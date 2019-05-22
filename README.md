@@ -1,4 +1,4 @@
-To Install
+Installation
 ----------
 
 This procedure was tested on Ubuntu 18.04.2 LTS.
@@ -49,10 +49,8 @@ cmake -G "Unix Makefiles" -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;libunwi
 make -j2
 ```
 
-To Use
+Usage
 ------
-
-
 A new library will be generated for the opt tool.
 
 ```
@@ -91,7 +89,10 @@ opt -mem2reg -simplifycfg -loops -lcssa -loop-simplify -loop-rotate -loop-unroll
 
 4. Call this tool to generate the Data Dependency Graph.
 
-
+```
+~/Projects/llvm-project/llvm/OBJ_ROOT/bin/opt -load ~/Projects/llvm-project/llvm/OBJ_ROOT/./lib/LLVMDependencyGraph.so -dependencyGraph input_bitcode_func_unrolled.bc > /dev/null 2>dataflow_graph.dot
+dot -Tpng dataflow_graph.dot -o dataflow_graph.png
+```
 
 
 
