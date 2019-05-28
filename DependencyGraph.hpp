@@ -90,10 +90,6 @@ class DependencyGraph {
         errs() << "populating ddg ... ";
         for(BasicBlock::iterator inst = BB->begin(),inst_e = BB->end(); inst != inst_e; ++inst){
             Instruction *I = &*inst;
-            // For DEBUG
-            Value *destination = cast<Value>(I);
-            errs()<< "//(DDG CLASS) Instruction:" << inst_count <<", "<< I->getOpcodeName() <<" "<< I->getName()<< " " << destination->getName() <<'\n';
-            // For Debug
             if( !(isa<GetElementPtrInst>(I) || isa<ReturnInst>(I))){
                 if(isa<LoadInst>(I) || isa<StoreInst>(I)){
                     Value *op;
