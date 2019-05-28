@@ -45,7 +45,7 @@ cd llvm-project
 cd llvm
 mkdir OBJ_DIR
 cd OBJ_DIR
-cmake -G "Unix Makefiles" -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;libunwind;lldb;compiler-rt;lld;polly;debuginfo-tests" ..
+cmake -G "Unix Makefiles" DLLVM_ENABLE_RTTI=on -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;libunwind;lldb;compiler-rt;lld;polly;debuginfo-tests" ..
 make -j2
 ```
 
