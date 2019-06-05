@@ -12,7 +12,7 @@ endif()
 
 add_llvm_library( LLVMDependencyGraph MODULE BUILDTREE_ONLY
   DependencyGraphGen.cpp
-
+  DependencyGraph.cpp
   DEPENDS 
   intrinsics_gen
   PLUGIN_TOOL
