@@ -58,6 +58,7 @@ namespace {
                 block++;      
                 DependencyGraph DG;
                 DG.populateGraph(BB); 
+                DG.supernode_opt();
                 DG.write_dot("DependencyGraph_class_boost_generated_ddg_color_writer.dot");
             }
             return false;

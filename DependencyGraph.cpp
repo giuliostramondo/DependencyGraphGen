@@ -53,6 +53,10 @@ void DependencyGraph::populateGraph(BasicBlock *BB){
                     vertex_t operandVertex = 
                         InstructionToVertexMap[operandInstruction];
                     add_edge(operandVertex,inst_vertex,ddg);
+                    write_nodes.push_back(inst_vertex);
+                }
+                else{
+                    read_nodes.push_back(inst_vertex);
                 }
             }else{
                 std::string nodeName;
@@ -82,7 +86,22 @@ void DependencyGraph::populateGraph(BasicBlock *BB){
 void DependencyGraph::write_dot(std::string fileName){
     std::ofstream output_dot_file;
     output_dot_file.open(fileName);
-    boost::write_graphviz(output_dot_file,ddg,vertex_writer(ddg),color_writer(ddg));
+    boost::write_graphviz(output_dot_file,ddg,vertex_writer(*this),color_writer(ddg));
+}
+
+
+void DependencyGraph::supernode_opt(){
+    std::list<vertex_t>::iterator it;
+    in_edge_it_t in_edge_it,in_edge_end;
+    for (it=write_nodes.begin(); it!= write_nodes.end(); ++it){
+        vertices_to_highlight.insert(*it); 
+        for(boost::tie(in_edge_it,in_edge_end) = boost::in_edges(*it,ddg);
+                in_edge_it != in_edge_end; ++in_edge_it){
+            vertices_to_highlight.insert(source(*in_edge_it,ddg)); 
+        
+        }
+    }
+
 }
 
 ArrayReference DependencyGraph::solveElementPtr(BasicBlock *BB, StringRef elementPtrID){
