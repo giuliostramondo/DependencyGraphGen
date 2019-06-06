@@ -5,13 +5,14 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Casting.h"
-
+#include "llvm/Bitcode/LLVMBitCodes.h"
 #include<fstream> // To write to file
 //Boost graph includes 
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/graphviz.hpp> // Export/Import dot files
+#include <tuple>
 
 using namespace llvm;
 
@@ -28,6 +29,7 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,Ve
 typedef boost::graph_traits<DataDependencyGraph>::vertex_descriptor vertex_t;
 typedef boost::graph_traits<DataDependencyGraph>::edge_descriptor edge_t;
 typedef DataDependencyGraph::in_edge_iterator in_edge_it_t;
+typedef DataDependencyGraph::out_edge_iterator out_edge_it_t;
 
 // A hash function for vertices.
 //struct vertex_hash:std::unary_function<vertex_t, std::size_t> {
@@ -48,22 +50,40 @@ typedef DataDependencyGraph::in_edge_iterator in_edge_it_t;
 //    return seed;
 //  }
 //};
+//
 std::string replaceAll(StringRef inString, char toReplace, char replacement);
 
 class DependencyGraph {
+    struct edgeHasher{
+        
+        public:
+            edgeHasher (DataDependencyGraph& g): ddg(g) {}
+            size_t operator()(const edge_t &e) const{
+                size_t seed =0;
+                boost::hash_combine(seed,source(e,ddg));
+                boost::hash_combine(seed,target(e,ddg));
+                return seed;
+            }
+        private:
+                DataDependencyGraph& ddg;
+
+    };
+
+
     class color_writer {
         public:
             // constructor - needs reference to graph we are coloring
-            color_writer(DataDependencyGraph& g ) : myGraph( g ) {}
+            color_writer(DependencyGraph& g ): ddg( g.ddg ), edges_to_highlight(g.edges_to_highlight) {}
             // functor that does the coloring
             template <class VertexOrEdge>
                 void operator()(std::ostream& out, const VertexOrEdge& e) const {
                     // check if this is the edge we want to color red
-                    //if(edges_to_highlight.find(e) != edges_to_highlight.end())
-                    //    out << "[color=red]";
+                    if(edges_to_highlight.find(e) != edges_to_highlight.end())
+                        out << "[color=red]";
                 }
         private:
-            DataDependencyGraph& myGraph;
+            DataDependencyGraph& ddg;
+            std::unordered_set<edge_t, edgeHasher> edges_to_highlight;
     };
 
     class vertex_writer {
@@ -73,8 +93,6 @@ class DependencyGraph {
             // functor that does the coloring
             template <class VertexOrEdge>
                 void operator()(std::ostream& out, const VertexOrEdge& e) const {
-                    errs()<<"Hey, I am the node writer dude\n";
-                    errs()<<"I have a list of "<<vertices_to_highlight.size()<<" vertices to highlight\n";
                     Instruction *inst =  ddg[e].inst;
                     std::string name = ddg[e].name;
                     // check if this is the edge we want to color red
@@ -101,7 +119,7 @@ class DependencyGraph {
     };
 
     public:
-    DependencyGraph(): ddg(0){} 
+    DependencyGraph(): ddg(0),edges_to_highlight{100,edgeHasher(ddg)} {}; 
     int inst_count=0;
     void populateGraph(BasicBlock *BB);
     void write_dot(std::string fileName);
@@ -114,7 +132,7 @@ class DependencyGraph {
     std::list<vertex_t> write_nodes;
     std::list<vertex_t> read_nodes;
     std::unordered_set<vertex_t> vertices_to_highlight;
-    //std::unordered_set<edge_t> edges_to_highlight;
+    std::unordered_set<edge_t, edgeHasher> edges_to_highlight;
     ArrayReference solveElementPtr(BasicBlock *BB, StringRef elementPtrID);
 };
 #endif 
