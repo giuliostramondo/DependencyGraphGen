@@ -92,6 +92,7 @@ void DependencyGraph::write_dot(std::string fileName){
 
 void DependencyGraph::supernode_opt(){
     std::list<vertex_t>::iterator it;
+    std::list<edge_t>::iterator e_it;
     std::list<vertex_t> vertex_to_check;
     in_edge_it_t in_edge_it,in_edge_end;
     out_edge_it_t out_edge_it,out_edge_end;
@@ -169,12 +170,43 @@ void DependencyGraph::supernode_opt(){
     std::list<std::tuple<std::list<vertex_t>,std::list<edge_t>,std::list<edge_t>,std::list<edge_t>>>::iterator supernode_it; 
     for(supernode_it=supernode_list.begin();
             supernode_it!=supernode_list.end(); ++supernode_it){
+
+        //Color supernodes nodes and inner edges red
+        //in-edges to the suepernodes in green
+        //out-edges to the supernodes in blue
         for(it=std::get<0>(*supernode_it).begin();
                 it!=std::get<0>(*supernode_it).end();++it){
-            vertices_to_highlight.insert(*it);
+            vertices_to_highlight[*it]="red";
         }
+        for(e_it=std::get<1>(*supernode_it).begin();
+                e_it!=std::get<1>(*supernode_it).end();++e_it){
+            edges_to_highlight[*e_it]="green";
+        }
+        for(e_it=std::get<2>(*supernode_it).begin();
+                e_it!=std::get<2>(*supernode_it).end();++e_it){
+            edges_to_highlight[*e_it]="red";
+        }
+        for(e_it=std::get<3>(*supernode_it).begin();
+                e_it!=std::get<3>(*supernode_it).end();++e_it){
+            edges_to_highlight[*e_it]="blue";
+        }
+
     }
 
+    
+    for(supernode_it=supernode_list.begin();
+            supernode_it!=supernode_list.end(); ++supernode_it){
+        for(int i=0; I< std::get<1>(*supernode_it).size();i++){
+            
+        
+        }
+        for(e_it=std::get<1>(*supernode_it).begin();
+                e_it!=std::get<1>(*supernode_it).end();++e_it){
+             
+        
+        }
+
+    }
 }
 
 ArrayReference DependencyGraph::solveElementPtr(BasicBlock *BB, StringRef elementPtrID){

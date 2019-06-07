@@ -31,31 +31,12 @@ typedef boost::graph_traits<DataDependencyGraph>::edge_descriptor edge_t;
 typedef DataDependencyGraph::in_edge_iterator in_edge_it_t;
 typedef DataDependencyGraph::out_edge_iterator out_edge_it_t;
 
-// A hash function for vertices.
-//struct vertex_hash:std::unary_function<vertex_t, std::size_t> {
-//  std::size_t operator()(vertex_descriptor const& u) const {
-//    std::size_t seed = 0;
-//    boost::hash_combine(seed, u[0]);
-//    boost::hash_combine(seed, u[1]);
-//    return seed;
-//  }
-//};
 
-// A hash function for vertices.
-//struct edge_hash:std::unary_function<edge_t, std::size_t> {
-//  std::size_t operator()(edge_t const& u) const {
-//    std::size_t seed = 0;
-//    boost::hash_combine(seed, u[0]);
-//    boost::hash_combine(seed, u[1]);
-//    return seed;
-//  }
-//};
-//
 std::string replaceAll(StringRef inString, char toReplace, char replacement);
 
 class DependencyGraph {
     struct edgeHasher{
-        
+
         public:
             edgeHasher (DataDependencyGraph& g): ddg(g) {}
             size_t operator()(const edge_t &e) const{
@@ -65,7 +46,7 @@ class DependencyGraph {
                 return seed;
             }
         private:
-                DataDependencyGraph& ddg;
+            DataDependencyGraph& ddg;
 
     };
 
@@ -79,11 +60,11 @@ class DependencyGraph {
                 void operator()(std::ostream& out, const VertexOrEdge& e) const {
                     // check if this is the edge we want to color red
                     if(edges_to_highlight.find(e) != edges_to_highlight.end())
-                        out << "[color=red]";
+                        out << "[color="<<edges_to_highlight.at(e)<<"]";
                 }
         private:
             DataDependencyGraph& ddg;
-            std::unordered_set<edge_t, edgeHasher> edges_to_highlight;
+            std::map<edge_t, std::string> edges_to_highlight;
     };
 
     class vertex_writer {
@@ -107,19 +88,19 @@ class DependencyGraph {
                         }
                     }
                     if( vertices_to_highlight.find(e) != vertices_to_highlight.end()){
-                        out <<"[color=red;label=\""<<name<<"\";shape="<<shape<<"]";
+                        out <<"[color="<<vertices_to_highlight.at(e)<<";label=\""<<name<<"\";shape="<<shape<<"]";
                     }else{
                         out <<"[label=\""<<name<<"\";shape="<<shape<<"]";
                     }
                 }
         private:
             DataDependencyGraph& ddg;
-            std::unordered_set<vertex_t> vertices_to_highlight;
+            std::map<vertex_t,std::string> vertices_to_highlight;
 
     };
 
     public:
-    DependencyGraph(): ddg(0),edges_to_highlight{100,edgeHasher(ddg)} {}; 
+    DependencyGraph(): ddg(0) {}; 
     int inst_count=0;
     void populateGraph(BasicBlock *BB);
     void write_dot(std::string fileName);
@@ -131,8 +112,8 @@ class DependencyGraph {
     std::unordered_map<Instruction*,vertex_t> InstructionToVertexMap;
     std::list<vertex_t> write_nodes;
     std::list<vertex_t> read_nodes;
-    std::unordered_set<vertex_t> vertices_to_highlight;
-    std::unordered_set<edge_t, edgeHasher> edges_to_highlight;
+    std::map<vertex_t,std::string> vertices_to_highlight;
+    std::map<edge_t, std::string> edges_to_highlight;
     ArrayReference solveElementPtr(BasicBlock *BB, StringRef elementPtrID);
 };
 #endif 
