@@ -1,7 +1,29 @@
 #include "DependencyGraph.hpp"
 
-
-
+std::unordered_set<Instruction*> removedInstructions;
+void replaceAndErase(Instruction* I) {
+    if(I==NULL) return;
+    if(isa<LoadInst>(I))return;
+    if(isa<StoreInst>(I)){
+        I->eraseFromParent();
+        return;
+    }
+    if(removedInstructions.find(I) == removedInstructions.end()){
+        errs()<<*I<<" Erased\n";
+        //TODO DEBUG HERE 
+        //Probably users returns something that is not an Instruction and on which users() cannot be called... 
+        //otherwise it seems strange
+        for (auto U : I->users()) {
+              replaceAndErase((Instruction*)U);
+        }
+        I->replaceAllUsesWith(UndefValue::get(I->getType()));
+        if(I->getParent() != NULL)
+            I->eraseFromParent();
+        removedInstructions.insert(I);
+    }else{
+        errs()<<"Already Erased\n";
+    }
+} 
 
 std::string replaceAll(StringRef inString, char toReplace, char replacement){
     std::string str_data = inString.str();
@@ -176,6 +198,7 @@ void DependencyGraph::supernode_opt(){
         //out-edges to the supernodes in blue
         for(it=std::get<0>(*supernode_it).begin();
                 it!=std::get<0>(*supernode_it).end();++it){
+            errs()<<"Supernode nodes ID: "<<*it<<" "<<ddg[*it].name <<"\n";
             vertices_to_highlight[*it]="red";
         }
         for(e_it=std::get<1>(*supernode_it).begin();
@@ -193,21 +216,114 @@ void DependencyGraph::supernode_opt(){
 
     }
 
-    
     for(supernode_it=supernode_list.begin();
             supernode_it!=supernode_list.end(); ++supernode_it){
-        for(int i=0; I< std::get<1>(*supernode_it).size();i++){
-            
-        
-        }
+        //Edges previous layer ( initialized with in-edges)
+        errs()<<"* Analysing new supernode\n";
+        std::vector<vertex_t> previous_layer_vertex;
         for(e_it=std::get<1>(*supernode_it).begin();
-                e_it!=std::get<1>(*supernode_it).end();++e_it){
-             
+            e_it!=std::get<1>(*supernode_it).end();++e_it){
+            previous_layer_vertex.push_back(source(*e_it,ddg));
+        }
+        while(previous_layer_vertex.size()>1){
+        std::vector<vertex_t> current_layer_vertex;
+        errs()<<"STARTING NEW LAYER\n";
         
+        for(size_t i=0; i< previous_layer_vertex.size()-1;i+=2){
+            errs()<<"i is equal to: "<<i<<" total size = "<<previous_layer_vertex.size()<<"\n";
+            errs()<<"handling node "<<ddg[previous_layer_vertex[i]].name <<" with id "<<previous_layer_vertex[i]<<" and "<<ddg[previous_layer_vertex[i+1]].name <<" "<<previous_layer_vertex[i+1]<<"\n"; 
+            Instruction* operandInst_0 = ddg[previous_layer_vertex[i]].inst;
+            Instruction* operandInst_1 = ddg[previous_layer_vertex[i+1]].inst;
+            //Instruction* insertionPoint = operandInst_1->getNextNode(); 
+            Instruction *newOp = BinaryOperator::Create(Instruction::Add,operandInst_0, operandInst_1); 
+            vertex_t newOpVertex = boost::add_vertex(ddg);
+            ddg[newOpVertex].inst = newOp;
+            ddg[newOpVertex].name = newOp->getName();
+            add_edge(previous_layer_vertex[i],newOpVertex,ddg); 
+            add_edge(previous_layer_vertex[i+1],newOpVertex,ddg); 
+            current_layer_vertex.push_back(newOpVertex);
+        }
+        if(previous_layer_vertex.size()%2){
+            current_layer_vertex.push_back(previous_layer_vertex.back());
+        }
+        previous_layer_vertex.clear();
+        previous_layer_vertex=current_layer_vertex;
+        }
+
+        edge_t out_supernode_edge = std::get<3>(*supernode_it).front();
+        vertex_t out_supernode_vertex = target(out_supernode_edge,ddg);
+        Instruction *out_supernode_instruction = ddg[out_supernode_vertex].inst;
+        if(isa<StoreInst>(out_supernode_instruction)){
+               StoreInst *out_supernode_instruction_store = (StoreInst*)out_supernode_instruction;
+               Value* ptrOperand =out_supernode_instruction_store->getPointerOperand();
+               vertex_t last_supernode_vertex = previous_layer_vertex.front();
+               Instruction* last_supernode_instruction = ddg[last_supernode_vertex].inst;
+               Instruction* newStore = new StoreInst(last_supernode_instruction,ptrOperand);
+               ddg[out_supernode_vertex].inst=newStore;
+               //out_supernode_instruction->eraseFromParent();
+        }
+        add_edge(previous_layer_vertex.front(),out_supernode_vertex,ddg);
+
+        for(it=std::get<0>(*supernode_it).begin();
+                it!=std::get<0>(*supernode_it).end();++it){
+            clear_vertex(*it,ddg); 
         }
 
     }
+    std::list<vertex_t> vertex_to_remove;
+    for(supernode_it=supernode_list.begin();
+            supernode_it!=supernode_list.end(); ++supernode_it){
+    //removing old nodes 
+        for(it=std::get<0>(*supernode_it).begin();
+                it!=std::get<0>(*supernode_it).end();++it){
+            ddg[*it].mark_remove=true;
+        }
+    }
+   
+   vertex_it_t vi,vi_end,next;
+   boost::tie(vi,vi_end) = vertices(ddg);
+    for(next=vi; vi !=vi_end;vi=next){
+        ++next;
+        if(ddg[*vi].mark_remove){
+            Instruction* toRemove=  ddg[*vi].inst;
+            errs()<<"\nErasing instruction attached to node : "<<ddg[*vi].name<<" ID:" <<*vi <<": ";
+            replaceAndErase(toRemove);
+            //toRemove->eraseFromParent();
+            remove_vertex(*vi,ddg);
+        }
+   }
+    BasicBlock* bb= ddg[0].inst->getParent();
+   // for (BasicBlock::iterator i = bb->begin(), e = bb->end(); i != e; ++i) {
+   //     Instruction* ii = &*i;
+   //     errs() << *ii << "\n";
+   // }
+   regenerateBasicBlock(bb);
 }
+
+void DependencyGraph::regenerateBasicBlock(BasicBlock *bb){
+  errs()<<"Called regenerateBasicBlock\n";
+  typedef std::list<vertex_t> InstructionOrder;
+  InstructionOrder instruction_order;
+  boost::topological_sort(ddg, std::front_inserter(instruction_order));
+    
+  errs() << "instruction ordering: ";
+  Instruction *previous_inst=NULL;
+  for (InstructionOrder::iterator i = instruction_order.begin();
+       i != instruction_order.end(); ++i){
+      if(previous_inst == NULL){
+        previous_inst=ddg[*i].inst;
+      }else{
+       if(ddg[*i].inst->getParent()!=NULL)
+           ddg[*i].inst->removeFromParent();
+       ddg[*i].inst->insertAfter(previous_inst);
+       previous_inst=ddg[*i].inst;
+
+      }
+    errs()<< *(ddg[*i].inst) << "\n";
+  }
+  errs() << "\n";
+}
+
 
 ArrayReference DependencyGraph::solveElementPtr(BasicBlock *BB, StringRef elementPtrID){
     StringRef arrayName;

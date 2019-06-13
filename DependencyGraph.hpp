@@ -11,6 +11,7 @@
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/graph/topological_sort.hpp>
 #include <boost/graph/graphviz.hpp> // Export/Import dot files
 #include <tuple>
 
@@ -23,13 +24,16 @@ struct ArrayReference{
 
 struct Vertex{
     Instruction *inst;
-    std::string name;};
+    std::string name;
+    bool mark_remove=false;
+};
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,Vertex, boost::no_property> DataDependencyGraph;
 typedef boost::graph_traits<DataDependencyGraph>::vertex_descriptor vertex_t;
 typedef boost::graph_traits<DataDependencyGraph>::edge_descriptor edge_t;
 typedef DataDependencyGraph::in_edge_iterator in_edge_it_t;
 typedef DataDependencyGraph::out_edge_iterator out_edge_it_t;
+typedef DataDependencyGraph::vertex_iterator vertex_it_t;
 
 
 std::string replaceAll(StringRef inString, char toReplace, char replacement);
@@ -105,6 +109,7 @@ class DependencyGraph {
     void populateGraph(BasicBlock *BB);
     void write_dot(std::string fileName);
     void supernode_opt();
+    void regenerateBasicBlock(BasicBlock *BB);
 
     private:
     DataDependencyGraph ddg;
