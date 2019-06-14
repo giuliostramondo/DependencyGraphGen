@@ -26,6 +26,7 @@ struct Vertex{
     Instruction *inst;
     std::string name;
     bool mark_remove=false;
+    Instruction *elementPtrInst=NULL;
 };
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,Vertex, boost::no_property> DataDependencyGraph;
@@ -110,6 +111,7 @@ class DependencyGraph {
     void write_dot(std::string fileName);
     void supernode_opt();
     void regenerateBasicBlock(BasicBlock *BB);
+    void dumpBasicBlockIR(std::string fileName,BasicBlock* bb);
 
     private:
     DataDependencyGraph ddg;
@@ -120,5 +122,6 @@ class DependencyGraph {
     std::map<vertex_t,std::string> vertices_to_highlight;
     std::map<edge_t, std::string> edges_to_highlight;
     ArrayReference solveElementPtr(BasicBlock *BB, StringRef elementPtrID);
+    Instruction* getElementPtr(BasicBlock *BB, StringRef elementPtrID);
 };
 #endif 

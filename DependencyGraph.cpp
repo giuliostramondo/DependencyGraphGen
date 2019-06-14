@@ -2,28 +2,73 @@
 
 std::unordered_set<Instruction*> removedInstructions;
 void replaceAndErase(Instruction* I) {
-    if(I==NULL) return;
-    if(isa<LoadInst>(I))return;
+    errs()<<" Replace and erase\n";
+
+    if(removedInstructions.find(I) == removedInstructions.end()){
+    if(I==NULL){ 
+        errs()<<"it is NULL, skipping ...";
+        return;
+    }
+    errs()<<*I<<" evaluating...\n";
+    errs()<<*I<<" not seen before...\n";
+    if(isa<LoadInst>(I)){
+        
+    errs()<<*I<<" is a load, skipping...\n";
+        return;
+    }
+    errs()<<*I<<" not a load...\n";
+    
     if(isa<StoreInst>(I)){
         I->eraseFromParent();
         return;
     }
-    if(removedInstructions.find(I) == removedInstructions.end()){
-        errs()<<*I<<" Erased\n";
+    errs()<<*I<<" not a store...\n";
+    if(I->getParent() == NULL){
+        errs()<<*I<<" does not have a parent, skipping";
+        return;
+    }
+    errs()<<*I<<" has a parent...\n";
+        errs()<<*I<<" Erasing ...\n";
         //TODO DEBUG HERE 
         //Probably users returns something that is not an Instruction and on which users() cannot be called... 
         //otherwise it seems strange
+        errs()<<"*I type"<<I->getType()<<"\n";
+        Instruction* Ic = dynamic_cast<Instruction*>(I);
+        if(Ic !=NULL){
         for (auto U : I->users()) {
-              replaceAndErase((Instruction*)U);
+            errs()<<"Erasing "<<*U<<" first, which is a user of "<<*I<<"\n";
+            replaceAndErase((Instruction*)U);
         }
+        
         I->replaceAllUsesWith(UndefValue::get(I->getType()));
+        
         if(I->getParent() != NULL)
             I->eraseFromParent();
         removedInstructions.insert(I);
+        }
     }else{
-        errs()<<"Already Erased\n";
+        errs()<<I<<"Already Erased\n";
     }
 } 
+ 
+void replaceAndErase2(Instruction *I){
+    errs()<<" Replace and erase\n";
+    if(I==NULL)return;
+    if(I->getParent() == NULL)return;
+    if(removedInstructions.find(I) != removedInstructions.end())return;
+    if(!isa<Value>(I)){errs()<<"FOUND THE BASTARD\n";return;}
+    //iterator_range<Instruction> U = I->users();
+    Value::user_iterator_impl<User> u_it,next;
+    for (u_it = I->users().begin(); u_it != I->users().end(); u_it=next) {
+        next=u_it;
+        next++;
+        Instruction* it_inner =(Instruction*) *u_it;
+            replaceAndErase2(it_inner);
+    }
+    I->replaceAllUsesWith(UndefValue::get(I->getType()));
+    I->eraseFromParent();
+    removedInstructions.insert(I);
+}
 
 std::string replaceAll(StringRef inString, char toReplace, char replacement){
     std::string str_data = inString.str();
@@ -46,8 +91,10 @@ void DependencyGraph::populateGraph(BasicBlock *BB){
                     op=I->getOperand(1);
                 }
                 ArrayReference a;
+                Instruction* elementPtrInst=NULL;
                 if( op->hasName() && op->getName().contains(StringRef("arrayidx"))){
                     a=solveElementPtr(BB,op->getName());
+                    elementPtrInst=getElementPtr(BB,op->getName());
                 }else{
                     StringRef ArrayID = op->getName();
                     a.arrayName = ArrayID;
@@ -65,6 +112,7 @@ void DependencyGraph::populateGraph(BasicBlock *BB){
                 std::string arrayOffset = a.offset.toString(10,false);
                 std::string vertexName = (a.arrayName+"["+arrayOffset).str()+"]";
                 ddg[inst_vertex].name =vertexName;
+                ddg[inst_vertex].elementPtrInst=elementPtrInst;
                 InstructionToVertexMap[I]=inst_vertex;
                 if(isa<StoreInst>(I)){
                     Value *source = I->getOperand(0);
@@ -109,6 +157,19 @@ void DependencyGraph::write_dot(std::string fileName){
     std::ofstream output_dot_file;
     output_dot_file.open(fileName);
     boost::write_graphviz(output_dot_file,ddg,vertex_writer(*this),color_writer(*this));
+}
+
+void DependencyGraph::dumpBasicBlockIR(std::string fileName,BasicBlock* bb){
+    std::ofstream output_dot_file;
+    output_dot_file.open(fileName);
+   for (BasicBlock::iterator i = bb->begin(), e = bb->end(); i != e; ++i) {
+        Instruction* ii = &*i;
+        std::string str;
+        llvm::raw_string_ostream ss(str);
+        ss<< *ii;
+        output_dot_file << ss.str()<< "\n";
+   }  
+
 }
 
 
@@ -234,8 +295,8 @@ void DependencyGraph::supernode_opt(){
             errs()<<"handling node "<<ddg[previous_layer_vertex[i]].name <<" with id "<<previous_layer_vertex[i]<<" and "<<ddg[previous_layer_vertex[i+1]].name <<" "<<previous_layer_vertex[i+1]<<"\n"; 
             Instruction* operandInst_0 = ddg[previous_layer_vertex[i]].inst;
             Instruction* operandInst_1 = ddg[previous_layer_vertex[i+1]].inst;
-            //Instruction* insertionPoint = operandInst_1->getNextNode(); 
-            Instruction *newOp = BinaryOperator::Create(Instruction::Add,operandInst_0, operandInst_1); 
+            Instruction* insertionPoint = operandInst_1->getNextNode(); 
+            Instruction *newOp = BinaryOperator::Create(Instruction::Add,operandInst_0, operandInst_1,Twine(),insertionPoint); 
             vertex_t newOpVertex = boost::add_vertex(ddg);
             ddg[newOpVertex].inst = newOp;
             ddg[newOpVertex].name = newOp->getName();
@@ -258,6 +319,7 @@ void DependencyGraph::supernode_opt(){
                Value* ptrOperand =out_supernode_instruction_store->getPointerOperand();
                vertex_t last_supernode_vertex = previous_layer_vertex.front();
                Instruction* last_supernode_instruction = ddg[last_supernode_vertex].inst;
+               errs()<<"creating store for instruction" <<*last_supernode_instruction<<"\n";
                Instruction* newStore = new StoreInst(last_supernode_instruction,ptrOperand);
                ddg[out_supernode_vertex].inst=newStore;
                //out_supernode_instruction->eraseFromParent();
@@ -279,7 +341,10 @@ void DependencyGraph::supernode_opt(){
             ddg[*it].mark_remove=true;
         }
     }
-   
+
+     BasicBlock* bb= ddg[0].inst->getParent();
+     dumpBasicBlockIR("bb_before_instruction_removal.ll",bb);
+
    vertex_it_t vi,vi_end,next;
    boost::tie(vi,vi_end) = vertices(ddg);
     for(next=vi; vi !=vi_end;vi=next){
@@ -287,41 +352,52 @@ void DependencyGraph::supernode_opt(){
         if(ddg[*vi].mark_remove){
             Instruction* toRemove=  ddg[*vi].inst;
             errs()<<"\nErasing instruction attached to node : "<<ddg[*vi].name<<" ID:" <<*vi <<": ";
-            replaceAndErase(toRemove);
+            if(removedInstructions.find(toRemove)==removedInstructions.end())
+            replaceAndErase2(toRemove);
             //toRemove->eraseFromParent();
             remove_vertex(*vi,ddg);
         }
    }
-    BasicBlock* bb= ddg[0].inst->getParent();
-   // for (BasicBlock::iterator i = bb->begin(), e = bb->end(); i != e; ++i) {
-   //     Instruction* ii = &*i;
-   //     errs() << *ii << "\n";
-   // }
-   regenerateBasicBlock(bb);
+     dumpBasicBlockIR("bb_after_instruction_removal.ll",bb);
+     regenerateBasicBlock(bb);
+     dumpBasicBlockIR("bb_after_instruction_reorder.ll",bb);
+
 }
 
 void DependencyGraph::regenerateBasicBlock(BasicBlock *bb){
   errs()<<"Called regenerateBasicBlock\n";
+  Instruction *returnI=NULL;
+    BasicBlock::reverse_iterator inst, inst_e,next;
+    for(inst = bb->rbegin(),inst_e = bb->rend();
+            inst != inst_e; inst=next){
+        if(isa<ReturnInst>(*inst))
+            returnI=&*inst;
+        next=inst;
+        next++;
+        inst->removeFromParent();
+    }
   typedef std::list<vertex_t> InstructionOrder;
   InstructionOrder instruction_order;
   boost::topological_sort(ddg, std::front_inserter(instruction_order));
     
   errs() << "instruction ordering: ";
-  Instruction *previous_inst=NULL;
+  //Instruction *previous_inst=NULL;
   for (InstructionOrder::iterator i = instruction_order.begin();
        i != instruction_order.end(); ++i){
-      if(previous_inst == NULL){
-        previous_inst=ddg[*i].inst;
-      }else{
-       if(ddg[*i].inst->getParent()!=NULL)
-           ddg[*i].inst->removeFromParent();
-       ddg[*i].inst->insertAfter(previous_inst);
-       previous_inst=ddg[*i].inst;
+      //if(previous_inst == NULL){
+      //  previous_inst=ddg[*i].inst;
+      //}else{
+      // if(ddg[*i].inst->getParent()!=NULL)
+      //     ddg[*i].inst->removeFromParent();
+      // ddg[*i].inst->insertAfter(previous_inst);
+      // previous_inst=ddg[*i].inst;
 
-      }
-    errs()<< *(ddg[*i].inst) << "\n";
+      //}
+      if(ddg[*i].elementPtrInst!=NULL)
+          bb->getInstList().push_back(ddg[*i].elementPtrInst);
+      bb->getInstList().push_back(ddg[*i].inst);
   }
-  errs() << "\n";
+ bb->getInstList().push_back(returnI);
 }
 
 
@@ -344,4 +420,20 @@ ArrayReference DependencyGraph::solveElementPtr(BasicBlock *BB, StringRef elemen
     }
     ArrayReference arrayRefInfo = {arrayName, offset};
     return arrayRefInfo;
+}
+
+Instruction* DependencyGraph::getElementPtr(BasicBlock *BB, StringRef elementPtrID){
+    StringRef arrayName;
+    APInt offset;
+    Instruction *resultElementPtr;
+    for(BasicBlock::reverse_iterator inst = BB->rbegin(),inst_e = BB->rend();
+            inst != inst_e; ++inst){
+        Instruction *I = &*inst;
+        if(elementPtrID == I->getName()){
+            resultElementPtr = I;
+            break;
+        }
+
+    }
+    return resultElementPtr;
 }
