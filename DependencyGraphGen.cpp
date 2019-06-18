@@ -52,14 +52,20 @@ namespace {
             errs().write_escaped(F.getName()) << '\n';
             int block=0;
             errs() << "//Iterating over basic blocks of "<< F.getName() << '\n';
+            if(F.size()>1){
+                errs() <<"There are "<<F.size()<<" basic blocks in the code, something went wrong during the loop unrolling\nQuitting...\n";
+                return false;
+            }
             for(Function::iterator b = F.begin(), be = F.end(); b != be; ++b) {
+
                 BasicBlock *BB = &*b;
                 errs()<< "//Block: " << block << '\n';
                 block++;      
                 DependencyGraph DG;
                 DG.populateGraph(BB); 
+                DG.write_dot("DependencyGraph_original.dot");
                 DG.supernode_opt();
-                DG.write_dot("DependencyGraph_class_boost_generated_ddg_color_writer.dot");
+                DG.write_dot("DependencyGraph_final.dot");
             }
             return false;
         }

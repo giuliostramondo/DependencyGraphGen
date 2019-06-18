@@ -123,5 +123,6 @@ class DependencyGraph {
     std::map<edge_t, std::string> edges_to_highlight;
     ArrayReference solveElementPtr(BasicBlock *BB, StringRef elementPtrID);
     Instruction* getElementPtr(BasicBlock *BB, StringRef elementPtrID);
+    void clearHighlights();
 };
 #endif 
