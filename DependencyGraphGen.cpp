@@ -34,7 +34,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "dependencyGraph"
 
-STATISTIC(HelloCounter, "Counts number of functions greeted");
 
 namespace {
 
@@ -47,7 +46,6 @@ namespace {
             //Source specific to adjacency_list graph https://www.boost.org/doc/libs/1_48_0/libs/graph/doc/adjacency_list.html 
             //This page was used as a reference to link the boost graph to an llvm instruction:https://stackoverflow.com/questions/3100146/adding-custom-vertices-to-a-boost-graph
 
-            ++HelloCounter;
             errs() << "//Data Dependency Graph Generator running on: ";
             errs().write_escaped(F.getName()) << '\n';
             int block=0;
@@ -66,6 +64,9 @@ namespace {
                 DG.write_dot("DependencyGraph_original.dot");
                 DG.supernode_opt();
                 DG.write_dot("DependencyGraph_final.dot");
+                DG.max_par_schedule();
+                DG.write_dot("DependencyGraph_final_schedule.dot");
+                
             }
             return false;
         }

@@ -27,6 +27,8 @@ struct Vertex{
     std::string name;
     bool mark_remove=false;
     Instruction *elementPtrInst=NULL;
+    size_t cycle_asap;
+    size_t cycle_alap;
 };
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,Vertex, boost::no_property> DataDependencyGraph;
@@ -81,6 +83,8 @@ class DependencyGraph {
                 void operator()(std::ostream& out, const VertexOrEdge& e) const {
                     Instruction *inst =  ddg[e].inst;
                     std::string name = ddg[e].name;
+                    size_t cycle_asap = ddg[e].cycle_asap;
+                    size_t cycle_alap = ddg[e].cycle_alap;
                     // check if this is the edge we want to color red
                     std::string shape;
                     if(inst->getOpcodeName()== StringRef("store")){
@@ -93,9 +97,9 @@ class DependencyGraph {
                         }
                     }
                     if( vertices_to_highlight.find(e) != vertices_to_highlight.end()){
-                        out <<"[color="<<vertices_to_highlight.at(e)<<";label=\""<<name<<"\";shape="<<shape<<"]";
+                        out <<"[color="<<vertices_to_highlight.at(e)<<";label=\""<<name<<".Cycle:"<<std::to_string(cycle_asap)<<"-"<<std::to_string(cycle_alap)<<"\";shape="<<shape<<"]";
                     }else{
-                        out <<"[label=\""<<name<<"\";shape="<<shape<<"]";
+                        out <<"[label=\""<<name<<".Cycle:"<<std::to_string(cycle_asap)<<"-"<<std::to_string(cycle_alap)<<"\";shape="<<shape<<"]";
                     }
                 }
         private:
@@ -110,6 +114,10 @@ class DependencyGraph {
     void populateGraph(BasicBlock *BB);
     void write_dot(std::string fileName);
     void supernode_opt();
+    //TODO 
+    void merge_loads();
+    //TODO 
+    void max_par_schedule();
     void regenerateBasicBlock(BasicBlock *BB);
     void dumpBasicBlockIR(std::string fileName,BasicBlock* bb);
 
@@ -122,7 +130,10 @@ class DependencyGraph {
     std::map<vertex_t,std::string> vertices_to_highlight;
     std::map<edge_t, std::string> edges_to_highlight;
     ArrayReference solveElementPtr(BasicBlock *BB, StringRef elementPtrID);
+    void supernode_opt_inner(unsigned opCode);
     Instruction* getElementPtr(BasicBlock *BB, StringRef elementPtrID);
     void clearHighlights();
+    std::vector<std::list<vertex_t>> schedule;
+    std::vector<std::list<vertex_t>> schedule_alap;
 };
 #endif 

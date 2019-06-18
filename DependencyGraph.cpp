@@ -120,8 +120,25 @@ void DependencyGraph::dumpBasicBlockIR(std::string fileName,BasicBlock* bb){
 
 }
 
-//TODO Split in two functions: spernode detection and optimization
+//TODO filter out unused instruction by current code
 void DependencyGraph::supernode_opt(){
+    std::list<unsigned> commutativeInstructions;
+    commutativeInstructions.push_back(Instruction::Add);
+    commutativeInstructions.push_back(Instruction::FAdd);
+    commutativeInstructions.push_back(Instruction::And);
+    commutativeInstructions.push_back(Instruction::Mul);
+    commutativeInstructions.push_back(Instruction::FMul);
+    commutativeInstructions.push_back(Instruction::Or);
+    commutativeInstructions.push_back(Instruction::Xor);
+     std::list<unsigned>::iterator inst;
+    for(inst=commutativeInstructions.begin();
+            inst!=commutativeInstructions.end();
+            inst++){
+        supernode_opt_inner(*inst);
+    }
+}
+void DependencyGraph::supernode_opt_inner(unsigned opCode){
+    errs()<<"*****####@@@@ Running supernode opt for inst "<<Instruction::getOpcodeName(opCode)<<" @@@@####*****\n";
     std::list<vertex_t>::iterator it;
     std::list<edge_t>::iterator e_it;
     std::list<vertex_t> vertex_to_check;
@@ -139,9 +156,8 @@ void DependencyGraph::supernode_opt(){
         Instruction *currVertexInstruction=ddg[curr_vertex].inst;
 
         errs()<<"Checking node "<<currVertexInstruction->getName()<<", Opcode: "<<currVertexInstruction->getOpcode()<<"\n";
-        errs()<<"BINOP_ADD CODE: "<<bitc::BINOP_ADD;
         if( isa<BinaryOperator>(currVertexInstruction) &&
-                currVertexInstruction->getOpcode() == Instruction::Add){
+                currVertexInstruction->getOpcode() == opCode){
             errs()<<"Found add instruction node\n";
 
             std::list<vertex_t> supernode;
@@ -167,7 +183,7 @@ void DependencyGraph::supernode_opt(){
                         vertex_t currFrontier = source(*in_edge_it,ddg);
                         Instruction *currFrontierInstruction=ddg[currFrontier].inst; 
                         if( isa<BinaryOperator>(currFrontierInstruction) &&
-                            currFrontierInstruction->getOpcode() == Instruction::Add){
+                            currFrontierInstruction->getOpcode() == opCode){
                             errs()<<"Expanding supernode with new add instruction node\n";
                             supernode_frontier.push_back(currFrontier);
                             supernode.push_back(currFrontier);
@@ -194,7 +210,6 @@ void DependencyGraph::supernode_opt(){
     for (it=write_nodes.begin(); it!= write_nodes.end(); ++it){
         for(boost::tie(in_edge_it,in_edge_end) = boost::in_edges(*it,ddg);
                 in_edge_it != in_edge_end; ++in_edge_it){
-        //    vertices_to_highlight.insert(source(*in_edge_it,ddg)); 
         
         }
     }
@@ -226,6 +241,7 @@ void DependencyGraph::supernode_opt(){
     }
 
     write_dot("DependencyGraph_supernode_highlight.dot");
+    size_t new_Nodes_count=0;
     clearHighlights();
     for(supernode_it=supernode_list.begin();
             supernode_it!=supernode_list.end(); ++supernode_it){
@@ -246,7 +262,9 @@ void DependencyGraph::supernode_opt(){
             Instruction* operandInst_0 = ddg[previous_layer_vertex[i]].inst;
             Instruction* operandInst_1 = ddg[previous_layer_vertex[i+1]].inst;
             Instruction* insertionPoint = operandInst_1->getNextNode(); 
-            Instruction *newOp = BinaryOperator::Create(Instruction::Add,operandInst_0, operandInst_1,Twine(),insertionPoint); 
+            const char *opCodeName = Instruction::getOpcodeName(opCode);
+            std::string name = opCodeName +std::string(".sup.") +std::to_string(new_Nodes_count++);
+            Instruction *newOp = BinaryOperator::Create((llvm::Instruction::BinaryOps)opCode,operandInst_0, operandInst_1,Twine(name),insertionPoint); 
             vertex_t newOpVertex = boost::add_vertex(ddg);
             ddg[newOpVertex].inst = newOp;
             ddg[newOpVertex].name = newOp->getName();
@@ -358,6 +376,93 @@ ArrayReference DependencyGraph::solveElementPtr(BasicBlock *BB, StringRef elemen
     }
     ArrayReference arrayRefInfo = {arrayName, offset};
     return arrayRefInfo;
+}
+
+//TODO ALAP and combine
+void DependencyGraph::max_par_schedule(){
+    errs()<<"Called max_par_schedule()\n";
+    std::list<vertex_t> instruction_order;
+
+    //ASAP
+    boost::topological_sort(ddg, std::front_inserter(instruction_order));
+    std::vector<int> clocks(num_vertices(ddg),0);
+
+    for (std::list<vertex_t>::iterator i = instruction_order.begin();
+       i != instruction_order.end(); ++i){
+        if (boost::in_degree (*i, ddg) > 0) {
+            in_edge_it_t j, j_end;
+            int maxdist = 0;
+            for(boost::tie(j,j_end) = in_edges(*i,ddg); j!= j_end;++j){
+                int v_source_id = source(*j,ddg);
+                maxdist = std::max(clocks[v_source_id],maxdist);
+            }
+            clocks[*i]=maxdist+1;
+            ddg[*i].cycle_asap = maxdist+1;
+            if(schedule.size() >= (unsigned) maxdist+1){
+                std::list<vertex_t> current_cycle = schedule[maxdist];
+                current_cycle.push_back(*i);
+            }
+            else{
+                std::list<vertex_t> current_cycle;
+                current_cycle.push_back(*i);
+                schedule.push_back(current_cycle);
+            }
+        }else{
+            clocks[*i]=0;
+            ddg[*i].cycle_asap=0;
+            if(schedule.size() >= 1){
+                std::list<vertex_t> current_cycle = schedule[0];
+                current_cycle.push_back(*i);
+            }else{
+                std::list<vertex_t> current_cycle;
+                current_cycle.push_back(*i);
+                schedule.push_back(current_cycle);
+
+            }
+        }
+    }
+    //ALAP
+    //TODO Fix alap: it is correct but instead of maxdist+1 the cycle should be 
+    //latency-(maxdist+1)
+    int latency= schedule.size(); 
+    std::vector<int> clocks_alap(num_vertices(ddg),0);
+    for (std::list<vertex_t>::reverse_iterator r_i = instruction_order.rbegin();
+       r_i != instruction_order.rend(); ++r_i){
+        if (boost::in_degree (*r_i, ddg) > 0) {
+            out_edge_it_t out_j, out_j_end;
+            int maxdist = 0;
+            for(boost::tie(out_j,out_j_end) = out_edges(*r_i,ddg);out_j!= out_j_end;++out_j){
+                int v_target_id = target(*out_j,ddg);
+                errs()<<"v_target_id:"<<v_target_id<<", clocks_alap[v_target_id]:"<<clocks_alap[v_target_id]<<"\n";
+                maxdist = std::max(clocks_alap[v_target_id],maxdist);
+            }
+            clocks_alap[*r_i]=maxdist+1;
+            ddg[*r_i].cycle_alap = maxdist+1;
+            if(schedule_alap.size() >= (unsigned) maxdist+1){
+                std::list<vertex_t> current_cycle = schedule_alap[maxdist];
+                current_cycle.push_back(*r_i);
+            }
+            else{
+                std::list<vertex_t> current_cycle;
+                current_cycle.push_back(*r_i);
+                schedule_alap.push_back(current_cycle);
+            }
+        }else{
+            clocks_alap[*r_i]=0;
+            ddg[*r_i].cycle_alap=0;
+            if(schedule_alap.size() >= 1){
+                std::list<vertex_t> current_cycle = schedule_alap[0];
+                current_cycle.push_back(*r_i);
+            }else{
+                std::list<vertex_t> current_cycle;
+                current_cycle.push_back(*r_i);
+                schedule_alap.push_back(current_cycle);
+
+            }
+        }
+    }
+
+    
 }
 
 Instruction* DependencyGraph::getElementPtr(BasicBlock *BB, StringRef elementPtrID){
