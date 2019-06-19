@@ -97,9 +97,17 @@ class DependencyGraph {
                         }
                     }
                     if( vertices_to_highlight.find(e) != vertices_to_highlight.end()){
-                        out <<"[color="<<vertices_to_highlight.at(e)<<";label=\""<<name<<".Cycle:"<<std::to_string(cycle_asap)<<"-"<<std::to_string(cycle_alap)<<"\";shape="<<shape<<"]";
+                        if(cycle_asap != cycle_alap)
+                            out <<"[color="<<vertices_to_highlight.at(e)<<";label=\""<<name<<".Cycle:("<<std::to_string(cycle_asap)<<"-"<<std::to_string(cycle_alap)<<")\";shape="<<shape<<"]";
+                        else
+                            out <<"[color="<<vertices_to_highlight.at(e)<<";label=\""<<name<<".Cycle:("<<std::to_string(cycle_asap)<<"\";shape="<<shape<<"]";
+
                     }else{
-                        out <<"[label=\""<<name<<".Cycle:"<<std::to_string(cycle_asap)<<"-"<<std::to_string(cycle_alap)<<"\";shape="<<shape<<"]";
+                        if(cycle_asap != cycle_alap)
+                            out <<"[label=\""<<name<<".Cycle:("<<std::to_string(cycle_asap)<<"-"<<std::to_string(cycle_alap)<<")\";shape="<<shape<<"]";
+                        else
+                            out <<"[label=\""<<name<<".Cycle:"<<std::to_string(cycle_asap)<<"\";shape="<<shape<<"]";
+
                     }
                 }
         private:
