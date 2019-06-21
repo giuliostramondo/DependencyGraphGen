@@ -15,6 +15,8 @@
 #include <boost/graph/graphviz.hpp> // Export/Import dot files
 #include <tuple>
 
+#include "mem_comp_paramJSON.hpp"
+
 using namespace llvm;
 
 struct ArrayReference{
@@ -117,7 +119,7 @@ class DependencyGraph {
     };
 
     public:
-    DependencyGraph(): ddg(0) {}; 
+    DependencyGraph(mem_comp_paramJSON_format _conf): ddg(0), config(_conf) {}; 
     int inst_count=0;
     void populateGraph(BasicBlock *BB);
     void write_dot(std::string fileName);
@@ -131,6 +133,7 @@ class DependencyGraph {
 
     private:
     DataDependencyGraph ddg;
+    mem_comp_paramJSON_format config;
     std::unordered_map<std::string, Instruction*> nodeNameToInstructionMap;
     std::unordered_map<Instruction*,vertex_t> InstructionToVertexMap;
     std::list<vertex_t> write_nodes;
@@ -143,5 +146,6 @@ class DependencyGraph {
     void clearHighlights();
     std::vector<std::list<vertex_t>> schedule;
     std::vector<std::list<vertex_t>> schedule_alap;
+    
 };
 #endif 

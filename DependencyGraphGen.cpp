@@ -16,7 +16,8 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
-
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/JSON.h"
 
 #include <utility> // for std::pair 
 #include <unordered_map>
@@ -28,6 +29,7 @@
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/graphviz.hpp> // Export/Import dot files
 
+#include "mem_comp_paramJSON.hpp"
 #include "DependencyGraph.hpp"
 
 using namespace llvm;
@@ -35,6 +37,7 @@ using namespace llvm;
 #define DEBUG_TYPE "dependencyGraph"
 
 
+cl::opt<std::string> ParameterFilename("dependencyGraphConf", cl::desc("Specify configuration file for the DependencyGraph module"), cl::value_desc("filename"));
 namespace {
 
     struct DependencyGraphGen : public FunctionPass {
@@ -45,7 +48,14 @@ namespace {
             //Good source on boost :https://www.boost.org/doc/libs/1_48_0/libs/graph/doc/quick_tour.html 
             //Source specific to adjacency_list graph https://www.boost.org/doc/libs/1_48_0/libs/graph/doc/adjacency_list.html 
             //This page was used as a reference to link the boost graph to an llvm instruction:https://stackoverflow.com/questions/3100146/adding-custom-vertices-to-a-boost-graph
-
+            mem_comp_paramJSON_format config;
+            if(ParameterFilename.getNumOccurrences() > 0){
+                errs()<<"Passed configuration file to DependencyGraph: "<<ParameterFilename.c_str()<<"\n";   
+                config = parse_json_file(ParameterFilename.c_str());
+            }else{
+                config = parse_json_file("./configurationFiles/conf_1.json");
+            }
+            errs()<< config.compute_param.funtional_unit.mul_32.latency << "<<LATENCY MUL32\n";
             errs() << "//Data Dependency Graph Generator running on: ";
             errs().write_escaped(F.getName()) << '\n';
             int block=0;
@@ -59,14 +69,14 @@ namespace {
                 BasicBlock *BB = &*b;
                 errs()<< "//Block: " << block << '\n';
                 block++;      
-                DependencyGraph DG;
+                DependencyGraph DG(config);
                 DG.populateGraph(BB); 
                 DG.write_dot("DependencyGraph_original.dot");
                 DG.supernode_opt();
                 DG.write_dot("DependencyGraph_final.dot");
                 DG.max_par_schedule();
                 DG.write_dot("DependencyGraph_final_schedule.dot");
-                
+
             }
             return false;
         }
