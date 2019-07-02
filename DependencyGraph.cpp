@@ -32,6 +32,7 @@ void DependencyGraph::populateGraph(BasicBlock *BB){
             if(isa<LoadInst>(I) || isa<StoreInst>(I)){
                 Value *op;
                 std::string nodeName;
+                vertex_options additional_info = MRAM;
                 if(isa<LoadInst>(I)){
                     op=I->getOperand(0); 
                 }
@@ -61,6 +62,7 @@ void DependencyGraph::populateGraph(BasicBlock *BB){
                 std::string vertexName = (a.arrayName+"["+arrayOffset).str()+"]";
                 ddg[inst_vertex].name =vertexName;
                 ddg[inst_vertex].elementPtrInst=elementPtrInst;
+                ddg[inst_vertex].info = additional_info;
                 InstructionToVertexMap[I]=inst_vertex;
                 if(isa<StoreInst>(I)){
                     Value *source = I->getOperand(0);
@@ -239,8 +241,10 @@ void DependencyGraph::supernode_opt_inner(unsigned opCode){
         }
 
     }
-
-    write_dot("DependencyGraph_supernode_highlight.dot");
+    std::string filename("DependencyGraph_supernode_highlight_");
+    filename+=Instruction::getOpcodeName(opCode);
+    filename+=".dot";
+    write_dot(filename);
     size_t new_Nodes_count=0;
     clearHighlights();
     for(supernode_it=supernode_list.begin();
@@ -378,6 +382,32 @@ ArrayReference DependencyGraph::solveElementPtr(BasicBlock *BB, StringRef elemen
     return arrayRefInfo;
 }
 
+int DependencyGraph::getLatency(vertex_t v){
+   Instruction *I = ddg[v].inst;
+   if(isa<LoadInst>(I)){
+        if(ddg[v].info == MRAM)
+          return  config.memory_param.mram.read_latency;
+        else
+          return  config.memory_param.sram.read_latency;
+   }
+   if(isa<StoreInst>(I)){
+        if(ddg[v].info == MRAM)
+           return config.memory_param.mram.write_latency;
+        else
+           return config.memory_param.sram.write_latency;
+   }
+   if(isa<BinaryOperator>(I)){
+        if(I->getOpcode() == Instruction::Add)
+            return config.compute_param.funtional_unit.add.latency;
+        if(I->getOpcode() == Instruction::Mul)
+            return config.compute_param.funtional_unit.mul.latency;
+   }
+   errs()<<"Unknown instruction "<<*I<<"\n";
+   errs()<<"returning default latency (1)\n";
+   return 1;
+}
+
+
 //TODO ALAP and combine
 void DependencyGraph::max_par_schedule(){
     errs()<<"Called max_par_schedule()\n";
@@ -394,10 +424,12 @@ void DependencyGraph::max_par_schedule(){
             int maxdist = 0;
             for(boost::tie(j,j_end) = in_edges(*i,ddg); j!= j_end;++j){
                 int v_source_id = source(*j,ddg);
-                maxdist = std::max(clocks[v_source_id],maxdist);
+                errs()<<v_source_id<<"previous node inst: "<<*(ddg[v_source_id].inst);
+                errs()<<", latency: "<<getLatency(v_source_id)<<"\n";
+                maxdist = std::max(clocks[v_source_id]+getLatency(v_source_id)-1,maxdist);
             }
             clocks[*i]=maxdist+1;
-            ddg[*i].cycle_asap = maxdist+1;
+            ddg[*i].cycle_asap_begin = maxdist+1;
             if(schedule.size() >= (unsigned) maxdist+1){
                 std::list<vertex_t> current_cycle = schedule[maxdist];
                 current_cycle.push_back(*i);
@@ -409,7 +441,7 @@ void DependencyGraph::max_par_schedule(){
             }
         }else{
             clocks[*i]=0;
-            ddg[*i].cycle_asap=0;
+            ddg[*i].cycle_asap_begin=0;
             if(schedule.size() >= 1){
                 std::list<vertex_t> current_cycle = schedule[0];
                 current_cycle.push_back(*i);
@@ -421,6 +453,8 @@ void DependencyGraph::max_par_schedule(){
             }
         }
     }
+    asap_scheduled = true; 
+    write_dot("DependencyGraph_final_schedule_asap_DBG1.dot");
     //ALAP
     //TODO Fix alap: it is correct but instead of maxdist+1 the cycle should be 
     //latency-(maxdist+1)
@@ -434,10 +468,10 @@ void DependencyGraph::max_par_schedule(){
             for(boost::tie(out_j,out_j_end) = out_edges(*r_i,ddg);out_j!= out_j_end;++out_j){
                 int v_target_id = target(*out_j,ddg);
                 errs()<<"v_target_id:"<<v_target_id<<", clocks_alap[v_target_id]:"<<clocks_alap[v_target_id]<<"\n";
-                maxdist = std::max(clocks_alap[v_target_id],maxdist);
+                maxdist = std::max(clocks_alap[v_target_id]+(getLatency(*r_i)-1),maxdist);
             }
             clocks_alap[*r_i]=maxdist+1;
-            ddg[*r_i].cycle_alap = latency-(maxdist+1);
+            ddg[*r_i].cycle_alap_begin = latency-(maxdist+1);
             if(schedule_alap.size() >= (unsigned) maxdist+1){
                 std::list<vertex_t> current_cycle = schedule_alap[maxdist];
                 current_cycle.push_back(*r_i);
@@ -449,7 +483,7 @@ void DependencyGraph::max_par_schedule(){
             }
         }else{
             clocks_alap[*r_i]=0;
-            ddg[*r_i].cycle_alap=latency;
+            ddg[*r_i].cycle_alap_begin=latency;
             if(schedule_alap.size() >= 1){
                 std::list<vertex_t> current_cycle = schedule_alap[0];
                 current_cycle.push_back(*r_i);
@@ -462,8 +496,7 @@ void DependencyGraph::max_par_schedule(){
         }
     }
     std::reverse(schedule_alap.begin(),schedule_alap.end());
-
-
+    alap_scheduled = true; 
 }
 
 Instruction* DependencyGraph::getElementPtr(BasicBlock *BB, StringRef elementPtrID){

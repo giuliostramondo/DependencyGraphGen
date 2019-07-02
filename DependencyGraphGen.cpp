@@ -51,11 +51,12 @@ namespace {
             mem_comp_paramJSON_format config;
             if(ParameterFilename.getNumOccurrences() > 0){
                 errs()<<"Passed configuration file to DependencyGraph: "<<ParameterFilename.c_str()<<"\n";   
-                config = parse_json_file(ParameterFilename.c_str());
+                config = parse_mem_comp_paramJSON(ParameterFilename.c_str());
             }else{
-                config = parse_json_file("./configurationFiles/conf_1.json");
+                //TODO Check if file exists
+                config = parse_mem_comp_paramJSON("./configurationFiles/conf_1.json");
             }
-            errs()<< config.compute_param.funtional_unit.mul_32.latency << "<<LATENCY MUL32\n";
+            errs()<< config.compute_param.funtional_unit.mul.latency << "<<LATENCY MUL32\n";
             errs() << "//Data Dependency Graph Generator running on: ";
             errs().write_escaped(F.getName()) << '\n';
             int block=0;
@@ -71,11 +72,11 @@ namespace {
                 block++;      
                 DependencyGraph DG(config);
                 DG.populateGraph(BB); 
-                DG.write_dot("DependencyGraph_original.dot");
+                DG.write_dot("DependencyGraph_original_DBG1.dot");
                 DG.supernode_opt();
-                DG.write_dot("DependencyGraph_final.dot");
+                DG.write_dot("DependencyGraph_final_DBG1.dot");
                 DG.max_par_schedule();
-                DG.write_dot("DependencyGraph_final_schedule.dot");
+                DG.write_dot("DependencyGraph_final_schedule_DBG1.dot");
 
             }
             return false;

@@ -24,13 +24,16 @@ struct ArrayReference{
     APInt offset;
 };
 
+enum vertex_options{ NA, MRAM,SRAM };
 struct Vertex{
     Instruction *inst;
     std::string name;
     bool mark_remove=false;
+
     Instruction *elementPtrInst=NULL;
-    size_t cycle_asap;
-    size_t cycle_alap;
+    size_t cycle_asap_begin;
+    size_t cycle_alap_begin;
+    vertex_options info = NA;
 };
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,Vertex, boost::no_property> DataDependencyGraph;
@@ -79,14 +82,14 @@ class DependencyGraph {
     class vertex_writer {
         public:
             // constructor - needs reference to graph we are coloring
-            vertex_writer(DependencyGraph& g ) : ddg( g.ddg ), vertices_to_highlight(g.vertices_to_highlight) {}
+            vertex_writer(DependencyGraph& g ) : ddg( g.ddg ), vertices_to_highlight(g.vertices_to_highlight), asap_scheduled(g.asap_scheduled), alap_scheduled(g.alap_scheduled) {}
             // functor that does the coloring
             template <class VertexOrEdge>
                 void operator()(std::ostream& out, const VertexOrEdge& e) const {
                     Instruction *inst =  ddg[e].inst;
                     std::string name = ddg[e].name;
-                    size_t cycle_asap = ddg[e].cycle_asap;
-                    size_t cycle_alap = ddg[e].cycle_alap;
+                    size_t cycle_asap = ddg[e].cycle_asap_begin;
+                    size_t cycle_alap = ddg[e].cycle_alap_begin;
                     // check if this is the edge we want to color red
                     std::string shape;
                     if(inst->getOpcodeName()== StringRef("store")){
@@ -98,28 +101,43 @@ class DependencyGraph {
                             shape="ellipse";
                         }
                     }
-                    if( vertices_to_highlight.find(e) != vertices_to_highlight.end()){
-                        if(cycle_asap != cycle_alap)
-                            out <<"[color="<<vertices_to_highlight.at(e)<<";label=\""<<name<<".Cycle:("<<std::to_string(cycle_asap)<<"-"<<std::to_string(cycle_alap)<<")\";shape="<<shape<<"]";
-                        else
-                            out <<"[color="<<vertices_to_highlight.at(e)<<";label=\""<<name<<".Cycle:("<<std::to_string(cycle_asap)<<"\";shape="<<shape<<"]";
+                    if(asap_scheduled){
+                        if( vertices_to_highlight.find(e) != vertices_to_highlight.end()){
+                            if(alap_scheduled && cycle_asap != cycle_alap)
+                                out <<"[color="<<vertices_to_highlight.at(e)<<";label=\""<<name<<".Cycle:("<<std::to_string(cycle_asap)<<"-"<<std::to_string(cycle_alap)<<")\";shape="<<shape<<"]";
+                            else
+                                out <<"[color="<<vertices_to_highlight.at(e)<<";label=\""<<name<<".Cycle:("<<std::to_string(cycle_asap)<<"\";shape="<<shape<<"]";
 
+                        }else{
+                            if(alap_scheduled && cycle_asap != cycle_alap)
+                                out <<"[label=\""<<name<<".Cycle:("<<std::to_string(cycle_asap)<<"-"<<std::to_string(cycle_alap)<<")\";shape="<<shape<<"]";
+                            else
+                                out <<"[label=\""<<name<<".Cycle:"<<std::to_string(cycle_asap)<<"\";shape="<<shape<<"]";
+
+                        }
                     }else{
-                        if(cycle_asap != cycle_alap)
-                            out <<"[label=\""<<name<<".Cycle:("<<std::to_string(cycle_asap)<<"-"<<std::to_string(cycle_alap)<<")\";shape="<<shape<<"]";
-                        else
-                            out <<"[label=\""<<name<<".Cycle:"<<std::to_string(cycle_asap)<<"\";shape="<<shape<<"]";
+                        if( vertices_to_highlight.find(e) != vertices_to_highlight.end()){
+                                out <<"[color="<<vertices_to_highlight.at(e)<<";label=\""<<name<<"\";shape="<<shape<<"]";
+                        }else{
+                                out <<"[label=\""<<name<<"\";shape="<<shape<<"]";
+
+                        }              
 
                     }
                 }
         private:
             DataDependencyGraph& ddg;
             std::map<vertex_t,std::string> vertices_to_highlight;
+            bool asap_scheduled;
+            bool alap_scheduled;
 
     };
 
     public:
-    DependencyGraph(mem_comp_paramJSON_format _conf): ddg(0), config(_conf) {}; 
+    DependencyGraph(mem_comp_paramJSON_format _conf): ddg(0), config(_conf) {
+        errs()<<"DependencyGraph constructor\n";
+        errs()<<"Latency of MRAM read :"+config.memory_param.mram.read_latency<<"\n";    
+    }; 
     int inst_count=0;
     void populateGraph(BasicBlock *BB);
     void write_dot(std::string fileName);
@@ -127,10 +145,13 @@ class DependencyGraph {
     //TODO 
     void merge_loads();
     //TODO 
+    bool asap_scheduled=false;
+    bool alap_scheduled=false;
     void max_par_schedule();
     void regenerateBasicBlock(BasicBlock *BB);
     void dumpBasicBlockIR(std::string fileName,BasicBlock* bb);
-
+    /** Gives back the latency of a given instruction.*/
+    int getLatency(vertex_t v); 
     private:
     DataDependencyGraph ddg;
     mem_comp_paramJSON_format config;
@@ -146,6 +167,6 @@ class DependencyGraph {
     void clearHighlights();
     std::vector<std::list<vertex_t>> schedule;
     std::vector<std::list<vertex_t>> schedule_alap;
-    
+
 };
 #endif 

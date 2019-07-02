@@ -27,6 +27,14 @@ def recParse_structure(toParse,nestLevel=0):
     if add_end:
         print("} "+struct_name+";")
 
+
+def parse_functionDefinition():
+    global output_filename
+    struct_name=os.path.basename(output_filename)
+    funct_name="parse_"+os.path.basename(output_filename)
+    struct_name=os.path.splitext(struct_name)[0]+"_format"
+    print(struct_name+" "+funct_name+"(const char *filename);")
+
 def recParse_function(toParse,nestLevel=0,previousLevelVar="O",variablePath=[]):
     global output_filename
     struct_name=os.path.basename(output_filename)
@@ -34,7 +42,7 @@ def recParse_function(toParse,nestLevel=0,previousLevelVar="O",variablePath=[]):
     struct_name=os.path.splitext(struct_name)[0]+"_format"
     add_end=False
     if nestLevel == 0:
-        print(struct_name+" parse_json_file(const char *filename){")
+        print(struct_name+" "+funct_name+"(const char *filename){")
         nestLevel+=1
         print("\t"*nestLevel+"std::ifstream confFileStream(filename);")
         print("\t"*nestLevel+"if(!confFileStream.good()){")
@@ -55,12 +63,15 @@ def recParse_function(toParse,nestLevel=0,previousLevelVar="O",variablePath=[]):
             recParse_function(toParse[p],nestLevel+1,"o_"+p,variablePath+[p])
             print("\t"*nestLevel+"}")
         if isinstance(toParse[p],int):
-            print("\t"*nestLevel+"if(Optional<int64_t> "+variablePath[-1]+"_"+p+" = "+previousLevelVar+"->getInteger(\""+p+"\")){")
-            print("\t"*nestLevel+"\tif("+variablePath[-1]+"_"+p+".hasValue()){ ")
+            variableName = p
+            if len(variablePath) > 0:
+                variableName = variablePath[-1]+"_"+p
+            print("\t"*nestLevel+"if(Optional<int64_t> "+variableName+" = "+previousLevelVar+"->getInteger(\""+p+"\")){")
+            print("\t"*nestLevel+"\tif("+variableName+".hasValue()){ ")
             print("\t"*nestLevel+"\t\tparam_out",end="")
             for i in variablePath:
                 print("."+i,end="")
-            print("."+p+" = "+ variablePath[-1]+"_"+p+".getValue();")
+            print("."+p+" = "+ variableName+".getValue();")
             print("\t"*nestLevel+"\t}else{ ")
             print("\t"*nestLevel+"\t\tparam_out",end="")
             for i in variablePath:
@@ -92,16 +103,18 @@ def main():
         print("You need to provide an input json file")
         return 
     json_filename = sys.argv[1]
+
+    if not os.path.exists(json_filename):
+        print("I couldn't find the input json file "+json_filename)
+        return
     if len(sys.argv) == 3:
         print("Redirecting output to "+sys.argv[2])
         output_filename = sys.argv[2]
-        sys.stdout = open(output_filename,'w')
-    if not os.path.exists(json_filename):
-        print("I couldn't find the input json file"+json_filename)
-        return
+        sys.stdout = open(output_filename+".hpp",'w')
+
     with open(json_filename) as json_file:
-        print("#ifndef "+output_filename.upper().replace('.','_'))
-        print("#define "+output_filename.upper().replace('.','_'))
+        print("#ifndef "+output_filename.upper()+"_HPP")
+        print("#define "+output_filename.upper()+"_HPP")
         print("")
         print("#include \"llvm/Support/JSON.h\" //to parse raw JSON")
         print("#include <fstream> //to write/read files")
@@ -113,9 +126,14 @@ def main():
         data = json.load(json_file)
         recParse_structure(data)
         print("")
-        recParse_function(data)
+        parse_functionDefinition()
         print("")
         print("#endif")
+        cpp_output_file=output_filename+".cpp"
+        sys.stdout = open(cpp_output_file,'w')
+        print("#include \""+output_filename+".hpp\"")
+        print("")
+        recParse_function(data)
 
 
 if __name__ == "__main__":
