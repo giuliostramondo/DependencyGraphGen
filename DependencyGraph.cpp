@@ -2,7 +2,7 @@
 
 std::unordered_set<Instruction*> removedInstructions;
 
-void replaceAndErase(Instruction *I){
+void DependencyGraph::replaceAndErase(Instruction *I){
     if(I==NULL)return;
     if(I->getParent() == NULL)return;
     if(removedInstructions.find(I) != removedInstructions.end())return;
@@ -103,10 +103,10 @@ void DependencyGraph::populateGraph(BasicBlock *BB){
     }
 }
 
-void DependencyGraph::write_dot(std::string fileName){
+void DependencyGraph::write_dot(std::string fileName, Schedule schedule){
     std::ofstream output_dot_file;
     output_dot_file.open(fileName);
-    boost::write_graphviz(output_dot_file,ddg,vertex_writer(*this),color_writer(*this));
+    boost::write_graphviz(output_dot_file,ddg,vertex_writer(*this,schedule),color_writer(*this));
 }
 
 void DependencyGraph::dumpBasicBlockIR(std::string fileName,BasicBlock* bb){
@@ -429,7 +429,8 @@ void DependencyGraph::max_par_schedule(){
                 maxdist = std::max(clocks[v_source_id]+getLatency(v_source_id)-1,maxdist);
             }
             clocks[*i]=maxdist+1;
-            ddg[*i].cycle_asap_begin = maxdist+1;
+            //TODO REMOVE cycle_asap_begin
+            ddg[*i].schedules[ASAP] = maxdist+1;
             if(schedule.size() >= (unsigned) maxdist+1){
                 std::list<vertex_t> current_cycle = schedule[maxdist];
                 current_cycle.push_back(*i);
@@ -441,7 +442,8 @@ void DependencyGraph::max_par_schedule(){
             }
         }else{
             clocks[*i]=0;
-            ddg[*i].cycle_asap_begin=0;
+            //TODO REMOVE cycle_asap_begin
+            ddg[*i].schedules[ASAP] =0;
             if(schedule.size() >= 1){
                 std::list<vertex_t> current_cycle = schedule[0];
                 current_cycle.push_back(*i);
@@ -454,10 +456,8 @@ void DependencyGraph::max_par_schedule(){
         }
     }
     asap_scheduled = true; 
-    write_dot("DependencyGraph_final_schedule_asap_DBG1.dot");
+    write_dot("DependencyGraph_final_schedule_asap_DBG1_.dot",ASAP);
     //ALAP
-    //TODO Fix alap: it is correct but instead of maxdist+1 the cycle should be 
-    //latency-(maxdist+1)
     int latency= schedule.size(); 
     std::vector<int> clocks_alap(num_vertices(ddg),0);
     for (std::list<vertex_t>::reverse_iterator r_i = instruction_order.rbegin();
@@ -471,7 +471,8 @@ void DependencyGraph::max_par_schedule(){
                 maxdist = std::max(clocks_alap[v_target_id]+(getLatency(*r_i)-1),maxdist);
             }
             clocks_alap[*r_i]=maxdist+1;
-            ddg[*r_i].cycle_alap_begin = latency-(maxdist+1);
+            //TODO remove cycle_alap_begin
+            ddg[*r_i].schedules[ALAP] =latency-(maxdist+1);
             if(schedule_alap.size() >= (unsigned) maxdist+1){
                 std::list<vertex_t> current_cycle = schedule_alap[maxdist];
                 current_cycle.push_back(*r_i);
@@ -483,7 +484,8 @@ void DependencyGraph::max_par_schedule(){
             }
         }else{
             clocks_alap[*r_i]=0;
-            ddg[*r_i].cycle_alap_begin=latency;
+            //TODO remove cycle_alap_begin
+            ddg[*r_i].schedules[ALAP]=latency;
             if(schedule_alap.size() >= 1){
                 std::list<vertex_t> current_cycle = schedule_alap[0];
                 current_cycle.push_back(*r_i);
@@ -497,6 +499,21 @@ void DependencyGraph::max_par_schedule(){
     }
     std::reverse(schedule_alap.begin(),schedule_alap.end());
     alap_scheduled = true; 
+}
+
+void DependencyGraph::sequential_schedule(){
+    errs()<<"Called sequential_schedule()\n";
+    std::list<vertex_t> instruction_order;
+    size_t cycle=0;
+    boost::topological_sort(ddg, std::front_inserter(instruction_order));
+    for (std::list<vertex_t>::iterator i = instruction_order.begin();
+            i != instruction_order.end(); ++i){
+        std::list<vertex_t> newCycle;
+        newCycle.push_back(*i);
+        schedule_sequential.push_back(newCycle);
+        ddg[*i].schedules[SEQUENTIAL] = cycle++;
+    }
+
 }
 
 Instruction* DependencyGraph::getElementPtr(BasicBlock *BB, StringRef elementPtrID){

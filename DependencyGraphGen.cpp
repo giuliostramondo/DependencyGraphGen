@@ -74,9 +74,11 @@ namespace {
                 DG.populateGraph(BB); 
                 DG.write_dot("DependencyGraph_original_DBG1.dot");
                 DG.supernode_opt();
-                DG.write_dot("DependencyGraph_final_DBG1.dot");
+                DG.write_dot("DependencyGraph_after_supernode_opt_DBG1.dot");
                 DG.max_par_schedule();
-                DG.write_dot("DependencyGraph_final_schedule_DBG1.dot");
+                DG.write_dot("DependencyGraph_ASAP_ALAP_schedule_DBG1.dot",ASAP_ALAP);
+                DG.sequential_schedule();
+                DG.write_dot("DependencyGraph_SEQUENTIAL_schedule_DBG1.dot",SEQUENTIAL);
 
             }
             return false;

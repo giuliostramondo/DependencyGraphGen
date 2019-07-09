@@ -8,13 +8,11 @@
 #include "llvm/Bitcode/LLVMBitCodes.h"
 #include<fstream> // To write to file
 //Boost graph includes 
-#include <boost/graph/graph_traits.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/dijkstra_shortest_paths.hpp>
-#include <boost/graph/topological_sort.hpp>
-#include <boost/graph/graphviz.hpp> // Export/Import dot files
+
 #include <tuple>
 
+#include "Architecture.hpp"
+#include "Graph_Utils.hpp"
 #include "mem_comp_paramJSON.hpp"
 
 using namespace llvm;
@@ -24,44 +22,10 @@ struct ArrayReference{
     APInt offset;
 };
 
-enum vertex_options{ NA, MRAM,SRAM };
-struct Vertex{
-    Instruction *inst;
-    std::string name;
-    bool mark_remove=false;
-
-    Instruction *elementPtrInst=NULL;
-    size_t cycle_asap_begin;
-    size_t cycle_alap_begin;
-    vertex_options info = NA;
-};
-
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,Vertex, boost::no_property> DataDependencyGraph;
-typedef boost::graph_traits<DataDependencyGraph>::vertex_descriptor vertex_t;
-typedef boost::graph_traits<DataDependencyGraph>::edge_descriptor edge_t;
-typedef DataDependencyGraph::in_edge_iterator in_edge_it_t;
-typedef DataDependencyGraph::out_edge_iterator out_edge_it_t;
-typedef DataDependencyGraph::vertex_iterator vertex_it_t;
-
 
 std::string replaceAll(StringRef inString, char toReplace, char replacement);
 
 class DependencyGraph {
-    struct edgeHasher{
-
-        public:
-            edgeHasher (DataDependencyGraph& g): ddg(g) {}
-            size_t operator()(const edge_t &e) const{
-                size_t seed =0;
-                boost::hash_combine(seed,source(e,ddg));
-                boost::hash_combine(seed,target(e,ddg));
-                return seed;
-            }
-        private:
-            DataDependencyGraph& ddg;
-
-    };
-
 
     class color_writer {
         public:
@@ -82,15 +46,60 @@ class DependencyGraph {
     class vertex_writer {
         public:
             // constructor - needs reference to graph we are coloring
-            vertex_writer(DependencyGraph& g ) : ddg( g.ddg ), vertices_to_highlight(g.vertices_to_highlight), asap_scheduled(g.asap_scheduled), alap_scheduled(g.alap_scheduled) {}
+            vertex_writer(DependencyGraph& g, Schedule to_print = NONE) : ddg( g.ddg ), vertices_to_highlight(g.vertices_to_highlight), to_print(to_print) {}
             // functor that does the coloring
             template <class VertexOrEdge>
                 void operator()(std::ostream& out, const VertexOrEdge& e) const {
                     Instruction *inst =  ddg[e].inst;
                     std::string name = ddg[e].name;
-                    size_t cycle_asap = ddg[e].cycle_asap_begin;
-                    size_t cycle_alap = ddg[e].cycle_alap_begin;
-                    // check if this is the edge we want to color red
+
+                    std::string vertex_label="[";
+                    if( vertices_to_highlight.find(e) != vertices_to_highlight.end()){
+                        vertex_label.append("color=");
+                        vertex_label.append(vertices_to_highlight.at(e));
+                        vertex_label.append(";");
+
+                    }
+                    vertex_label.append("label=\"");
+                    vertex_label.append(name);
+                    std::string cycle_asap; 
+                    std::string cycle_alap; 
+                    std::string cycle_sequential; 
+                    switch(to_print){
+                        case ASAP_ALAP:
+                            cycle_asap = std::to_string(ddg[e].schedules[ASAP]);
+                            cycle_alap = std::to_string(ddg[e].schedules[ALAP]);
+                            if(cycle_asap.compare(cycle_alap)){
+                                vertex_label.append(".Cycle:(");
+                                vertex_label.append(cycle_asap);
+                                vertex_label.append("-");
+                                vertex_label.append(cycle_alap);
+                                vertex_label.append(");");
+                            }else{
+                                cycle_asap = std::to_string(ddg[e].schedules[ASAP]);
+                                vertex_label.append(".Cycle:");
+                                vertex_label.append(cycle_asap);
+                            }
+                            break;
+                        case ASAP:
+                            cycle_asap = std::to_string(ddg[e].schedules[ASAP]);
+                            vertex_label.append(".Cycle:");
+                            vertex_label.append(cycle_asap);
+                            break;
+                        case ALAP:
+                            cycle_alap = std::to_string(ddg[e].schedules[ALAP]);
+                            vertex_label.append(".Cycle:");
+                            vertex_label.append(cycle_alap);
+                            break;
+                        case SEQUENTIAL:
+                            cycle_sequential= std::to_string(ddg[e].schedules[SEQUENTIAL]);
+                            vertex_label.append(".Cycle:");
+                            vertex_label.append(cycle_sequential);
+                            break;
+                        default:;
+
+                    } 
+                    vertex_label.append("\";");
                     std::string shape;
                     if(inst->getOpcodeName()== StringRef("store")){
                         shape="triangle";
@@ -101,46 +110,30 @@ class DependencyGraph {
                             shape="ellipse";
                         }
                     }
-                    if(asap_scheduled){
-                        if( vertices_to_highlight.find(e) != vertices_to_highlight.end()){
-                            if(alap_scheduled && cycle_asap != cycle_alap)
-                                out <<"[color="<<vertices_to_highlight.at(e)<<";label=\""<<name<<".Cycle:("<<std::to_string(cycle_asap)<<"-"<<std::to_string(cycle_alap)<<")\";shape="<<shape<<"]";
-                            else
-                                out <<"[color="<<vertices_to_highlight.at(e)<<";label=\""<<name<<".Cycle:("<<std::to_string(cycle_asap)<<"\";shape="<<shape<<"]";
-
-                        }else{
-                            if(alap_scheduled && cycle_asap != cycle_alap)
-                                out <<"[label=\""<<name<<".Cycle:("<<std::to_string(cycle_asap)<<"-"<<std::to_string(cycle_alap)<<")\";shape="<<shape<<"]";
-                            else
-                                out <<"[label=\""<<name<<".Cycle:"<<std::to_string(cycle_asap)<<"\";shape="<<shape<<"]";
-
-                        }
-                    }else{
-                        if( vertices_to_highlight.find(e) != vertices_to_highlight.end()){
-                                out <<"[color="<<vertices_to_highlight.at(e)<<";label=\""<<name<<"\";shape="<<shape<<"]";
-                        }else{
-                                out <<"[label=\""<<name<<"\";shape="<<shape<<"]";
-
-                        }              
-
-                    }
+                    vertex_label.append("shape="); 
+                    vertex_label.append(shape); 
+                    vertex_label.append("]");
+                    out << vertex_label;
                 }
-        private:
-            DataDependencyGraph& ddg;
-            std::map<vertex_t,std::string> vertices_to_highlight;
-            bool asap_scheduled;
-            bool alap_scheduled;
+    private:
+        DataDependencyGraph& ddg;
+        std::map<vertex_t,std::string> vertices_to_highlight;
+        bool asap_scheduled;
+        bool alap_scheduled;
+        Schedule to_print;
 
-    };
+};
+    protected:
+        friend class Instruction;
 
     public:
-    DependencyGraph(mem_comp_paramJSON_format _conf): ddg(0), config(_conf) {
-        errs()<<"DependencyGraph constructor\n";
-        errs()<<"Latency of MRAM read :"+config.memory_param.mram.read_latency<<"\n";    
-    }; 
+     DependencyGraph(mem_comp_paramJSON_format _conf): ddg(0), config(_conf) {
+            errs()<<"DependencyGraph constructor\n";
+            errs()<<"Latency of MRAM read :"+config.memory_param.mram.read_latency<<"\n";    
+        }; 
     int inst_count=0;
     void populateGraph(BasicBlock *BB);
-    void write_dot(std::string fileName);
+    void write_dot(std::string fileName, Schedule schedule = NONE);
     void supernode_opt();
     //TODO 
     void merge_loads();
@@ -148,6 +141,7 @@ class DependencyGraph {
     bool asap_scheduled=false;
     bool alap_scheduled=false;
     void max_par_schedule();
+    void sequential_schedule();
     void regenerateBasicBlock(BasicBlock *BB);
     void dumpBasicBlockIR(std::string fileName,BasicBlock* bb);
     /** Gives back the latency of a given instruction.*/
@@ -163,10 +157,12 @@ class DependencyGraph {
     std::map<edge_t, std::string> edges_to_highlight;
     ArrayReference solveElementPtr(BasicBlock *BB, StringRef elementPtrID);
     void supernode_opt_inner(unsigned opCode);
+    void replaceAndErase(Instruction *I);
     Instruction* getElementPtr(BasicBlock *BB, StringRef elementPtrID);
     void clearHighlights();
     std::vector<std::list<vertex_t>> schedule;
     std::vector<std::list<vertex_t>> schedule_alap;
-
+    std::vector<std::list<vertex_t>> schedule_sequential;
+    //std::list<Architecture> architectures;
 };
 #endif 
