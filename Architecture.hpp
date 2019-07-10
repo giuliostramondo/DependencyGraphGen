@@ -59,6 +59,11 @@ class Architecture{
                             vertex_label.append(".Cycle:");
                             vertex_label.append(cycle_asap);
                             break;
+                        case ARCHITECTURAL:
+                            cycle_asap = std::to_string(ddg[e].schedules[ARCHITECTURAL]);
+                            vertex_label.append(".Cycle:");
+                            vertex_label.append(cycle_asap);
+                            break;
                         case ALAP:
                             cycle_alap = std::to_string(ddg[e].schedules[ALAP]);
                             vertex_label.append(".Cycle:");
@@ -119,19 +124,23 @@ class Architecture{
         public:
         unsigned opCode;
         unsigned extra_description;
+        unsigned earliest_free_slot=0;
         std::string label;
 
     };
     public:
-        Architecture(DataDependencyGraph& g,int latency): ddg(g), maxLatency(latency) {};
+        Architecture(DataDependencyGraph& g,int latency,mem_comp_paramJSON_format config): 
+            ddg(g), maxLatency(latency),config(config) {};
         void generateArchitecturalMapping();
+        void generateSmallestArchitecturalMapping();
         void write_dot(std::string filename);
         void describe();
+        void mergeFUs();
     private:
         DataDependencyGraph& ddg;
         int maxLatency;
+        mem_comp_paramJSON_format config;
         void performALAPSchedule();
-        void mergeFUs();
         //Map between OpCodes and list of FUs (implementing the opcode)
         //Each FU contains a list of vertices of the ddg that will execute
         //std::map<unsigned,std::list<std::list<vertex_t>>> units;

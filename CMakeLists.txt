@@ -15,6 +15,7 @@ add_llvm_library( LLVMDependencyGraph MODULE BUILDTREE_ONLY
   DependencyGraph.cpp
   Architecture.cpp
   mem_comp_paramJSON.cpp
+  Graph_Utils.cpp
   DEPENDS 
   intrinsics_gen
   PLUGIN_TOOL

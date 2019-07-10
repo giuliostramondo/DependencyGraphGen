@@ -8,6 +8,7 @@
 #include <boost/graph/graphviz.hpp> // Export/Import dot files
 #include "llvm/IR/Instructions.h"
 #include <boost/graph/adjacency_list.hpp>
+#include "mem_comp_paramJSON.hpp"
 
 using namespace llvm;
 enum vertex_options{ NA, MRAM,SRAM };
@@ -15,6 +16,7 @@ enum Schedule{
     ASAP,
     ALAP,
     SEQUENTIAL,
+    ARCHITECTURAL,
     ASAP_ALAP,
     NONE
 };
@@ -25,7 +27,7 @@ struct Vertex{
     bool mark_remove=false;
 
     Instruction *elementPtrInst=NULL;
-    std::vector<size_t>schedules{0,0,0};
+    std::vector<size_t>schedules{0,0,0,0};
     vertex_options info = NA;
 };
 
@@ -51,5 +53,7 @@ struct edgeHasher{
         DataDependencyGraph& ddg;
 
 };
+int getVertexLatency(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_format config);
+
 
 #endif 

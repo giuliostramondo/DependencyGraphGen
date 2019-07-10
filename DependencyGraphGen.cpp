@@ -79,8 +79,9 @@ namespace {
                 DG.write_dot("DependencyGraph_ASAP_ALAP_schedule_DBG1.dot",ASAP_ALAP);
                 DG.sequential_schedule();
                 DG.write_dot("DependencyGraph_SEQUENTIAL_schedule_DBG1.dot",SEQUENTIAL);
-                Architecture a(DG.ddg,8);
-                a.generateArchitecturalMapping();
+                Architecture a(DG.ddg,8, DG.config);
+                //a.generateArchitecturalMapping();
+                a.generateSmallestArchitecturalMapping();
                 a.describe();
                 a.write_dot("Architecture_subgraphs.dot");
             }

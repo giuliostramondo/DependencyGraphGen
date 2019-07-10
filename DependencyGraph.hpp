@@ -147,8 +147,8 @@ class DependencyGraph {
     /** Gives back the latency of a given instruction.*/
     int getLatency(vertex_t v); 
     DataDependencyGraph ddg;
-    private:
     mem_comp_paramJSON_format config;
+    private:
     std::unordered_map<std::string, Instruction*> nodeNameToInstructionMap;
     std::unordered_map<Instruction*,vertex_t> InstructionToVertexMap;
     std::list<vertex_t> write_nodes;
