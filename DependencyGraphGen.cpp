@@ -79,11 +79,17 @@ namespace {
                 DG.write_dot("DependencyGraph_ASAP_ALAP_schedule_DBG1.dot",ASAP_ALAP);
                 DG.sequential_schedule();
                 DG.write_dot("DependencyGraph_SEQUENTIAL_schedule_DBG1.dot",SEQUENTIAL);
-                Architecture a(DG.ddg,8, DG.config);
-                //a.generateArchitecturalMapping();
-                a.generateSmallestArchitecturalMapping();
-                a.describe();
-                a.write_dot("Architecture_subgraphs.dot");
+                for(unsigned i=DG.schedule.size();i<=DG.schedule_sequential.size();i++){
+                    Architecture a(DG.ddg,i, DG.config);
+                    //a.generateArchitecturalMapping();
+                    a.performALAPSchedule();
+                    a.generateSmallestArchitecturalMapping();
+                    //a.describe();
+                    std::string arcFileName=std::string("Architecture_subgraphs_latency_");
+                    arcFileName+=std::to_string(i);
+                    arcFileName+=".dot";
+                    a.write_dot(arcFileName);
+                }
             }
             return false;
         }

@@ -148,6 +148,8 @@ class DependencyGraph {
     int getLatency(vertex_t v); 
     DataDependencyGraph ddg;
     mem_comp_paramJSON_format config;
+    std::vector<std::list<vertex_t>> schedule;
+    std::vector<std::list<vertex_t>> schedule_sequential;
     private:
     std::unordered_map<std::string, Instruction*> nodeNameToInstructionMap;
     std::unordered_map<Instruction*,vertex_t> InstructionToVertexMap;
@@ -160,9 +162,7 @@ class DependencyGraph {
     void replaceAndErase(Instruction *I);
     Instruction* getElementPtr(BasicBlock *BB, StringRef elementPtrID);
     void clearHighlights();
-    std::vector<std::list<vertex_t>> schedule;
     std::vector<std::list<vertex_t>> schedule_alap;
-    std::vector<std::list<vertex_t>> schedule_sequential;
     //std::list<Architecture> architectures;
 };
 #endif 
