@@ -13,6 +13,7 @@ endif()
 add_llvm_library( LLVMDependencyGraph MODULE BUILDTREE_ONLY
   DependencyGraphGen.cpp
   DependencyGraph.cpp
+  Architecture.cpp
   mem_comp_paramJSON.cpp
   DEPENDS 
   intrinsics_gen

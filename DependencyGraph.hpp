@@ -146,8 +146,8 @@ class DependencyGraph {
     void dumpBasicBlockIR(std::string fileName,BasicBlock* bb);
     /** Gives back the latency of a given instruction.*/
     int getLatency(vertex_t v); 
-    private:
     DataDependencyGraph ddg;
+    private:
     mem_comp_paramJSON_format config;
     std::unordered_map<std::string, Instruction*> nodeNameToInstructionMap;
     std::unordered_map<Instruction*,vertex_t> InstructionToVertexMap;

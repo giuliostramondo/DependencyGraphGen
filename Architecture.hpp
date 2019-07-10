@@ -14,13 +14,18 @@ using namespace llvm;
 class Architecture{
 
     public:
-        Architecture(DataDependencyGraph& g,int latency): ddg(g),maxLatency(latency) {}
+        Architecture(DataDependencyGraph& g,int latency): ddg(g), maxLatency(latency) {};
+        void generateArchitecturalMapping();
+        void write_dot(std::string filename);
+        void describe();
     private:
         DataDependencyGraph& ddg;
         int maxLatency;
         void performALAPSchedule();
         void mergeFUs();
-        std::map<std::string,std::list<std::list<Instruction*>>> units;
+        //Map between OpCodes and list of FUs (implementing the opcode)
+        //Each FU contains a list of vertices of the ddg that will execute
+        std::map<unsigned,std::list<std::list<vertex_t>>> units;
         
 }; 
 #endif
