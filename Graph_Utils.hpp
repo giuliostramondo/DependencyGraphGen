@@ -32,6 +32,7 @@ struct Vertex{
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,Vertex, boost::no_property> DataDependencyGraph;
 typedef boost::graph_traits<DataDependencyGraph>::vertex_descriptor vertex_t;
 typedef boost::graph_traits<DataDependencyGraph>::edge_descriptor edge_t;
+typedef boost::graph_traits<DataDependencyGraph>::edge_iterator edge_it_t;
 typedef DataDependencyGraph::in_edge_iterator in_edge_it_t;
 typedef DataDependencyGraph::out_edge_iterator out_edge_it_t;
 typedef DataDependencyGraph::vertex_iterator vertex_it_t;

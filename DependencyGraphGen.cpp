@@ -82,6 +82,7 @@ namespace {
                 Architecture a(DG.ddg,8);
                 a.generateArchitecturalMapping();
                 a.describe();
+                a.write_dot("Architecture_subgraphs.dot");
             }
             return false;
         }
