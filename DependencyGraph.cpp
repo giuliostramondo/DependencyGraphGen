@@ -106,7 +106,9 @@ void DependencyGraph::populateGraph(BasicBlock *BB){
 void DependencyGraph::write_dot(std::string fileName, Schedule schedule){
     std::ofstream output_dot_file;
     output_dot_file.open(fileName);
-    boost::write_graphviz(output_dot_file,ddg,vertex_writer(*this,schedule),color_writer(*this));
+    vertex_writer vtx_writer=vertex_writer(ddg,vertices_to_highlight,schedule);
+    edges_writer edg_writer= edges_writer(ddg,edges_to_highlight);
+    boost::write_graphviz(output_dot_file,ddg,vtx_writer,edg_writer);
 }
 
 void DependencyGraph::dumpBasicBlockIR(std::string fileName,BasicBlock* bb){
