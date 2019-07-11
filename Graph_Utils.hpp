@@ -21,6 +21,8 @@ enum Schedule{
     NONE
 };
 
+
+
 struct Vertex{
     Instruction *inst;
     std::string name;
@@ -29,6 +31,7 @@ struct Vertex{
     Instruction *elementPtrInst=NULL;
     std::vector<size_t>schedules{0,0,0,0};
     vertex_options info = NA;
+    std::string FU = "";
 };
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,Vertex, boost::no_property> DataDependencyGraph;
@@ -38,6 +41,15 @@ typedef boost::graph_traits<DataDependencyGraph>::edge_iterator edge_it_t;
 typedef DataDependencyGraph::in_edge_iterator in_edge_it_t;
 typedef DataDependencyGraph::out_edge_iterator out_edge_it_t;
 typedef DataDependencyGraph::vertex_iterator vertex_it_t;
+
+class FunctionalUnit: public std::list<vertex_t>{
+    public:
+    unsigned opCode;
+    unsigned extra_description;
+    unsigned earliest_free_slot=0;
+    std::string label;
+
+};
 
 struct edgeHasher{
 

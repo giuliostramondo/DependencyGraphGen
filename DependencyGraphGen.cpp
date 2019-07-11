@@ -89,6 +89,10 @@ namespace {
                     arcFileName+=std::to_string(i);
                     arcFileName+=".dot";
                     a.write_dot(arcFileName);
+                    std::string arc_schemeFilename=std::string("Architecture_subgraphs_latency_");
+                    arc_schemeFilename+=std::to_string(i);
+                    arc_schemeFilename+="_schematic.dot";
+                    a.write_architecture_dot(arc_schemeFilename);
                 }
             }
             return false;

@@ -9,25 +9,27 @@
 #include "Graph_Utils.hpp"
 #include <utility> // for std::pair 
 #include <unordered_map>
+#include <set>
 
 using namespace llvm;
 class Architecture{
 
 
-    class FunctionalUnit: public std::list<vertex_t>{
-        public:
-        unsigned opCode;
-        unsigned extra_description;
-        unsigned earliest_free_slot=0;
-        std::string label;
+//    class FunctionalUnit: public std::list<vertex_t>{
+//        public:
+//        unsigned opCode;
+//        unsigned extra_description;
+//        unsigned earliest_free_slot=0;
+//        std::string label;
 
-    };
+//    };
     public:
         Architecture(DataDependencyGraph& g,int latency,mem_comp_paramJSON_format config): 
             ddg(g), maxLatency(latency),config(config) {};
         void generateArchitecturalMapping();
         void generateSmallestArchitecturalMapping();
         void write_dot(std::string filename);
+        void write_architecture_dot(std::string filename);
         void describe();
         void mergeFUs();
         void performALAPSchedule();

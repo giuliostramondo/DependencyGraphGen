@@ -109,6 +109,7 @@ void DependencyGraph::write_dot(std::string fileName, Schedule schedule){
     vertex_writer vtx_writer=vertex_writer(ddg,vertices_to_highlight,schedule);
     edges_writer edg_writer= edges_writer(ddg,edges_to_highlight);
     boost::write_graphviz(output_dot_file,ddg,vtx_writer,edg_writer);
+    output_dot_file.close();
 }
 
 void DependencyGraph::dumpBasicBlockIR(std::string fileName,BasicBlock* bb){

@@ -81,6 +81,7 @@ void Architecture::generateSmallestArchitecturalMapping(){
                            it->earliest_free_slot=
                                ddg[*i].schedules[ARCHITECTURAL]+getVertexLatency(ddg,*i,config); 
                            it->push_back(*i);
+                           ddg[*i].FU=it->label;
                            units[opCode]=fuList;
                            allocated=true;
                            break;
@@ -99,6 +100,7 @@ void Architecture::generateSmallestArchitecturalMapping(){
                     fulabel+="_"+std::to_string(fuList.size());
                     newFUnit.label=fulabel;
                     fuList.push_back(newFUnit);
+                    ddg[*i].FU=fulabel;
                     units[opCode]=fuList;
                 }
             }else{
@@ -112,6 +114,7 @@ void Architecture::generateSmallestArchitecturalMapping(){
                 FULabel+="_"+std::to_string(0);
                 newFUnit.label=FULabel;
                 newFuList.push_back(newFUnit);
+                ddg[*i].FU=FULabel;
                 units.insert(std::pair<unsigned,std::list<FunctionalUnit>>(opCode,newFuList));
             }
 
@@ -136,6 +139,48 @@ void Architecture::describe(){
     }
 }
 
+void Architecture::write_architecture_dot(std::string filename){
+    std::ofstream output_dot_file;
+    output_dot_file.open(filename);
+    //Obtain Edges between the functional units
+    typedef std::pair<std::string, std::string> edgeFU; 
+    std::set<edgeFU> edgeFUset;
+    std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
+    for(units_it = units.begin();units_it != units.end();units_it++){
+        std::list<FunctionalUnit> FUList = units_it->second;
+        for(auto it=FUList.begin(); it!=FUList.end();it++){
+            std::string source_label=it->label;
+            errs()<<"Checking Connections of: "<<source_label<<"\n";
+            for(auto it_FUnit = it->begin(); it_FUnit != it->end();it_FUnit++){
+                out_edge_it_t out_edge_it,out_edge_end;
+                for(boost::tie(out_edge_it,out_edge_end) = boost::out_edges(*it_FUnit,ddg);
+                        out_edge_it != out_edge_end; ++out_edge_it){
+                    vertex_t target = boost::target(*out_edge_it,ddg);
+                    std::string target_label= ddg[target].FU;
+                    edgeFUset.insert(edgeFU(source_label,target_label));
+                    errs()<<"adding edge: "<<source_label<<" -> "<<target_label<<"\n";
+                }
+            }
+        }
+    }
+    output_dot_file << "digraph G{\n";         
+    errs()<<"out of edge loop";
+    for(units_it = units.begin();units_it != units.end();units_it++){
+        std::list<FunctionalUnit> FUList = units_it->second;
+        for(auto it=FUList.begin(); it!=FUList.end();it++){
+            output_dot_file<<"\t"<<it->label<<"[label=\""<<it->label<<"\";shape=rectangle];\n";
+        }
+
+    }
+    for(auto edge: edgeFUset){
+        std::string source = edge.first;
+        std::string target = edge.second;
+        output_dot_file<<source<<"->"<<target<<";\n";
+    }
+    output_dot_file << "}\n";         
+    output_dot_file.close();
+      
+}
 
 void Architecture::write_dot(std::string filename){
     std::ofstream output_dot_file;
@@ -178,6 +223,7 @@ void Architecture::write_dot(std::string filename){
         
     }
     output_dot_file<<"}\n";
+    output_dot_file.close();
 }
 
 void Architecture::performALAPSchedule(){
