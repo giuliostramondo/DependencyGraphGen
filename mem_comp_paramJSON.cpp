@@ -7,7 +7,7 @@ mem_comp_paramJSON_format parse_mem_comp_paramJSON(const char *filename){
 	}
 	std::stringstream buffer;
 	buffer<< confFileStream.rdbuf();
-	mem_comp_paramJSON_format param_out;
+	mem_comp_paramJSON_format param_out = initConf();
 	Expected<json::Value> param = json::parse(buffer.str());
 	if(param){
 		json::Object* O = param->getAsObject();
@@ -180,4 +180,30 @@ mem_comp_paramJSON_format parse_mem_comp_paramJSON(const char *filename){
 				errs()<<"Unexpected Error\n";
 			}
 return param_out;
+}
+
+mem_comp_paramJSON_format initConf(){
+	mem_comp_paramJSON_format defaultConf; 
+	defaultConf.data_width = 32;
+	defaultConf.compute_param.funtional_unit.add.latency = 1;
+	defaultConf.compute_param.funtional_unit.add.area = 2;
+	defaultConf.compute_param.funtional_unit.add.static_power = 1;
+	defaultConf.compute_param.funtional_unit.add.dynamic_power = 2;
+	defaultConf.compute_param.funtional_unit.mul.latency = 2;
+	defaultConf.compute_param.funtional_unit.mul.area = 4;
+	defaultConf.compute_param.funtional_unit.mul.static_power = 3;
+	defaultConf.compute_param.funtional_unit.mul.dynamic_power = 5;
+	defaultConf.memory_param.mram.read_latency = 2;
+	defaultConf.memory_param.mram.write_latency = 5;
+	defaultConf.memory_param.mram.area = 3;
+	defaultConf.memory_param.mram.static_power = 0;
+	defaultConf.memory_param.mram.dynamic_read_power = 2;
+	defaultConf.memory_param.mram.dynamic_write_power = 5;
+	defaultConf.memory_param.sram.read_latency = 1;
+	defaultConf.memory_param.sram.write_latency = 1;
+	defaultConf.memory_param.sram.area = 6;
+	defaultConf.memory_param.sram.static_power = 4;
+	defaultConf.memory_param.sram.dynamic_read_power = 2;
+	defaultConf.memory_param.sram.dynamic_write_power = 2;
+	return defaultConf;
 }

@@ -47,5 +47,6 @@ typedef struct mem_comp_paramJSON_format_t{
 } mem_comp_paramJSON_format;
 
 mem_comp_paramJSON_format parse_mem_comp_paramJSON(const char *filename);
+mem_comp_paramJSON_format initConf();
 
 #endif
