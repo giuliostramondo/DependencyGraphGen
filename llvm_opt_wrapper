@@ -1,0 +1,39 @@
+#!/bin/bash 
+
+source_file="$1"
+initial_bitcode=${source_file%.c}.bc
+function_to_analyze=$2
+
+if [ "$#" -lt 2 ];then
+    echo "Usage: $0 <c_source_file> <function_to_analyze>"
+else
+
+echo -n "Emitting LLVM_IR..."
+#Emit LLVM-IR
+clang -emit-llvm -Xclang -disable-O0-optnone $source_file -c -o $initial_bitcode
+echo " $initial_bitcode"
+
+kernel_bitcode=${initial_bitcode%.bc}_kernel.bc
+
+echo -n "Extracting function $2..."
+#Extract function of interest
+llvm-extract -func $function_to_analyze $initial_bitcode > $kernel_bitcode 
+echo " $kernel_bitcode"
+
+unrolled_kernel_bitcode=${kernel_bitcode%.bc}_unrolled.bc
+
+#Perform full loop-unroll
+echo -n "Performing full loop unroll..."
+#opt -mem2reg -simplifycfg -loops -lcssa -loop-simplify -loop-rotate -loop-unroll  -simplifycfg -instnamer $kernel_bitcode -debug > $unrolled_kernel_bitcode
+opt -mem2reg -simplifycfg -loops -lcssa -loop-simplify -loop-rotate -loop-unroll -loop-rotate -loop-unroll -simplifycfg -instnamer $kernel_bitcode -debug > $unrolled_kernel_bitcode
+echo " $unrolled_kernel_bitcode"
+#Generate DataFlowGraph
+~/Projects/llvm-project/llvm/OBJ_ROOT/bin/opt -load ~/Projects/llvm-project/llvm/OBJ_ROOT_SLIM/lib/LLVMDependencyGraph.so -dependencyGraph $unrolled_kernel_bitcode -debug > /dev/null 
+
+# Generate png images from dot files
+
+for dot_file in $(ls|grep ".dot"); do
+#dot -Tpdf $dot_file -o ${dot_file%.dot}.pdf
+dot -Tpng $dot_file -o ${dot_file%.dot}.png
+done
+fi
