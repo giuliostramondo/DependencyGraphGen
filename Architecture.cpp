@@ -1,7 +1,7 @@
 #include "Architecture.hpp"
 
 
-
+// Below function is deprecated use generateSmallestArchitecturalMapping instead
 void Architecture::generateArchitecturalMapping(){
     errs()<<"Generating architectural mappings\n";
     vertex_it_t vi,vi_end,next;
@@ -26,11 +26,11 @@ void Architecture::generateArchitecturalMapping(){
             newFUnit.label=fulabel;
             fuList.push_back(newFUnit);
             units[opCode]=fuList; 
-        for(auto it=fuList.begin(); it!=fuList.end();it++){
-            for(auto it_FUnit = it->begin(); it_FUnit != it->end();it_FUnit++){
-                errs()<<ddg[*it_FUnit].name;
-            }
-        }errs()<<"\n";
+            for(auto it=fuList.begin(); it!=fuList.end();it++){
+                for(auto it_FUnit = it->begin(); it_FUnit != it->end();it_FUnit++){
+                    errs()<<ddg[*it_FUnit].name;
+                }
+            }errs()<<"\n";
         }else{
             std::list<FunctionalUnit> newFuList;
             std::string FULabel=std::string(Instruction::getOpcodeName(opCode));
@@ -41,6 +41,7 @@ void Architecture::generateArchitecturalMapping(){
         }
     }
 }
+
 //Greedy Interval Partitioning
 void Architecture::generateSmallestArchitecturalMapping(){
     errs()<<"Generating architectural mappings\n";
@@ -49,74 +50,99 @@ void Architecture::generateSmallestArchitecturalMapping(){
     boost::topological_sort(ddg, std::front_inserter(instruction_order));
     for (InstructionOrder::iterator i = instruction_order.begin();
             i != instruction_order.end(); ++i){
-            unsigned architecturalASAP=ddg[*i].schedules[ASAP];
-            if (boost::in_degree (*i, ddg) > 0) {
-                in_edge_it_t j, j_end;
-                unsigned maxdist = 0;
-                for(boost::tie(j,j_end) = in_edges(*i,ddg); j!= j_end;++j){
-                    int v_source_id = source(*j,ddg);
-                    unsigned sourceArchitecturalASAP=ddg[v_source_id].schedules[ARCHITECTURAL];
-                    maxdist = std::max(sourceArchitecturalASAP+getVertexLatency(ddg,v_source_id,config)-1,maxdist);
-                }
-                architecturalASAP=maxdist+1;
+        unsigned architecturalASAP=ddg[*i].schedules[ASAP];
+        if (boost::in_degree (*i, ddg) > 0) {
+            in_edge_it_t j, j_end;
+            unsigned maxdist = 0;
+            for(boost::tie(j,j_end) = in_edges(*i,ddg); j!= j_end;++j){
+                int v_source_id = source(*j,ddg);
+                unsigned sourceArchitecturalASAP=ddg[v_source_id].schedules[ARCHITECTURAL];
+                maxdist = std::max(sourceArchitecturalASAP+getVertexLatency(ddg,v_source_id,config)-1,maxdist);
             }
-            Instruction *I=ddg[*i].inst; 
-            unsigned opCode = I->getOpcode();
-            if(units.find(opCode) != units.end()){
-                std::list<FunctionalUnit> fuList = units.find(opCode)->second;
-                bool allocated=false;
-                std::list<FunctionalUnit>::iterator it,next;
-                //Check if instruction is compatible with existing FUs
-                for(it=fuList.begin(); it!=fuList.end();it=next){
-                        next=it;
-                        next++;
-                        if(ddg[*i].schedules[ALAP]>=it->earliest_free_slot){
-                           unsigned allocated_clock=it->earliest_free_slot;
-                           if(ddg[*i].schedules[ASAP]>allocated_clock){
-                               // TODO it also needs to be higher than the
-                               // preceeding node architectural schedule
-                                allocated_clock=architecturalASAP;
-                           }
-                           ddg[*i].schedules[ARCHITECTURAL]=it->earliest_free_slot;
-                           it->earliest_free_slot=
-                               ddg[*i].schedules[ARCHITECTURAL]+getVertexLatency(ddg,*i,config); 
-                           it->push_back(*i);
-                           ddg[*i].FU=it->label;
-                           units[opCode]=fuList;
-                           allocated=true;
-                           break;
+            architecturalASAP=maxdist+1;
+        }
+        Instruction *I=ddg[*i].inst; 
+        unsigned opCode = I->getOpcode();
+        if(units.find(opCode) != units.end()){
+            std::list<FunctionalUnit> fuList = units.find(opCode)->second;
+            bool allocated=false;
+            std::list<FunctionalUnit>::iterator it,next;
+            //Check if instruction is compatible with existing FUs
+            for(it=fuList.begin(); it!=fuList.end();it=next){
+                next=it;
+                next++;
+                if(ddg[*i].schedules[ALAP]>=it->earliest_free_slot){
+                    unsigned allocated_clock=it->earliest_free_slot;
+                    if(architecturalASAP>allocated_clock){
+                        allocated_clock=architecturalASAP;
+                    }
+                    ddg[*i].schedules[ARCHITECTURAL]=allocated_clock;
+                    if(schedule_architectural.size() > it->earliest_free_slot){
+                        schedule_architectural[it->earliest_free_slot].push_back(*i);
+                    }else{
+                        while(schedule_architectural.size() < architecturalASAP + 1){
+                            std::list<vertex_t> current_cycle;
+                            schedule_architectural.push_back(current_cycle);
                         }
-                        
-                }
-                if(!allocated){
-                    //Add new functional unit and allocate
-                    FunctionalUnit newFUnit;
-                    // Add Instruction to new FU
-                    newFUnit.push_back(*i); 
-                    ddg[*i].schedules[ARCHITECTURAL]=architecturalASAP;
-                    newFUnit.earliest_free_slot=architecturalASAP+getVertexLatency(ddg,*i,config);
-                    newFUnit.opCode=opCode;
-                    std::string fulabel=std::string(Instruction::getOpcodeName(opCode));
-                    fulabel+="_"+std::to_string(fuList.size());
-                    newFUnit.label=fulabel;
-                    fuList.push_back(newFUnit);
-                    ddg[*i].FU=fulabel;
+                        schedule_architectural[architecturalASAP].push_back(*i);
+                    }
+                    it->earliest_free_slot=
+                        ddg[*i].schedules[ARCHITECTURAL]+getVertexLatency(ddg,*i,config); 
+                    it->push_back(*i);
+                    ddg[*i].FU=it->label;
                     units[opCode]=fuList;
+                    allocated=true;
+                    break;
                 }
-            }else{
-                //Add opcode to map
+
+            }
+            if(!allocated){
+                //Add new functional unit and allocate
                 FunctionalUnit newFUnit;
+                // Add Instruction to new FU
                 newFUnit.push_back(*i); 
                 ddg[*i].schedules[ARCHITECTURAL]=architecturalASAP;
+                if(schedule_architectural.size() > architecturalASAP){
+                    schedule_architectural[architecturalASAP].push_back(*i);
+                }else{
+                    while(schedule_architectural.size() < architecturalASAP +1){
+                        std::list<vertex_t> current_cycle;
+                        schedule_architectural.push_back(current_cycle);
+                    }
+                    schedule_architectural[architecturalASAP].push_back(*i);
+                }
                 newFUnit.earliest_free_slot=architecturalASAP+getVertexLatency(ddg,*i,config);
-                std::list<FunctionalUnit> newFuList;
-                std::string FULabel=std::string(Instruction::getOpcodeName(opCode));
-                FULabel+="_"+std::to_string(0);
-                newFUnit.label=FULabel;
-                newFuList.push_back(newFUnit);
-                ddg[*i].FU=FULabel;
-                units.insert(std::pair<unsigned,std::list<FunctionalUnit>>(opCode,newFuList));
+                newFUnit.opCode=opCode;
+                std::string fulabel=std::string(Instruction::getOpcodeName(opCode));
+                fulabel+="_"+std::to_string(fuList.size());
+                newFUnit.label=fulabel;
+                fuList.push_back(newFUnit);
+                ddg[*i].FU=fulabel;
+                units[opCode]=fuList;
             }
+        }else{
+            //Add opcode to map
+            FunctionalUnit newFUnit;
+            newFUnit.push_back(*i); 
+            ddg[*i].schedules[ARCHITECTURAL]=architecturalASAP;
+            if(schedule_architectural.size() > architecturalASAP){
+                schedule_architectural[architecturalASAP].push_back(*i);
+            }else{
+                while(schedule_architectural.size() < architecturalASAP +1){
+                    std::list<vertex_t> current_cycle;
+                    schedule_architectural.push_back(current_cycle);
+                }
+                schedule_architectural[architecturalASAP].push_back(*i);
+            }
+            newFUnit.earliest_free_slot=architecturalASAP+getVertexLatency(ddg,*i,config);
+            std::list<FunctionalUnit> newFuList;
+            std::string FULabel=std::string(Instruction::getOpcodeName(opCode));
+            FULabel+="_"+std::to_string(0);
+            newFUnit.label=FULabel;
+            newFuList.push_back(newFUnit);
+            ddg[*i].FU=FULabel;
+            units.insert(std::pair<unsigned,std::list<FunctionalUnit>>(opCode,newFuList));
+        }
 
 
     }
@@ -179,7 +205,7 @@ void Architecture::write_architecture_dot(std::string filename){
     }
     output_dot_file << "}\n";         
     output_dot_file.close();
-      
+
 }
 
 void Architecture::write_dot(std::string filename){
@@ -220,7 +246,7 @@ void Architecture::write_dot(std::string filename){
         output_dot_file <<std::to_string(source)<<"->"<<std::to_string(target);
         ed_writer(output_dot_file,*edge_it);
         output_dot_file << ";\n";
-        
+
     }
     output_dot_file<<"}\n";
     output_dot_file.close();
@@ -244,7 +270,6 @@ void Architecture::performALAPSchedule(){
                 maxdist = std::max(clocks_alap[v_target_id]+(getVertexLatency(ddg,*r_i,config)-1),maxdist);
             }
             clocks_alap[*r_i]=maxdist+1;
-            //TODO remove cycle_alap_begin
             ddg[*r_i].schedules[ALAP] =latency-(maxdist+1);
             if(schedule_alap.size() >= (unsigned) maxdist+1){
                 std::list<vertex_t> current_cycle = schedule_alap[maxdist];
@@ -257,7 +282,6 @@ void Architecture::performALAPSchedule(){
             }
         }else{
             clocks_alap[*r_i]=0;
-            //TODO remove cycle_alap_begin
             ddg[*r_i].schedules[ALAP]=latency;
             if(schedule_alap.size() >= 1){
                 std::list<vertex_t> current_cycle = schedule_alap[0];
@@ -271,4 +295,84 @@ void Architecture::performALAPSchedule(){
         }
     }
     std::reverse(schedule_alap.begin(),schedule_alap.end());
+}
+
+int Architecture::getMaxLatency(){
+   return maxLatency; 
+}
+
+int Architecture::getActualMaxLatency(){
+    return schedule_architectural.size();
+}
+
+int Architecture::getArea(){    
+    int totalArea = 0;
+    std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
+    for(units_it = units.begin();units_it != units.end();units_it++){
+        std::list<FunctionalUnit> FUList = units_it->second;
+        FunctionalUnit firstFU = FUList.front();
+        int instanceArea = firstFU.getArea(ddg,config);
+        int instancesArea = instanceArea * FUList.size();
+        totalArea+= instancesArea;
+    }
+    return totalArea;
+}
+
+int Architecture::getStaticPower(){
+    int totalStaticPower = 0;
+    std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
+    for(units_it = units.begin();units_it != units.end();units_it++){
+        std::list<FunctionalUnit> FUList = units_it->second;
+        FunctionalUnit firstFU = FUList.front();
+        int instanceStaticPower = firstFU.getArea(ddg,config);
+        int instancesStaticPower = instanceStaticPower * FUList.size();
+        totalStaticPower+= instancesStaticPower;
+    }
+    return totalStaticPower* getActualMaxLatency();
+}
+
+int Architecture::getDynamicPower(){
+    int totalDynamicPower = 0;
+    std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
+    for(units_it = units.begin();units_it != units.end();units_it++){
+        std::list<FunctionalUnit> FUList = units_it->second;
+        FunctionalUnit firstFU = FUList.front();
+        int instanceDynamicPower = firstFU.getArea(ddg,config);
+
+        int instancesDynamicPower = 0;
+        for(auto it=FUList.begin(); it!=FUList.end();it++){
+           instancesDynamicPower += instanceDynamicPower * it->size(); 
+        }
+        totalDynamicPower+= instancesDynamicPower;
+    }
+    return totalDynamicPower;
+}
+int Architecture::getTotalPower(){
+    int dyn_pow = getDynamicPower();
+    int stc_pow = getStaticPower();
+    return dyn_pow + stc_pow;
+}
+
+void Architecture::appendArchInfoToCSV(std::string csvFileName){
+    std::ofstream csvFile;
+    csvFile.open(csvFileName,std::fstream::app);
+    csvFile<<getMaxLatency()<<",";
+    csvFile<<getActualMaxLatency()<<",";
+    csvFile<<getArea()<<",";
+    csvFile<<getStaticPower()<<",";
+    csvFile<<getDynamicPower()<<",";
+    csvFile<<getTotalPower()<<"\n";
+    csvFile.close();
+}
+
+void Architecture::dumpSchedule(){
+    for(unsigned i=0; i<schedule_architectural.size();i++){
+        std::cout<<"Cycle "<<i<<" :";
+        for(auto inst_it = schedule_architectural[i].begin();
+               inst_it != schedule_architectural[i].end();
+                ++inst_it){
+            std::cout<<ddg[*inst_it].name<<", ";
+        } 
+        std::cout<<"\n";
+    }
 }

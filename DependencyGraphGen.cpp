@@ -79,12 +79,17 @@ namespace {
                 DG.write_dot("DependencyGraph_ASAP_ALAP_schedule_DBG1.dot",ASAP_ALAP);
                 DG.sequential_schedule();
                 DG.write_dot("DependencyGraph_SEQUENTIAL_schedule_DBG1.dot",SEQUENTIAL);
+                std::ofstream csvFile;
+                csvFile.open(std::string(ParameterFilename.c_str())+"arch_info.csv");
+                csvFile<<"MaxLatency,ActualMaxLatency,Area,StaticPower,DynamicPower\n";
+                csvFile.close();
                 for(unsigned i=DG.schedule.size();i<=DG.schedule_sequential.size();i++){
                     Architecture a(DG.ddg,i, DG.config);
                     //a.generateArchitecturalMapping();
                     a.performALAPSchedule();
                     a.generateSmallestArchitecturalMapping();
                     //a.describe();
+                    a.dumpSchedule();
                     std::string arcFileName=std::string("Architecture_subgraphs_latency_");
                     arcFileName+=std::to_string(i);
                     arcFileName+=".dot";
@@ -93,6 +98,8 @@ namespace {
                     arc_schemeFilename+=std::to_string(i);
                     arc_schemeFilename+="_schematic.dot";
                     a.write_architecture_dot(arc_schemeFilename);
+                    //csvFile.open(std::string(ParameterFilename.c_str())+"arch_info.csv",std::fstream::app);
+                    a.appendArchInfoToCSV(std::string(ParameterFilename.c_str())+"arch_info.csv");
                 }
             }
             return false;

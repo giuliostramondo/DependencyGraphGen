@@ -48,11 +48,13 @@ class FunctionalUnit: public std::list<vertex_t>{
     unsigned extra_description;
     unsigned earliest_free_slot=0;
     std::string label;
-
+    int getLatency(DataDependencyGraph& ddg,mem_comp_paramJSON_format config);
+    int getArea(DataDependencyGraph& ddg,mem_comp_paramJSON_format config);
+    int getStaticPower(DataDependencyGraph& ddg,mem_comp_paramJSON_format config);
+    int getDynamicPower(DataDependencyGraph& ddg,mem_comp_paramJSON_format config);
 };
 
 struct edgeHasher{
-
     public:
         edgeHasher (DataDependencyGraph& g): ddg(g) {}
         size_t operator()(const edge_t &e) const{
@@ -65,7 +67,12 @@ struct edgeHasher{
         DataDependencyGraph& ddg;
 
 };
+
+//Getter function for vertex from configuration file
 int getVertexLatency(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_format config);
+int getVertexArea(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_format config);
+int getVertexDynamicPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_format config);
+int getVertexStaticPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_format config);
 
 class vertex_writer {
     public:

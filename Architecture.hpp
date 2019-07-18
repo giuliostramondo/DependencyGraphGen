@@ -10,19 +10,12 @@
 #include <utility> // for std::pair 
 #include <unordered_map>
 #include <set>
+#include<fstream> // To write to file
+#include<iostream>
 
 using namespace llvm;
 class Architecture{
 
-
-//    class FunctionalUnit: public std::list<vertex_t>{
-//        public:
-//        unsigned opCode;
-//        unsigned extra_description;
-//        unsigned earliest_free_slot=0;
-//        std::string label;
-
-//    };
     public:
         Architecture(DataDependencyGraph& g,int latency,mem_comp_paramJSON_format config): 
             ddg(g), maxLatency(latency),config(config) {};
@@ -33,6 +26,17 @@ class Architecture{
         void describe();
         void mergeFUs();
         void performALAPSchedule();
+        //MaxLatency is the maximum latency allowed to the scheduler
+        int getMaxLatency();
+        //ActualMaxLatency is the maximum latency obtained after scheduling
+        int getActualMaxLatency();
+        int getArea();
+        int getStaticPower();
+        int getDynamicPower();
+        int getTotalPower();
+        void appendArchInfoToCSV(std::string csvFileName);
+        void dumpSchedule();
+
     private:
         DataDependencyGraph& ddg;
         int maxLatency;
@@ -42,6 +46,7 @@ class Architecture{
         //std::map<unsigned,std::list<std::list<vertex_t>>> units;
         std::map<unsigned,std::list<FunctionalUnit>> units;
         std::vector<std::list<vertex_t>> schedule_alap;
+        std::vector<std::list<vertex_t>> schedule_architectural;
         
 }; 
 #endif
