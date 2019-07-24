@@ -306,9 +306,13 @@ int Architecture::getActualMaxLatency(){
     return schedule_architectural.size();
 }
 
+//The function below assumed the rebalancing of the elements
+//within memory banks was possible, it has been replaced with
+//getMaxBankDepth which does not assume that and returns the 
+//maximum bank depth
 int Architecture::getAVGBankDepth(){
     std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
-    int memory_access_count=0;
+    unsigned memory_access_count=0;
     int banks_count=0;
     for(units_it = units.begin();units_it != units.end();units_it++){     
         std::list<FunctionalUnit> FUList = units_it->second;
@@ -319,7 +323,12 @@ int Architecture::getAVGBankDepth(){
             continue;
         for(auto it=FUList.begin(); it!=FUList.end();it++){
             banks_count++;
-            memory_access_count += it->size();
+            //count only different elements
+            std::set<std::string> unique_data_elem;
+            for(auto inst_it = it->begin(); inst_it != it->end();inst_it++){
+               unique_data_elem.insert(ddg[*inst_it].name); 
+            }
+            memory_access_count += unique_data_elem.size();
         }
     }
     bankDepth=ceil(memory_access_count/(double)banks_count);
@@ -327,11 +336,39 @@ int Architecture::getAVGBankDepth(){
     return bankDepth;
 }
 
+int Architecture::getMaxBankDepth(){
+    std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
+    unsigned max_bank_depth=0;
+    int banks_count=0;
+    for(units_it = units.begin();units_it != units.end();units_it++){     
+        std::list<FunctionalUnit> FUList = units_it->second;
+        FunctionalUnit firstFU = FUList.front();
+        vertex_t first_vertex = firstFU.front();
+        Instruction *I = ddg[first_vertex].inst;
+        if(!(isa<LoadInst>(I) || isa<StoreInst>(I)))
+            continue;
+        for(auto it=FUList.begin(); it!=FUList.end();it++){
+            banks_count++;
+            //count only different elements
+            std::set<std::string> unique_data_elem;
+            for(auto inst_it = it->begin(); inst_it != it->end();inst_it++){
+               unique_data_elem.insert(ddg[*inst_it].name); 
+            }
+            if(max_bank_depth < unique_data_elem.size())
+                max_bank_depth = unique_data_elem.size();
+        }
+    }
+    bankDepth=max_bank_depth;
+    bankNumber = banks_count;
+    return bankDepth;
+
+}
+
 double Architecture::getArea(){    
     double totalArea = 0;
     int currentBankDepth=bankDepth;
     if(currentBankDepth == 0)
-        currentBankDepth = getAVGBankDepth();
+        currentBankDepth = getMaxBankDepth();
     std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
     for(units_it = units.begin();units_it != units.end();units_it++){
         std::list<FunctionalUnit> FUList = units_it->second;
@@ -347,7 +384,7 @@ double Architecture::getStaticPower(){
     double totalStaticPower = 0;
     int currentBankDepth=bankDepth;
     if(currentBankDepth == 0)
-        currentBankDepth = getAVGBankDepth();
+        currentBankDepth = getMaxBankDepth();
     std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
     for(units_it = units.begin();units_it != units.end();units_it++){
         std::list<FunctionalUnit> FUList = units_it->second;
@@ -364,7 +401,7 @@ double Architecture::getDynamicPower(){
     double totalDynamicPower = 0;
     int currentBankDepth=bankDepth;
     if(currentBankDepth == 0)
-        currentBankDepth = getAVGBankDepth();
+        currentBankDepth = getMaxBankDepth();
     std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
     for(units_it = units.begin();units_it != units.end();units_it++){
         std::list<FunctionalUnit> FUList = units_it->second;

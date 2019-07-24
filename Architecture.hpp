@@ -42,6 +42,7 @@ class Architecture{
         //TODO Integrate with resource_database_interface
         DataDependencyGraph& ddg;
         int getAVGBankDepth();
+        int getMaxBankDepth();
         int maxLatency;
         int bankDepth = 0;
         int bankNumber = 0;
