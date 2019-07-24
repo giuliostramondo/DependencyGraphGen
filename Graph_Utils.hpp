@@ -9,6 +9,7 @@
 #include "llvm/IR/Instructions.h"
 #include <boost/graph/adjacency_list.hpp>
 #include "mem_comp_paramJSON.hpp"
+#include "resource_database_interface.hpp"
 
 using namespace llvm;
 enum vertex_options{ NA, MRAM,SRAM };
@@ -49,9 +50,13 @@ class FunctionalUnit: public std::list<vertex_t>{
     unsigned earliest_free_slot=0;
     std::string label;
     int getLatency(DataDependencyGraph& ddg,mem_comp_paramJSON_format config);
-    int getArea(DataDependencyGraph& ddg,mem_comp_paramJSON_format config);
-    int getStaticPower(DataDependencyGraph& ddg,mem_comp_paramJSON_format config);
-    int getDynamicPower(DataDependencyGraph& ddg,mem_comp_paramJSON_format config);
+    double getArea(DataDependencyGraph& ddg,mem_comp_paramJSON_format config, 
+            int registerFileAVGDepth = 5);
+    double getStaticPower(DataDependencyGraph& ddg,mem_comp_paramJSON_format config,
+            int registerFileAVGDepth = 5);
+            
+    double getDynamicPower(DataDependencyGraph& ddg,mem_comp_paramJSON_format config,
+            int registerFileAVGDepth = 5);
 };
 
 struct edgeHasher{
@@ -70,9 +75,12 @@ struct edgeHasher{
 
 //Getter function for vertex from configuration file
 int getVertexLatency(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_format config);
-int getVertexArea(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_format config);
-int getVertexDynamicPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_format config);
-int getVertexStaticPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_format config);
+double getVertexArea(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_format config, 
+        int registerFileAVGDepth = 5);
+double getVertexDynamicPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_format config,
+        int registerFileAVGDepth = 5);
+double getVertexStaticPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_format config,
+        int registerFileAVGDepth = 5);
 
 class vertex_writer {
     public:

@@ -31,6 +31,7 @@
 
 #include "mem_comp_paramJSON.hpp"
 #include "DependencyGraph.hpp"
+#include "resource_database_interface.hpp"
 
 using namespace llvm;
 
@@ -49,6 +50,7 @@ namespace {
             //Source specific to adjacency_list graph https://www.boost.org/doc/libs/1_48_0/libs/graph/doc/adjacency_list.html 
             //This page was used as a reference to link the boost graph to an llvm instruction:https://stackoverflow.com/questions/3100146/adding-custom-vertices-to-a-boost-graph
             mem_comp_paramJSON_format config;
+            resources_database r = resources_database("./data/new_resource_utilization_data.db");
             if(ParameterFilename.getNumOccurrences() > 0){
                 errs()<<"Passed configuration file to DependencyGraph: "<<ParameterFilename.c_str()<<"\n";   
                 config = parse_mem_comp_paramJSON(ParameterFilename.c_str());
@@ -80,8 +82,8 @@ namespace {
                 DG.sequential_schedule();
                 DG.write_dot("DependencyGraph_SEQUENTIAL_schedule_DBG1.dot",SEQUENTIAL);
                 std::ofstream csvFile;
-                csvFile.open(std::string(ParameterFilename.c_str())+"arch_info.csv");
-                csvFile<<"MaxLatency,ActualMaxLatency,Area,StaticPower,DynamicPower\n";
+                csvFile.open(std::string(ParameterFilename.c_str())+".arch_info.csv");
+                csvFile<<"MaxLatency,ActualMaxLatency,Area,StaticPower,DynamicPower,TotalEnergy\n";
                 csvFile.close();
                 for(unsigned i=DG.schedule.size();i<=DG.schedule_sequential.size();i++){
                     Architecture a(DG.ddg,i, DG.config);
@@ -99,7 +101,7 @@ namespace {
                     arc_schemeFilename+="_schematic.dot";
                     a.write_architecture_dot(arc_schemeFilename);
                     //csvFile.open(std::string(ParameterFilename.c_str())+"arch_info.csv",std::fstream::app);
-                    a.appendArchInfoToCSV(std::string(ParameterFilename.c_str())+"arch_info.csv");
+                    a.appendArchInfoToCSV(std::string(ParameterFilename.c_str())+".arch_info.csv");
                 }
             }
             return false;

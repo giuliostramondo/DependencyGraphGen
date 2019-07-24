@@ -10,7 +10,10 @@ if(WIN32 OR CYGWIN)
   set(LLVM_LINK_COMPONENTS Core Support)
 endif()
 
+link_libraries(sqlite3)
+
 add_llvm_library( LLVMDependencyGraph MODULE BUILDTREE_ONLY
+  resource_database_interface.cpp
   DependencyGraphGen.cpp
   DependencyGraph.cpp
   Architecture.cpp

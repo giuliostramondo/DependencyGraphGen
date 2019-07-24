@@ -18,6 +18,13 @@ mem_comp_paramJSON_format parse_mem_comp_paramJSON(const char *filename){
 					param_out.data_width = 32;
 				}
 			}
+			if(Optional<int64_t> overwrite_resouce_database = O->getInteger("overwrite_resouce_database")){
+				if(overwrite_resouce_database.hasValue()){ 
+					param_out.overwrite_resouce_database = overwrite_resouce_database.getValue();
+				}else{ 
+					param_out.overwrite_resouce_database = 0;
+				}
+			}
 			if (json::Object* o_compute_param = O->getObject("compute_param")){
 				if (json::Object* o_funtional_unit = o_compute_param->getObject("funtional_unit")){
 					if (json::Object* o_add = o_funtional_unit->getObject("add")){
@@ -172,6 +179,36 @@ mem_comp_paramJSON_format parse_mem_comp_paramJSON(const char *filename){
 					}
 				}
 			}
+			if (json::Object* o_resource_database = O->getObject("resource_database")){
+				if(Optional<int64_t> resource_database_clock_frequency = o_resource_database->getInteger("clock_frequency")){
+					if(resource_database_clock_frequency.hasValue()){ 
+						param_out.resource_database.clock_frequency = resource_database_clock_frequency.getValue();
+					}else{ 
+						param_out.resource_database.clock_frequency = 1000;
+					}
+				}
+				if(Optional<int64_t> resource_database_bitwidth_adder = o_resource_database->getInteger("bitwidth_adder")){
+					if(resource_database_bitwidth_adder.hasValue()){ 
+						param_out.resource_database.bitwidth_adder = resource_database_bitwidth_adder.getValue();
+					}else{ 
+						param_out.resource_database.bitwidth_adder = 64;
+					}
+				}
+				if(Optional<int64_t> resource_database_bitwidth_multiplier = o_resource_database->getInteger("bitwidth_multiplier")){
+					if(resource_database_bitwidth_multiplier.hasValue()){ 
+						param_out.resource_database.bitwidth_multiplier = resource_database_bitwidth_multiplier.getValue();
+					}else{ 
+						param_out.resource_database.bitwidth_multiplier = 32;
+					}
+				}
+				if(Optional<int64_t> resource_database_bitwidth_register_file = o_resource_database->getInteger("bitwidth_register_file")){
+					if(resource_database_bitwidth_register_file.hasValue()){ 
+						param_out.resource_database.bitwidth_register_file = resource_database_bitwidth_register_file.getValue();
+					}else{ 
+						param_out.resource_database.bitwidth_register_file = 64;
+					}
+				}
+			}
 			}
 			else{
 				if(auto Err =handleErrors(param.takeError(),[](const json::ParseError &PE){
@@ -185,6 +222,7 @@ return param_out;
 mem_comp_paramJSON_format initConf(){
 	mem_comp_paramJSON_format defaultConf; 
 	defaultConf.data_width = 32;
+	defaultConf.overwrite_resouce_database = 0;
 	defaultConf.compute_param.funtional_unit.add.latency = 1;
 	defaultConf.compute_param.funtional_unit.add.area = 2;
 	defaultConf.compute_param.funtional_unit.add.static_power = 1;
@@ -205,5 +243,9 @@ mem_comp_paramJSON_format initConf(){
 	defaultConf.memory_param.sram.static_power = 4;
 	defaultConf.memory_param.sram.dynamic_read_power = 2;
 	defaultConf.memory_param.sram.dynamic_write_power = 2;
+	defaultConf.resource_database.clock_frequency = 1000;
+	defaultConf.resource_database.bitwidth_adder = 64;
+	defaultConf.resource_database.bitwidth_multiplier = 32;
+	defaultConf.resource_database.bitwidth_register_file = 64;
 	return defaultConf;
 }

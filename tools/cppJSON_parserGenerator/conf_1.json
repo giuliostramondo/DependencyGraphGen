@@ -1,5 +1,6 @@
 {
   "data_width": 32,
+  "overwrite_resouce_database": 0,
   "compute_param": {
     "funtional_unit": {
       "add": {
@@ -33,5 +34,11 @@
       "dynamic_read_power": 2,
       "dynamic_write_power": 2
     }
+  },
+  "resource_database": {
+    "clock_frequency": 1000,
+    "bitwidth_adder": 64,
+    "bitwidth_multiplier": 32,
+    "bitwidth_register_file": 64
   }
 }

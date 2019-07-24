@@ -10,6 +10,7 @@ using namespace llvm;
 
 typedef struct mem_comp_paramJSON_format_t{
 	int data_width;
+	int overwrite_resouce_database;
 	struct compute_param_t{
 		struct funtional_unit_t{
 			struct add_t{
@@ -44,6 +45,12 @@ typedef struct mem_comp_paramJSON_format_t{
 			int dynamic_write_power;
 		}sram;
 	}memory_param;
+	struct resource_database_t{
+		int clock_frequency;
+		int bitwidth_adder;
+		int bitwidth_multiplier;
+		int bitwidth_register_file;
+	}resource_database;
 } mem_comp_paramJSON_format;
 
 mem_comp_paramJSON_format parse_mem_comp_paramJSON(const char *filename);

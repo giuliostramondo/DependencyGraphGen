@@ -77,14 +77,15 @@ void Architecture::generateSmallestArchitecturalMapping(){
                         allocated_clock=architecturalASAP;
                     }
                     ddg[*i].schedules[ARCHITECTURAL]=allocated_clock;
-                    if(schedule_architectural.size() > it->earliest_free_slot){
-                        schedule_architectural[it->earliest_free_slot].push_back(*i);
+                    if(schedule_architectural.size() > allocated_clock){
+                        schedule_architectural[allocated_clock].push_back(*i);
                     }else{
-                        while(schedule_architectural.size() < architecturalASAP + 1){
+                        while(schedule_architectural.size() < allocated_clock + 1){
                             std::list<vertex_t> current_cycle;
                             schedule_architectural.push_back(current_cycle);
                         }
-                        schedule_architectural[architecturalASAP].push_back(*i);
+                        schedule_architectural[allocated_clock].push_back(*i);
+                        
                     }
                     it->earliest_free_slot=
                         ddg[*i].schedules[ARCHITECTURAL]+getVertexLatency(ddg,*i,config); 
@@ -305,41 +306,72 @@ int Architecture::getActualMaxLatency(){
     return schedule_architectural.size();
 }
 
-int Architecture::getArea(){    
-    int totalArea = 0;
+int Architecture::getAVGBankDepth(){
+    std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
+    int memory_access_count=0;
+    int banks_count=0;
+    for(units_it = units.begin();units_it != units.end();units_it++){     
+        std::list<FunctionalUnit> FUList = units_it->second;
+        FunctionalUnit firstFU = FUList.front();
+        vertex_t first_vertex = firstFU.front();
+        Instruction *I = ddg[first_vertex].inst;
+        if(!(isa<LoadInst>(I) || isa<StoreInst>(I)))
+            continue;
+        for(auto it=FUList.begin(); it!=FUList.end();it++){
+            banks_count++;
+            memory_access_count += it->size();
+        }
+    }
+    bankDepth=ceil(memory_access_count/(double)banks_count);
+    bankNumber = banks_count;
+    return bankDepth;
+}
+
+double Architecture::getArea(){    
+    double totalArea = 0;
+    int currentBankDepth=bankDepth;
+    if(currentBankDepth == 0)
+        currentBankDepth = getAVGBankDepth();
     std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
     for(units_it = units.begin();units_it != units.end();units_it++){
         std::list<FunctionalUnit> FUList = units_it->second;
         FunctionalUnit firstFU = FUList.front();
-        int instanceArea = firstFU.getArea(ddg,config);
-        int instancesArea = instanceArea * FUList.size();
+        double instanceArea = firstFU.getArea(ddg,config,currentBankDepth);
+        double instancesArea = instanceArea * FUList.size();
         totalArea+= instancesArea;
     }
     return totalArea;
 }
 
-int Architecture::getStaticPower(){
-    int totalStaticPower = 0;
+double Architecture::getStaticPower(){
+    double totalStaticPower = 0;
+    int currentBankDepth=bankDepth;
+    if(currentBankDepth == 0)
+        currentBankDepth = getAVGBankDepth();
     std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
     for(units_it = units.begin();units_it != units.end();units_it++){
         std::list<FunctionalUnit> FUList = units_it->second;
         FunctionalUnit firstFU = FUList.front();
-        int instanceStaticPower = firstFU.getArea(ddg,config);
-        int instancesStaticPower = instanceStaticPower * FUList.size();
+        //double instanceStaticPower = firstFU.getArea(ddg,config,currentBankDepth);
+        double instanceStaticPower = firstFU.getStaticPower(ddg,config,currentBankDepth);
+        double instancesStaticPower = instanceStaticPower * FUList.size();
         totalStaticPower+= instancesStaticPower;
     }
     return totalStaticPower* getActualMaxLatency();
 }
 
-int Architecture::getDynamicPower(){
-    int totalDynamicPower = 0;
+double Architecture::getDynamicPower(){
+    double totalDynamicPower = 0;
+    int currentBankDepth=bankDepth;
+    if(currentBankDepth == 0)
+        currentBankDepth = getAVGBankDepth();
     std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
     for(units_it = units.begin();units_it != units.end();units_it++){
         std::list<FunctionalUnit> FUList = units_it->second;
         FunctionalUnit firstFU = FUList.front();
-        int instanceDynamicPower = firstFU.getArea(ddg,config);
+        double instanceDynamicPower = firstFU.getDynamicPower(ddg,config,currentBankDepth);
 
-        int instancesDynamicPower = 0;
+        double instancesDynamicPower = 0;
         for(auto it=FUList.begin(); it!=FUList.end();it++){
            instancesDynamicPower += instanceDynamicPower * it->size(); 
         }
@@ -347,9 +379,10 @@ int Architecture::getDynamicPower(){
     }
     return totalDynamicPower;
 }
-int Architecture::getTotalPower(){
-    int dyn_pow = getDynamicPower();
-    int stc_pow = getStaticPower();
+
+double Architecture::getTotalPower(){
+    double dyn_pow = getDynamicPower();
+    double stc_pow = getStaticPower();
     return dyn_pow + stc_pow;
 }
 
@@ -367,12 +400,12 @@ void Architecture::appendArchInfoToCSV(std::string csvFileName){
 
 void Architecture::dumpSchedule(){
     for(unsigned i=0; i<schedule_architectural.size();i++){
-        std::cout<<"Cycle "<<i<<" :";
+        errs()<<"Cycle "<<i<<" :";
         for(auto inst_it = schedule_architectural[i].begin();
                inst_it != schedule_architectural[i].end();
                 ++inst_it){
-            std::cout<<ddg[*inst_it].name<<", ";
+            errs()<<ddg[*inst_it].name<<", ";
         } 
-        std::cout<<"\n";
+        errs()<<"\n";
     }
 }
