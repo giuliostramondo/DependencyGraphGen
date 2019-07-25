@@ -38,9 +38,11 @@ else
         ~/Projects/llvm-project/llvm/OBJ_ROOT/bin/opt -load ~/Projects/llvm-project/llvm/OBJ_ROOT_SLIM/lib/LLVMDependencyGraph.so -dependencyGraph $unrolled_kernel_bitcode -debug > /dev/null 
     fi
     # Generate png images from dot files
+    # commented out, open dot files with xdot
 
-    for dot_file in $(ls|grep ".dot"); do
+    #for dot_file in $(ls|grep ".dot"); do
     #dot -Tpdf $dot_file -o ${dot_file%.dot}.pdf
-    dot -Tpng $dot_file -o ${dot_file%.dot}.png
-    done
+    
+    #dot -Tpng $dot_file -o ${dot_file%.dot}.png
+    #done
 fi

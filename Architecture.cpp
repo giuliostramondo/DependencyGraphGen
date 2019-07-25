@@ -299,7 +299,7 @@ void Architecture::performALAPSchedule(){
 }
 
 int Architecture::getMaxLatency(){
-   return maxLatency; 
+   return maxLatency+1; 
 }
 
 int Architecture::getActualMaxLatency(){
@@ -423,6 +423,26 @@ double Architecture::getTotalPower(){
     return dyn_pow + stc_pow;
 }
 
+std::string Architecture::getCSVResourceHeader(){
+    std::string resources;
+    for(auto units_it = units.begin();units_it != units.end();units_it++){
+        unsigned opCode = units_it->first;
+        std::string FUname = Instruction::getOpcodeName(opCode);
+        resources+=FUname+","; 
+    }
+    resources+="L1_Banks,L1_Depth,"; 
+    return resources;
+}
+
+std::string Architecture::getCSVResourceUsage(){
+    std::string resources;
+    for(auto units_it = units.begin();units_it != units.end();units_it++){
+        std::list<FunctionalUnit> FUList = units_it->second;
+        resources+=std::to_string(FUList.size())+","; 
+    }
+    return resources;
+}
+
 void Architecture::appendArchInfoToCSV(std::string csvFileName){
     std::ofstream csvFile;
     csvFile.open(csvFileName,std::fstream::app);
@@ -431,7 +451,10 @@ void Architecture::appendArchInfoToCSV(std::string csvFileName){
     csvFile<<getArea()<<",";
     csvFile<<getStaticPower()<<",";
     csvFile<<getDynamicPower()<<",";
-    csvFile<<getTotalPower()<<"\n";
+    csvFile<<getTotalPower()<<",";
+    csvFile<<getCSVResourceUsage();
+    csvFile<<bankNumber<<",";
+    csvFile<<bankDepth<<"\n";
     csvFile.close();
 }
 

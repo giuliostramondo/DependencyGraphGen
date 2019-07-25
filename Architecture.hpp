@@ -37,6 +37,8 @@ class Architecture{
         double getTotalPower();
         void appendArchInfoToCSV(std::string csvFileName);
         void dumpSchedule();
+        std::string getCSVResourceUsage();
+        std::string getCSVResourceHeader();
 
     private:
         //TODO Integrate with resource_database_interface
