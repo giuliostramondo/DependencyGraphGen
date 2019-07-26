@@ -13,6 +13,7 @@ endif()
 link_libraries(sqlite3)
 
 add_llvm_library( LLVMDependencyGraph MODULE BUILDTREE_ONLY
+  register_file_model.cpp
   resource_database_interface.cpp
   DependencyGraphGen.cpp
   DependencyGraph.cpp

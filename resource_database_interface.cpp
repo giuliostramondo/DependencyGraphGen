@@ -97,7 +97,7 @@ double resources_database::query_double(std::string query){
         std::cout<<"error1: "<<sqlite3_errmsg(DB)<<std::endl;
         return 0;
     }
-    double id;
+    double id=NO_RESULTS;
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW){
         id = sqlite3_column_double(stmt,0);
     }
@@ -115,7 +115,7 @@ int resources_database::query_int(std::string query){
         std::cout<<"error: "<<sqlite3_errmsg(DB)<<std::endl;
         return 0;
     }
-    int id;
+    int id = NO_RESULTS;
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW){
         id = sqlite3_column_int(stmt,0);
     }
@@ -134,7 +134,7 @@ std::string resources_database::query_string(std::string query){
         std::cout<<"error: "<<sqlite3_errmsg(DB)<<std::endl;
         return 0;
     }
-    std::string result;
+    std::string result="NO_RESULTS";
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW){
         result = reinterpret_cast<const char*>(sqlite3_column_text(stmt,0));
     }

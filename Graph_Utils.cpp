@@ -94,8 +94,14 @@ double getVertexArea(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_form
               //return  config.memory_param.sram.area;
             int registerFileBitwidth= 
                config.resource_database.bitwidth_register_file;
-           return resources_database::getRegisterFileArea(
+            double result=resources_database::getRegisterFileArea(
                    registerFileAVGDepth, ClockFreq, registerFileBitwidth);   
+            //if no results where found in the db use model
+            if(result == NO_RESULTS){
+               result = getFromModelRegisterFileArea(registerFileBitwidth,
+                      ClockFreq, registerFileAVGDepth); 
+            }
+            return result;
        }
        if(isa<BinaryOperator>(I)){
             if(I->getOpcode() == Instruction::Add){
@@ -140,8 +146,13 @@ double getVertexDynamicPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJ
            //   return  config.memory_param.sram.dynamic_read_power;
             int registerFileBitwidth= 
                config.resource_database.bitwidth_register_file;
-           return resources_database::getRegisterFileActiveEnergy(
+           double result=resources_database::getRegisterFileActiveEnergy(
                    registerFileAVGDepth, ClockFreq, registerFileBitwidth);  
+           if(result==NO_RESULTS){
+                result=getFromModelRegisterFileActiveEnergy(registerFileBitwidth,
+                        ClockFreq, registerFileAVGDepth);
+           }
+           return result;
        }
        if(isa<StoreInst>(I)){
             //if(ddg[v].info == MRAM)
@@ -150,8 +161,14 @@ double getVertexDynamicPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJ
             //   return config.memory_param.sram.dynamic_write_power;
             int registerFileBitwidth= 
                config.resource_database.bitwidth_register_file;
-           return resources_database::getRegisterFileActiveEnergy(
+           double result= resources_database::getRegisterFileActiveEnergy(
                    registerFileAVGDepth, ClockFreq, registerFileBitwidth);  
+           if(result==NO_RESULTS){
+                result=getFromModelRegisterFileActiveEnergy(registerFileBitwidth,
+                        ClockFreq, registerFileAVGDepth);
+           }
+           return result;
+
        }
        if(isa<BinaryOperator>(I)){
             if(I->getOpcode() == Instruction::Add){
@@ -193,8 +210,14 @@ double getVertexStaticPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJS
            //   return  config.memory_param.sram.static_power;
             int registerFileBitwidth= 
                config.resource_database.bitwidth_register_file;
-           return resources_database::getRegisterFileIdleEnergy(
+           double result= resources_database::getRegisterFileIdleEnergy(
                    registerFileAVGDepth, ClockFreq, registerFileBitwidth);      
+           if (result == NO_RESULTS){
+                result = getFromModelRegisterFileIdleEnergy(
+                        registerFileBitwidth,ClockFreq,
+                        registerFileAVGDepth);
+           }
+           return result;
        }
        if(isa<BinaryOperator>(I)){
             if(I->getOpcode() == Instruction::Add){

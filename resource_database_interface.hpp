@@ -5,6 +5,8 @@
 #include <iostream>
 #include <string>
 
+#define NO_RESULTS -1
+#define ERROR 0
 class resources_database{
     public: 
         resources_database(std::string db_file_name);
