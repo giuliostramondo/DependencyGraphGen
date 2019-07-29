@@ -1,6 +1,97 @@
 #include "Graph_Utils.hpp"
 
 
+void alltopologicalSortUtil(DataDependencyGraph& g,std::list<vertex_t>& res, 
+                                   std::map<vertex_t,bool> visited,std::map<vertex_t,int> indegree,
+                                   std::list<std::list<vertex_t>> &topological_sorts) 
+{ 
+    // To indicate whether all topological are found 
+    // or not 
+    if(topological_sorts.size()>1000)
+        return;
+    bool flag = false;  
+    vertex_it_t vi,vi_end,next;
+    boost::tie(vi,vi_end)=vertices(g);
+    for(next=vi; vi !=vi_end;vi=next)
+    { 
+        ++next;
+        //  If indegree is 0 and not yet visited then 
+        //  only choose that vertex 
+        if (indegree[*vi] == 0 && !visited[*vi]) 
+        { 
+            //  reducing indegree of adjacent vertices 
+            out_edge_it_t out_edge_it, out_edge_end;
+            for(boost::tie(out_edge_it,out_edge_end)= boost::out_edges(*vi,g)
+                    ;out_edge_it!=out_edge_end;
+                    ++out_edge_it){
+                vertex_t target = boost::target(*out_edge_it,g);
+                indegree[target]--; 
+            }
+            //  including in result 
+            res.push_back(*vi); 
+            visited[*vi] = true; 
+            alltopologicalSortUtil(g,res, visited,indegree,topological_sorts); 
+  
+            // resetting visited, res and indegree for 
+            // backtracking 
+            visited[*vi] = false; 
+            res.pop_back();
+             for(boost::tie(out_edge_it,out_edge_end)= boost::out_edges(*vi,g)
+                     ;out_edge_it!=out_edge_end;
+                    ++out_edge_it){
+                vertex_t target = boost::target(*out_edge_it,g);
+                indegree[target]++;  
+             }
+            flag = true; 
+        } 
+    } 
+  
+    //  We reach here if all vertices are visited. 
+    //  So we print the solution here 
+    if (!flag) 
+    { 
+        topological_sorts.push_back(res);
+        for(auto sort_it = res.begin();
+                sort_it != res.end();
+                sort_it++){
+            std::cout<<*sort_it<<" ";
+        }
+            std::cout<<"\n";
+    } 
+} 
+  
+//  The function does all Topological Sort. 
+//  It uses recursive alltopologicalSortUtil() 
+std::list<std::list<vertex_t>> alltopologicalSort(DataDependencyGraph& g) 
+{ 
+    // Mark all the vertices as not visited 
+    //bool *visited = new bool[V]; 
+    std::map<vertex_t,bool> visited;
+    //int *indegree = new int[V]; 
+    std::map<vertex_t,int> indegree;
+    vertex_it_t vi,vi_end,next;
+    boost::tie(vi,vi_end)=vertices(g);
+    for(next=vi; vi !=vi_end;vi=next)
+    { 
+        ++next;
+        visited[*vi] = false; 
+        out_edge_it_t out_edge_it, out_edge_end;
+        for(boost::tie(out_edge_it,out_edge_end)= boost::out_edges(*vi,g)
+                ;out_edge_it!=out_edge_end;
+                ++out_edge_it){
+            vertex_t target = boost::target(*out_edge_it,g);
+            indegree[target]++; 
+        }
+    }
+    std::list<vertex_t> res; 
+    std::list<std::list<vertex_t>> topological_sorts;
+    alltopologicalSortUtil(g,res, visited,indegree,topological_sorts); 
+
+    return topological_sorts;
+} 
+
+
+
 //Note: To perform accesses to the database
 //an istance of resources_database needs to be instantiated in the main 
 int getVertexLatency(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_format config){

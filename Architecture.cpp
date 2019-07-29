@@ -42,13 +42,41 @@ void Architecture::generateArchitecturalMapping(){
     }
 }
 
-//Greedy Interval Partitioning
-void Architecture::generateSmallestArchitecturalMapping(){
-    errs()<<"Generating architectural mappings\n";
-    typedef std::list<vertex_t> InstructionOrder;
-    InstructionOrder instruction_order;
+
+void Architecture::generateSmallestArchitecturalMapping_Heu(){
+    
+    std::list<vertex_t> instruction_order;
     boost::topological_sort(ddg, std::front_inserter(instruction_order));
-    for (InstructionOrder::iterator i = instruction_order.begin();
+    generateSmallestArchitecturalMapping(instruction_order);
+
+}
+
+void Architecture::generateSmallestArchitecturalMapping_Opt(){
+    std::list<std::list<vertex_t>> topological_sorts =
+      alltopologicalSort(ddg);  
+    double minArea=-1;
+    std::vector<std::list<vertex_t>> schedule_architectural_;
+    std::map<unsigned,std::list<FunctionalUnit>> units_;
+    for(auto instruction_order = topological_sorts.begin();
+            instruction_order != topological_sorts.end();
+            instruction_order++){
+        Architecture a_current = Architecture(ddg,maxLatency, config);
+        a_current.generateSmallestArchitecturalMapping(*instruction_order);
+        double currArea = a_current.getArea();
+        if(minArea == -1 || currArea < minArea){
+            minArea = currArea;
+            schedule_architectural_=a_current.schedule_architectural;
+            units_=a_current.units;
+        }
+    }
+    schedule_architectural = schedule_architectural_;
+    units = units_;
+}
+//Greedy Interval Partitioning
+void Architecture::generateSmallestArchitecturalMapping(std::list<vertex_t> instruction_order){
+    errs()<<"Generating architectural mappings\n";
+    boost::topological_sort(ddg, std::front_inserter(instruction_order));
+    for (auto i = instruction_order.begin();
             i != instruction_order.end(); ++i){
         unsigned architecturalASAP=ddg[*i].schedules[ASAP];
         if (boost::in_degree (*i, ddg) > 0) {

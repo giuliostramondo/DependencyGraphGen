@@ -89,7 +89,8 @@ namespace {
                     Architecture a(DG.ddg,i, DG.config);
                     //a.generateArchitecturalMapping();
                     a.performALAPSchedule();
-                    a.generateSmallestArchitecturalMapping();
+                    a.generateSmallestArchitecturalMapping_Heu();
+                    //a.generateSmallestArchitecturalMapping_Opt();
                     if (firstArchitecture){
                         csvFile<<a.getCSVResourceHeader()<<"\n";
                         csvFile.close();

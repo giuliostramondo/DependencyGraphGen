@@ -21,7 +21,9 @@ class Architecture{
         Architecture(DataDependencyGraph& g,int latency,mem_comp_paramJSON_format config): 
             ddg(g), maxLatency(latency),config(config) {};
         void generateArchitecturalMapping();
-        void generateSmallestArchitecturalMapping();
+        void generateSmallestArchitecturalMapping(std::list<vertex_t> instruction_order);
+        void generateSmallestArchitecturalMapping_Heu();
+        void generateSmallestArchitecturalMapping_Opt();
         void write_dot(std::string filename);
         void write_architecture_dot(std::string filename);
         void describe();
