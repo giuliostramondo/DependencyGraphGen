@@ -3,18 +3,22 @@
 
 void alltopologicalSortUtil(DataDependencyGraph& g,std::list<vertex_t>& res, 
                                    std::map<vertex_t,bool> visited,std::map<vertex_t,int> indegree,
-                                   std::list<std::list<vertex_t>> &topological_sorts) 
+                                   std::list<std::list<vertex_t>> &topological_sorts,
+                                    std::mt19937 rng) 
 { 
     // To indicate whether all topological are found 
     // or not 
-    if(topological_sorts.size()>1000)
+    if(topological_sorts.size()>2)
         return;
     bool flag = false;  
+    std::uniform_int_distribution<int> uni(0,100); // guaranteed unbiased
     vertex_it_t vi,vi_end,next;
     boost::tie(vi,vi_end)=vertices(g);
     for(next=vi; vi !=vi_end;vi=next)
     { 
         ++next;
+        if(uni(rng)<40)
+            continue;
         //  If indegree is 0 and not yet visited then 
         //  only choose that vertex 
         if (indegree[*vi] == 0 && !visited[*vi]) 
@@ -30,7 +34,7 @@ void alltopologicalSortUtil(DataDependencyGraph& g,std::list<vertex_t>& res,
             //  including in result 
             res.push_back(*vi); 
             visited[*vi] = true; 
-            alltopologicalSortUtil(g,res, visited,indegree,topological_sorts); 
+            alltopologicalSortUtil(g,res, visited,indegree,topological_sorts,rng); 
   
             // resetting visited, res and indegree for 
             // backtracking 
@@ -63,7 +67,10 @@ void alltopologicalSortUtil(DataDependencyGraph& g,std::list<vertex_t>& res,
 //  The function does all Topological Sort. 
 //  It uses recursive alltopologicalSortUtil() 
 std::list<std::list<vertex_t>> alltopologicalSort(DataDependencyGraph& g) 
-{ 
+{
+    std::random_device rd;     // only used once to initialise (seed) engine
+    std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
+
     // Mark all the vertices as not visited 
     //bool *visited = new bool[V]; 
     std::map<vertex_t,bool> visited;
@@ -85,7 +92,7 @@ std::list<std::list<vertex_t>> alltopologicalSort(DataDependencyGraph& g)
     }
     std::list<vertex_t> res; 
     std::list<std::list<vertex_t>> topological_sorts;
-    alltopologicalSortUtil(g,res, visited,indegree,topological_sorts); 
+    alltopologicalSortUtil(g,res, visited,indegree,topological_sorts,rng); 
 
     return topological_sorts;
 } 

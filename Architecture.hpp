@@ -13,6 +13,7 @@
 #include <set>
 #include<fstream> // To write to file
 #include<iostream>
+#include <memory>
 
 using namespace llvm;
 class Architecture{
@@ -23,7 +24,7 @@ class Architecture{
         void generateArchitecturalMapping();
         void generateSmallestArchitecturalMapping(std::list<vertex_t> instruction_order);
         void generateSmallestArchitecturalMapping_Heu();
-        void generateSmallestArchitecturalMapping_Opt();
+        std::unique_ptr<Architecture> generateSmallestArchitecturalMapping_Opt();
         void write_dot(std::string filename);
         void write_architecture_dot(std::string filename);
         void describe();

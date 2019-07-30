@@ -11,6 +11,7 @@
 #include "mem_comp_paramJSON.hpp"
 #include "resource_database_interface.hpp"
 #include "register_file_model.hpp"
+#include <random>
 
 using namespace llvm;
 enum vertex_options{ NA, MRAM,SRAM };
@@ -88,7 +89,8 @@ void alltopologicalSortUtil(
         std::vector<vertex_t>& res,
         std::map<vertex_t,bool> visited,
         std::map<vertex_t,int> indegree,
-        std::list<std::list<vertex_t>> &topological_sorts);
+        std::list<std::list<vertex_t>> &topological_sorts,
+        std::mt19937 rng);
 std::list<std::list<vertex_t>> alltopologicalSort(
         DataDependencyGraph& g); 
 

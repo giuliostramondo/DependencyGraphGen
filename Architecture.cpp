@@ -51,31 +51,39 @@ void Architecture::generateSmallestArchitecturalMapping_Heu(){
 
 }
 
-void Architecture::generateSmallestArchitecturalMapping_Opt(){
+std::unique_ptr<Architecture> Architecture::generateSmallestArchitecturalMapping_Opt(){
     std::list<std::list<vertex_t>> topological_sorts =
       alltopologicalSort(ddg);  
+    std::list<vertex_t> instruction_order;
+    boost::topological_sort(ddg, std::front_inserter(instruction_order));
+    topological_sorts.push_front(instruction_order);
     double minArea=-1;
-    std::vector<std::list<vertex_t>> schedule_architectural_;
-    std::map<unsigned,std::list<FunctionalUnit>> units_;
+    //std::vector<std::list<vertex_t>> schedule_architectural_;
+    //std::map<unsigned,std::list<FunctionalUnit>> units_;
+    //DataDependencyGraph ddg_;
+    std::unique_ptr<Architecture> best_arc;
     for(auto instruction_order = topological_sorts.begin();
             instruction_order != topological_sorts.end();
             instruction_order++){
-        Architecture a_current = Architecture(ddg,maxLatency, config);
-        a_current.generateSmallestArchitecturalMapping(*instruction_order);
-        double currArea = a_current.getArea();
+        //Architecture a_current = Architecture(ddg,maxLatency, config);
+        std::unique_ptr<Architecture> a_current(new Architecture(ddg,maxLatency,config));
+        a_current->generateSmallestArchitecturalMapping(*instruction_order);
+        double currArea = a_current->getArea();
         if(minArea == -1 || currArea < minArea){
             minArea = currArea;
-            schedule_architectural_=a_current.schedule_architectural;
-            units_=a_current.units;
+            //schedule_architectural_=std::vector<std::list<vertex_t>>(a_current->schedule_architectural);
+            //units_=std::map<unsigned,std::list<FunctionalUnit>>(a_current->units);
+            //ddg_=a_current.ddg;
+            best_arc=std::move(a_current);
         }
     }
-    schedule_architectural = schedule_architectural_;
-    units = units_;
+    //schedule_architectural = schedule_architectural_;
+    //units = units_;
+    //ddg = ddg_;
+    return best_arc;
 }
 //Greedy Interval Partitioning
 void Architecture::generateSmallestArchitecturalMapping(std::list<vertex_t> instruction_order){
-    errs()<<"Generating architectural mappings\n";
-    boost::topological_sort(ddg, std::front_inserter(instruction_order));
     for (auto i = instruction_order.begin();
             i != instruction_order.end(); ++i){
         unsigned architecturalASAP=ddg[*i].schedules[ASAP];
