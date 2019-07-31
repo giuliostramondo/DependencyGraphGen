@@ -83,7 +83,7 @@ namespace {
                 DG.write_dot("DependencyGraph_SEQUENTIAL_schedule_DBG1.dot",SEQUENTIAL);
                 std::ofstream csvFile;
                 csvFile.open(std::string(ParameterFilename.c_str())+".arch_info.csv");
-                csvFile<<"MaxLatency,ActualMaxLatency,Area,StaticPower,DynamicPower,TotalEnergy,";
+                csvFile<<"MaxLatency,ActualMaxLatency,Area(mm^2),StaticEnergy(mW-ns),DynamicEnergy(mW-ns),TotalEnergy(mW-ns),";
                 bool firstArchitecture=true;
                 for(unsigned i=DG.schedule.size();i<=DG.schedule_sequential.size();i++){
                     Architecture a(DG.ddg,i, DG.config);

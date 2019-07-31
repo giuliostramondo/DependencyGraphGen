@@ -438,7 +438,7 @@ void DependencyGraph::max_par_schedule(){
         }
     }
     asap_scheduled = true; 
-    write_dot("DependencyGraph_final_schedule_asap_DBG1_.dot",ASAP);
+    write_dot("DependencyGraph_final_schedule_asap_DBG1.dot",ASAP);
     //ALAP
     int latency= schedule.size(); 
     std::vector<int> clocks_alap(num_vertices(ddg),0);
