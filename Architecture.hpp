@@ -20,11 +20,12 @@ class Architecture{
 
     public:
         Architecture(DataDependencyGraph& g,int latency,mem_comp_paramJSON_format config): 
-            ddg(g), maxLatency(latency),config(config) {};
+             ddg(g),maxLatency(latency),config(config) {
+             };
         void generateArchitecturalMapping();
         void generateSmallestArchitecturalMapping(std::list<vertex_t> instruction_order);
         void generateSmallestArchitecturalMapping_Heu();
-        std::unique_ptr<Architecture> generateSmallestArchitecturalMapping_Opt();
+        Architecture generateSmallestArchitecturalMapping_Opt();
         void write_dot(std::string filename);
         void write_architecture_dot(std::string filename);
         void describe();

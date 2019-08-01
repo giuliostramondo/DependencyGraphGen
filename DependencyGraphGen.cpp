@@ -90,26 +90,25 @@ namespace {
                     //a.generateArchitecturalMapping();
                     a.performALAPSchedule();
                     //a.generateSmallestArchitecturalMapping_Heu();
-                    std::unique_ptr<Architecture> curr_a =
+                    Architecture curr_a =
                         a.generateSmallestArchitecturalMapping_Opt();
                     if (firstArchitecture){
-                        csvFile<<curr_a->getCSVResourceHeader()<<"\n";
+                        csvFile<<curr_a.getCSVResourceHeader()<<"\n";
                         csvFile.close();
                         firstArchitecture=false;
                     }
 
                     //a.describe();
-                    curr_a->dumpSchedule();
+                    curr_a.dumpSchedule();
                     std::string arcFileName=std::string("Architecture_subgraphs_latency_");
                     arcFileName+=std::to_string(i);
                     arcFileName+=".dot";
-                    curr_a->write_dot(arcFileName);
+                    curr_a.write_dot(arcFileName);
                     std::string arc_schemeFilename=std::string("Architecture_subgraphs_latency_");
                     arc_schemeFilename+=std::to_string(i);
                     arc_schemeFilename+="_schematic.dot";
-                    curr_a->write_architecture_dot(arc_schemeFilename);
-                    //csvFile.open(std::string(ParameterFilename.c_str())+"arch_info.csv",std::fstream::app);
-                    curr_a->appendArchInfoToCSV(std::string(ParameterFilename.c_str())+".arch_info.csv");
+                    curr_a.write_architecture_dot(arc_schemeFilename);
+                    curr_a.appendArchInfoToCSV(std::string(ParameterFilename.c_str())+".arch_info.csv");
                 }
             }
             return false;

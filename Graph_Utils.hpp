@@ -8,6 +8,7 @@
 #include <boost/graph/graphviz.hpp> // Export/Import dot files
 #include "llvm/IR/Instructions.h"
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/copy.hpp>
 #include "mem_comp_paramJSON.hpp"
 #include "resource_database_interface.hpp"
 #include "register_file_model.hpp"

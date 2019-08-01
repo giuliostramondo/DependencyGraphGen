@@ -8,7 +8,7 @@ void alltopologicalSortUtil(DataDependencyGraph& g,std::list<vertex_t>& res,
 { 
     // To indicate whether all topological are found 
     // or not 
-    if(topological_sorts.size()>2)
+    if(topological_sorts.size()>4)
         return;
     bool flag = false;  
     std::uniform_int_distribution<int> uni(0,100); // guaranteed unbiased
@@ -17,8 +17,10 @@ void alltopologicalSortUtil(DataDependencyGraph& g,std::list<vertex_t>& res,
     for(next=vi; vi !=vi_end;vi=next)
     { 
         ++next;
-        if(uni(rng)<40)
+        if(uni(rng)<40){
+            flag = true;
             continue;
+        } 
         //  If indegree is 0 and not yet visited then 
         //  only choose that vertex 
         if (indegree[*vi] == 0 && !visited[*vi]) 

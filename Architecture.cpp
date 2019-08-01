@@ -51,7 +51,7 @@ void Architecture::generateSmallestArchitecturalMapping_Heu(){
 
 }
 
-std::unique_ptr<Architecture> Architecture::generateSmallestArchitecturalMapping_Opt(){
+Architecture Architecture::generateSmallestArchitecturalMapping_Opt(){
     std::list<std::list<vertex_t>> topological_sorts =
       alltopologicalSort(ddg);  
     std::list<vertex_t> instruction_order;
@@ -61,25 +61,27 @@ std::unique_ptr<Architecture> Architecture::generateSmallestArchitecturalMapping
     //std::vector<std::list<vertex_t>> schedule_architectural_;
     //std::map<unsigned,std::list<FunctionalUnit>> units_;
     //DataDependencyGraph ddg_;
-    std::unique_ptr<Architecture> best_arc;
+    std::list<vertex_t> best_topological_order;
     for(auto instruction_order = topological_sorts.begin();
             instruction_order != topological_sorts.end();
             instruction_order++){
         //Architecture a_current = Architecture(ddg,maxLatency, config);
-        std::unique_ptr<Architecture> a_current(new Architecture(ddg,maxLatency,config));
-        a_current->generateSmallestArchitecturalMapping(*instruction_order);
-        double currArea = a_current->getArea();
+        Architecture a_current(ddg,maxLatency,config);
+        a_current.generateSmallestArchitecturalMapping(*instruction_order);
+        double currArea = a_current.getArea();
         if(minArea == -1 || currArea < minArea){
             minArea = currArea;
             //schedule_architectural_=std::vector<std::list<vertex_t>>(a_current->schedule_architectural);
             //units_=std::map<unsigned,std::list<FunctionalUnit>>(a_current->units);
             //ddg_=a_current.ddg;
-            best_arc=std::move(a_current);
+            best_topological_order = *instruction_order;
         }
     }
     //schedule_architectural = schedule_architectural_;
     //units = units_;
     //ddg = ddg_;
+    Architecture best_arc(ddg,maxLatency,config);
+    best_arc.generateSmallestArchitecturalMapping(best_topological_order);
     return best_arc;
 }
 //Greedy Interval Partitioning
