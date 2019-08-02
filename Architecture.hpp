@@ -25,7 +25,7 @@ class Architecture{
         void generateArchitecturalMapping();
         void generateSmallestArchitecturalMapping(std::list<vertex_t> instruction_order);
         void generateSmallestArchitecturalMapping_Heu();
-        Architecture generateSmallestArchitecturalMapping_Opt();
+        Architecture *generateSmallestArchitecturalMapping_Opt(unsigned optLimit);
         void write_dot(std::string filename);
         void write_architecture_dot(std::string filename);
         void describe();

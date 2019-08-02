@@ -94,7 +94,17 @@ void alltopologicalSortUtil(
         std::mt19937 rng);
 std::list<std::list<vertex_t>> alltopologicalSort(
         DataDependencyGraph& g); 
-
+void alltopologicalSortUtil_rev(
+        DataDependencyGraph& g,
+        std::vector<vertex_t>& res,
+        std::map<vertex_t,bool> visited,
+        std::map<vertex_t,int> indegree,
+        std::list<std::list<vertex_t>> &topological_sorts,
+        std::mt19937 rng);
+std::list<std::list<vertex_t>> alltopologicalSort(
+        DataDependencyGraph& g); 
+std::list<std::list<vertex_t>> *alltopologicalSort_rev(
+        DataDependencyGraph& g, unsigned optLimit); 
 class vertex_writer {
     public:
         // constructor - needs reference to graph we are coloring

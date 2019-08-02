@@ -1,5 +1,6 @@
 #include "Graph_Utils.hpp"
 
+std::list<std::list<vertex_t>> *topological_sort_cache = NULL;
 
 void alltopologicalSortUtil(DataDependencyGraph& g,std::list<vertex_t>& res, 
                                    std::map<vertex_t,bool> visited,std::map<vertex_t,int> indegree,
@@ -8,23 +9,25 @@ void alltopologicalSortUtil(DataDependencyGraph& g,std::list<vertex_t>& res,
 { 
     // To indicate whether all topological are found 
     // or not 
-    if(topological_sorts.size()>4)
+    if(topological_sorts.size()>100000)
         return;
     bool flag = false;  
-    std::uniform_int_distribution<int> uni(0,100); // guaranteed unbiased
+    std::uniform_int_distribution<int> uni(0,1000); // guaranteed unbiased
     vertex_it_t vi,vi_end,next;
     boost::tie(vi,vi_end)=vertices(g);
     for(next=vi; vi !=vi_end;vi=next)
     { 
         ++next;
-        if(uni(rng)<40){
-            flag = true;
-            continue;
-        } 
+
         //  If indegree is 0 and not yet visited then 
         //  only choose that vertex 
         if (indegree[*vi] == 0 && !visited[*vi]) 
         { 
+            //if(uni(rng)<400){
+            //errs()<<"Nope at depth "<<res.size()<<"\n";
+            //flag = true;
+            //continue;
+            //} 
             //  reducing indegree of adjacent vertices 
             out_edge_it_t out_edge_it, out_edge_end;
             for(boost::tie(out_edge_it,out_edge_end)= boost::out_edges(*vi,g)
@@ -60,16 +63,88 @@ void alltopologicalSortUtil(DataDependencyGraph& g,std::list<vertex_t>& res,
         for(auto sort_it = res.begin();
                 sort_it != res.end();
                 sort_it++){
-            std::cout<<*sort_it<<" ";
+            errs()<<*sort_it<<" ";
         }
-            std::cout<<"\n";
+            errs()<<"\n";
     } 
 } 
+void alltopologicalSortUtil_rev(DataDependencyGraph& g,std::list<vertex_t>& res, 
+                                   std::map<vertex_t,bool> visited,std::map<vertex_t,int> outdegree,
+                                   std::list<std::list<vertex_t>> *topological_sorts,
+                                    unsigned optLimit) 
+{ 
+    // To indicate whether all topological are found 
+    // or not
+    errs()<<"topological sorts size: "<<topological_sorts->size()<<"\n";
+    if(topological_sorts->size()>optLimit)
+        return;
+    bool flag = false;  
+    std::uniform_int_distribution<int> uni(0,1000); // guaranteed unbiased
+    vertex_it_t vi,vi_end,next;
+    boost::tie(vi,vi_end)=vertices(g);
+    for(next=vi; vi !=vi_end;vi=next)
+    { 
+        ++next;
+
+        //  If indegree is 0 and not yet visited then 
+        //  only choose that vertex 
+        if (outdegree[*vi] == 0 && !visited[*vi]) 
+        { 
+            //if(uni(rng)<400){
+            //errs()<<"Nope at depth "<<res.size()<<"\n";
+            //flag = true;
+            //continue;
+            //} 
+            //  reducing indegree of adjacent vertices 
+            in_edge_it_t in_edge_it, in_edge_end;
+            for(boost::tie(in_edge_it,in_edge_end)= boost::in_edges(*vi,g)
+                    ;in_edge_it!=in_edge_end;
+                    ++in_edge_it){
+                vertex_t source = boost::source(*in_edge_it,g);
+                outdegree[source]--; 
+            }
+            //  including in result 
+            res.push_front(*vi); 
+            visited[*vi] = true; 
+            alltopologicalSortUtil_rev(g,res, visited,outdegree,topological_sorts,optLimit); 
   
+            // resetting visited, res and indegree for 
+            // backtracking 
+            visited[*vi] = false; 
+            res.pop_front();
+             for(boost::tie(in_edge_it,in_edge_end)= boost::in_edges(*vi,g)
+                     ;in_edge_it!=in_edge_end;
+                    ++in_edge_it){
+                vertex_t source = boost::source(*in_edge_it,g);
+                outdegree[source]++;  
+             }
+            flag = true; 
+        } 
+    } 
+  
+    //  We reach here if all vertices are visited. 
+    //  So we print the solution here 
+    if (!flag) 
+    { 
+        topological_sorts->push_back(res);
+        for(auto sort_it = res.begin();
+                sort_it != res.end();
+                sort_it++){
+            errs()<<*sort_it<<" ";
+        }
+            errs()<<"\n";
+    } 
+}  
 //  The function does all Topological Sort. 
 //  It uses recursive alltopologicalSortUtil() 
 std::list<std::list<vertex_t>> alltopologicalSort(DataDependencyGraph& g) 
 {
+    //errs()<<"Called all topological sorts\n";
+
+    if (topological_sort_cache != NULL){
+        return *topological_sort_cache;
+    }
+
     std::random_device rd;     // only used once to initialise (seed) engine
     std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
 
@@ -93,9 +168,55 @@ std::list<std::list<vertex_t>> alltopologicalSort(DataDependencyGraph& g)
         }
     }
     std::list<vertex_t> res; 
-    std::list<std::list<vertex_t>> topological_sorts;
-    alltopologicalSortUtil(g,res, visited,indegree,topological_sorts,rng); 
+    std::list<std::list<vertex_t>> topological_sorts = *(new std::list<std::list<vertex_t>>());
 
+    //errs()<<"Calling topological sort utils\n";
+    alltopologicalSortUtil(g,res, visited,indegree,topological_sorts,rng); 
+    //errs()<<"out of it\n";
+    topological_sort_cache = &topological_sorts;
+    return topological_sorts;
+} 
+
+std::list<std::list<vertex_t>>* alltopologicalSort_rev(DataDependencyGraph& g, unsigned optLimit) 
+{
+    //errs()<<"Called all topological sorts\n";
+
+    if (topological_sort_cache != NULL){
+        return topological_sort_cache;
+    }
+
+
+    std::random_device rd;     // only used once to initialise (seed) engine
+
+    // Mark all the vertices as not visited 
+    //bool *visited = new bool[V]; 
+    std::map<vertex_t,bool> visited;
+    //int *indegree = new int[V]; 
+    std::map<vertex_t,int> outdegree;
+    vertex_it_t vi,vi_end,next;
+    boost::tie(vi,vi_end)=vertices(g);
+    for(next=vi; vi !=vi_end;vi=next)
+    { 
+        ++next;
+        visited[*vi] = false; 
+        in_edge_it_t in_edge_it, in_edge_end;
+        for(boost::tie(in_edge_it,in_edge_end)= boost::in_edges(*vi,g)
+                ;in_edge_it!=in_edge_end;
+                ++in_edge_it){
+            vertex_t source = boost::source(*in_edge_it,g);
+            outdegree[source]++; 
+        }
+    }
+    std::list<vertex_t> res; 
+    std::list<std::list<vertex_t>> *topological_sorts =
+        new std::list<std::list<vertex_t>>();
+    std::list<vertex_t> instruction_order;
+    boost::topological_sort(g, std::front_inserter(instruction_order));
+    topological_sorts->push_front(instruction_order);
+    //errs()<<"Calling topological sort utils\n";
+    alltopologicalSortUtil_rev(g,res, visited,outdegree,topological_sorts,optLimit); 
+    //errs()<<"out of it\n";
+    topological_sort_cache = topological_sorts;
     return topological_sorts;
 } 
 

@@ -51,21 +51,21 @@ void Architecture::generateSmallestArchitecturalMapping_Heu(){
 
 }
 
-Architecture Architecture::generateSmallestArchitecturalMapping_Opt(){
-    std::list<std::list<vertex_t>> topological_sorts =
-      alltopologicalSort(ddg);  
-    std::list<vertex_t> instruction_order;
-    boost::topological_sort(ddg, std::front_inserter(instruction_order));
-    topological_sorts.push_front(instruction_order);
+Architecture* Architecture::generateSmallestArchitecturalMapping_Opt(unsigned optLimit){
+    std::list<std::list<vertex_t>> *topological_sorts =
+      alltopologicalSort_rev(ddg,optLimit);  
+
     double minArea=-1;
     //std::vector<std::list<vertex_t>> schedule_architectural_;
     //std::map<unsigned,std::list<FunctionalUnit>> units_;
     //DataDependencyGraph ddg_;
     std::list<vertex_t> best_topological_order;
-    for(auto instruction_order = topological_sorts.begin();
-            instruction_order != topological_sorts.end();
+    int counter = 0;
+    for(auto instruction_order = topological_sorts->begin();
+            instruction_order != topological_sorts->end();
             instruction_order++){
         //Architecture a_current = Architecture(ddg,maxLatency, config);
+        errs()<<counter*100/10000<<"%\n";
         Architecture a_current(ddg,maxLatency,config);
         a_current.generateSmallestArchitecturalMapping(*instruction_order);
         double currArea = a_current.getArea();
@@ -76,12 +76,13 @@ Architecture Architecture::generateSmallestArchitecturalMapping_Opt(){
             //ddg_=a_current.ddg;
             best_topological_order = *instruction_order;
         }
+        counter++;
     }
     //schedule_architectural = schedule_architectural_;
     //units = units_;
     //ddg = ddg_;
-    Architecture best_arc(ddg,maxLatency,config);
-    best_arc.generateSmallestArchitecturalMapping(best_topological_order);
+    Architecture *best_arc= new Architecture(ddg,maxLatency,config);
+    best_arc->generateSmallestArchitecturalMapping(best_topological_order);
     return best_arc;
 }
 //Greedy Interval Partitioning

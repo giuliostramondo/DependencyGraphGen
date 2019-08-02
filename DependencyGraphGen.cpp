@@ -39,6 +39,9 @@ using namespace llvm;
 
 
 cl::opt<std::string> ParameterFilename("dependencyGraphConf", cl::desc("Specify configuration file for the DependencyGraph module"), cl::value_desc("filename"));
+
+cl::opt<int> OptSearchLimit("dependencyGraphOptLimit", cl::desc("Specify a limit for the search of the optimal solution"), cl::value_desc("integer"));
+
 namespace {
 
     struct DependencyGraphGen : public FunctionPass {
@@ -90,25 +93,34 @@ namespace {
                     //a.generateArchitecturalMapping();
                     a.performALAPSchedule();
                     //a.generateSmallestArchitecturalMapping_Heu();
-                    Architecture curr_a =
-                        a.generateSmallestArchitecturalMapping_Opt();
+                    Architecture *curr_a;
+                    if(OptSearchLimit.getNumOccurrences()>0){
+                        errs()<<"Selected the BETTER THAN GREEDY algorithm\n";
+                        errs()<<"Optimization limit set to "<<OptSearchLimit<<"\n";
+                        curr_a=a.generateSmallestArchitecturalMapping_Opt(OptSearchLimit);
+                    }else{
+                        errs()<<"Selected the GREEDY algorithm\n";
+                        a.generateSmallestArchitecturalMapping_Heu();
+                        curr_a=&a;
+                    
+                    }
                     if (firstArchitecture){
-                        csvFile<<curr_a.getCSVResourceHeader()<<"\n";
+                        csvFile<<curr_a->getCSVResourceHeader()<<"\n";
                         csvFile.close();
                         firstArchitecture=false;
                     }
 
                     //a.describe();
-                    curr_a.dumpSchedule();
+                    curr_a->dumpSchedule();
                     std::string arcFileName=std::string("Architecture_subgraphs_latency_");
                     arcFileName+=std::to_string(i);
                     arcFileName+=".dot";
-                    curr_a.write_dot(arcFileName);
+                    curr_a->write_dot(arcFileName);
                     std::string arc_schemeFilename=std::string("Architecture_subgraphs_latency_");
                     arc_schemeFilename+=std::to_string(i);
                     arc_schemeFilename+="_schematic.dot";
-                    curr_a.write_architecture_dot(arc_schemeFilename);
-                    curr_a.appendArchInfoToCSV(std::string(ParameterFilename.c_str())+".arch_info.csv");
+                    curr_a->write_architecture_dot(arc_schemeFilename);
+                    curr_a->appendArchInfoToCSV(std::string(ParameterFilename.c_str())+".arch_info.csv");
                 }
             }
             return false;
