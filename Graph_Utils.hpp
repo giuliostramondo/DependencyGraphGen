@@ -13,6 +13,8 @@
 #include "resource_database_interface.hpp"
 #include "register_file_model.hpp"
 #include <random>
+#include <stdlib.h>     /* srand, rand */
+#include <time.h> 
 
 using namespace llvm;
 enum vertex_options{ NA, MRAM,SRAM };

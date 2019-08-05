@@ -90,11 +90,11 @@ void alltopologicalSortUtil_rev(DataDependencyGraph& g,std::list<vertex_t>& res,
         //  only choose that vertex 
         if (outdegree[*vi] == 0 && !visited[*vi]) 
         { 
-            //if(uni(rng)<400){
+            if(rand() % 100 + 1<40){
             //errs()<<"Nope at depth "<<res.size()<<"\n";
-            //flag = true;
-            //continue;
-            //} 
+                flag = true;
+                continue;
+            } 
             //  reducing indegree of adjacent vertices 
             in_edge_it_t in_edge_it, in_edge_end;
             for(boost::tie(in_edge_it,in_edge_end)= boost::in_edges(*vi,g)
@@ -185,7 +185,7 @@ std::list<std::list<vertex_t>>* alltopologicalSort_rev(DataDependencyGraph& g, u
         return topological_sort_cache;
     }
 
-
+    srand (time(NULL));
     std::random_device rd;     // only used once to initialise (seed) engine
 
     // Mark all the vertices as not visited 
