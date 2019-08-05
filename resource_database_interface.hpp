@@ -24,6 +24,12 @@ class resources_database{
         static double getRegisterFileActiveEnergy(int depth, int clockFrequency, int bitwidth);
         static double getRegisterFileArea(int depth, int clockFrequency, int bitwidth);
         static double getRegisterFileDoubleBufferArea(int depth, int clockFrequency, int bitwidth);
+        static int getL2Area(int depth, int clockFrequency, int bitwidth);
+        static int getL2SetupLatency(int depth, int clockFrequency, int bitwidth);
+        static double getL2IdleEnergy(int depth, int clockFrequency, int bitwidth);
+        static double getL2ActiveReadEnergy(int depth, int clockFrequency, int bitwidth);
+        static double getL2ActiveWriteEnergy(int depth, int clockFrequency, int bitwidth);
+        static double getL2SleepEnergy(int depth, int clockFrequency, int bitwidth);
         ~resources_database();
     private:
         static sqlite3* DB;
@@ -31,5 +37,17 @@ class resources_database{
         static int query_int(std::string query);
         static std::string query_string(std::string query);
 };
-
+/*
+CREATE TABLE sram_l2(
+  "Clock frequency" INTEGER,
+  "IO" INTEGER,
+  "Depth" INTEGER,
+  "Total cell area" REAL,
+  "setup_latency" INTEGER,
+  "Idle Energy" REAL,
+  "Active Energy Read" REAL,
+  "Active Energy Write" REAL,
+  "Sleep Energy" REAL
+);
+*/
 #endif

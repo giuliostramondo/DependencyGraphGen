@@ -39,6 +39,9 @@
     "clock_frequency": 1000,
     "bitwidth_adder": 64,
     "bitwidth_multiplier": 32,
-    "bitwidth_register_file": 64
+    "bitwidth_register_file": 64,
+    "clock_l2": 1000,
+    "bitwidth_l2": 64,
+    "depth_l2":2048 
   }
 }

@@ -208,6 +208,27 @@ mem_comp_paramJSON_format parse_mem_comp_paramJSON(const char *filename){
 						param_out.resource_database.bitwidth_register_file = 64;
 					}
 				}
+				if(Optional<int64_t> resource_database_clock_l2 = o_resource_database->getInteger("clock_l2")){
+					if(resource_database_clock_l2.hasValue()){ 
+						param_out.resource_database.clock_l2 = resource_database_clock_l2.getValue();
+					}else{ 
+						param_out.resource_database.clock_l2 = 1000;
+					}
+				}
+				if(Optional<int64_t> resource_database_bitwidth_l2 = o_resource_database->getInteger("bitwidth_l2")){
+					if(resource_database_bitwidth_l2.hasValue()){ 
+						param_out.resource_database.bitwidth_l2 = resource_database_bitwidth_l2.getValue();
+					}else{ 
+						param_out.resource_database.bitwidth_l2 = 64;
+					}
+				}
+				if(Optional<int64_t> resource_database_depth_l2 = o_resource_database->getInteger("depth_l2")){
+					if(resource_database_depth_l2.hasValue()){ 
+						param_out.resource_database.depth_l2 = resource_database_depth_l2.getValue();
+					}else{ 
+						param_out.resource_database.depth_l2 = 2048;
+					}
+				}
 			}
 			}
 			else{
@@ -247,5 +268,8 @@ mem_comp_paramJSON_format initConf(){
 	defaultConf.resource_database.bitwidth_adder = 64;
 	defaultConf.resource_database.bitwidth_multiplier = 32;
 	defaultConf.resource_database.bitwidth_register_file = 64;
+	defaultConf.resource_database.clock_l2 = 1000;
+	defaultConf.resource_database.bitwidth_l2 = 64;
+	defaultConf.resource_database.depth_l2 = 2048;
 	return defaultConf;
 }

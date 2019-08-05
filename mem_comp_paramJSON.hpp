@@ -50,6 +50,9 @@ typedef struct mem_comp_paramJSON_format_t{
 		int bitwidth_adder;
 		int bitwidth_multiplier;
 		int bitwidth_register_file;
+		int clock_l2;
+		int bitwidth_l2;
+		int depth_l2;
 	}resource_database;
 } mem_comp_paramJSON_format;
 

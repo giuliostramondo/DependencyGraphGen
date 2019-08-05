@@ -63,6 +63,8 @@ void DependencyGraph::populateGraph(BasicBlock *BB){
                 ddg[inst_vertex].name =vertexName;
                 ddg[inst_vertex].elementPtrInst=elementPtrInst;
                 ddg[inst_vertex].info = additional_info;
+                ddg[inst_vertex].arrayName = a.arrayName;
+                ddg[inst_vertex].arrayOffset = std::stoi(arrayOffset);
                 InstructionToVertexMap[I]=inst_vertex;
                 if(isa<StoreInst>(I)){
                     Value *source = I->getOperand(0);
@@ -389,8 +391,91 @@ int DependencyGraph::getLatency(vertex_t v){
     return getVertexLatency(ddg,v,config);
 }
 
+void DependencyGraph::computeL2_L1_transfertimes(){
+    std::map<std::string,int> arrayInfo_read;
+    std::map<std::string,int> arrayInfo_write;
 
-//TODO ALAP and combine
+    // collect data and sort them in lexicographic order
+    //std::list<vertex_t>::iterator it;
+    //for(it = read_nodes.begin(); it!= read_nodes.end(); it++){
+
+    vertex_it_t it,vi_end,next;
+    boost::tie(it,vi_end) = vertices(ddg);
+    for(next=it;it !=vi_end;it=next){
+        ++next;
+        Instruction *I = ddg[*it].inst;
+        if(isa<LoadInst>(I)){
+            std::string arrayName = ddg[*it].arrayName;
+            int arraySize = ddg[*it].arrayOffset;
+           if(arrayInfo_read.find(arrayName) != arrayInfo_read.end()){
+               int currArraySize = arrayInfo_read[arrayName]; 
+               if (currArraySize < arraySize + 1){
+                    arrayInfo_read[arrayName] = arraySize+1;
+               }
+           }else{
+                arrayInfo_read.insert(std::pair<std::string,int>(arrayName,arraySize+1));
+           }
+        }
+    }
+    boost::tie(it,vi_end) = vertices(ddg);
+    for(next=it;it !=vi_end;it=next){
+        ++next;
+        Instruction *I = ddg[*it].inst;
+        if(isa<StoreInst>(I)){
+            std::string arrayName = ddg[*it].arrayName;
+            int arraySize = ddg[*it].arrayOffset;
+           if(arrayInfo_write.find(arrayName) != arrayInfo_write.end()){
+               int currArraySize = arrayInfo_write[arrayName]; 
+               if (currArraySize < arraySize + 1){
+                    arrayInfo_write[arrayName] = arraySize+1;
+               }
+           }else{
+                arrayInfo_write.insert(std::pair<std::string,int>(arrayName,arraySize+1));
+           }
+       }
+    }   
+     std::map<std::string,int> L2_baseAddress;
+     int nextAvailableL2Slot =0;
+    for(auto arrayInfoIt = arrayInfo_read.begin();
+            arrayInfoIt != arrayInfo_read.end();
+            arrayInfoIt ++){
+        std::string arrayName = arrayInfoIt->first;
+        int size = arrayInfoIt->second;
+        L2_baseAddress.insert(std::pair<std::string,int>(arrayName,nextAvailableL2Slot));
+        nextAvailableL2Slot+= size;
+    }
+    for(auto arrayInfoIt = arrayInfo_write.begin();
+            arrayInfoIt != arrayInfo_write.end();
+            arrayInfoIt ++){
+        std::string arrayName = arrayInfoIt->first;
+        int size = arrayInfoIt->second;
+        L2_baseAddress.insert(std::pair<std::string,int>(arrayName,nextAvailableL2Slot));
+        nextAvailableL2Slot+= size;
+    }
+    // get initial startup time
+    int clock_l2 = config.resource_database.clock_l2;
+    int depth_l2 = config.resource_database.depth_l2;
+    int bitwidth_l2 = config.resource_database.bitwidth_l2;
+    int startupLatencyL2 = resources_database::getL2SetupLatency(depth_l2,clock_l2,bitwidth_l2);
+
+    int elementTransfered_perClock = bitwidth_l2/config.resource_database.bitwidth_register_file;
+    // ASAP read vector time = startuptime + (array base address + offset)/L2ElementPerClock
+   //TODO 
+    boost::tie(it,vi_end) = vertices(ddg);
+    for(next=it;it !=vi_end;it=next){
+        ++next;
+        Instruction *I = ddg[*it].inst;
+        if(isa<LoadInst>(I)){
+            std::string arrayName = ddg[*it].arrayName;
+            int arrayOffset = ddg[*it].arrayOffset;
+            int arrayBaseAddress= L2_baseAddress[arrayName];
+            int arrivalTime =  startupLatencyL2 + (arrayBaseAddress + arrayOffset)/elementTransfered_perClock;
+            ddg[*it].schedules[ASAP] = arrivalTime;
+        }
+    }
+    return;
+}
+
 void DependencyGraph::max_par_schedule(){
     errs()<<"Called max_par_schedule()\n";
     std::list<vertex_t> instruction_order;
@@ -398,6 +483,13 @@ void DependencyGraph::max_par_schedule(){
     //ASAP
     boost::topological_sort(ddg, std::front_inserter(instruction_order));
     std::vector<int> clocks(num_vertices(ddg),0);
+
+    //SET the arrival time of data to L1 here!
+    computeL2_L1_transfertimes();
+    std::list<vertex_t>::iterator it;
+    for(it = read_nodes.begin(); it!= read_nodes.end(); it++){
+        clocks[*it]=ddg[*it].schedules[ASAP];
+    }
 
     for (std::list<vertex_t>::iterator i = instruction_order.begin();
             i != instruction_order.end(); ++i){
@@ -411,7 +503,6 @@ void DependencyGraph::max_par_schedule(){
                 maxdist = std::max(clocks[v_source_id]+getLatency(v_source_id)-1,maxdist);
             }
             clocks[*i]=maxdist+1;
-            //TODO REMOVE cycle_asap_begin
             ddg[*i].schedules[ASAP] = maxdist+1;
             if(schedule.size() >= (unsigned) maxdist+1){
                 std::list<vertex_t> current_cycle = schedule[maxdist];
@@ -423,17 +514,19 @@ void DependencyGraph::max_par_schedule(){
                 schedule.push_back(current_cycle);
             }
         }else{
-            clocks[*i]=0;
-            //TODO REMOVE cycle_asap_begin
-            ddg[*i].schedules[ASAP] =0;
-            if(schedule.size() >= 1){
-                std::list<vertex_t> current_cycle = schedule[0];
+          //  clocks[*i]=0;
+            //ddg[*i].schedules[ASAP] =0;
+            int asapClock = ddg[*i].schedules[ASAP];
+            if(schedule.size() >= (unsigned) asapClock+1){
+                std::list<vertex_t> current_cycle = schedule[asapClock];
                 current_cycle.push_back(*i);
             }else{
-                std::list<vertex_t> current_cycle;
-                current_cycle.push_back(*i);
-                schedule.push_back(current_cycle);
-
+                while(schedule.size()<(unsigned) asapClock+1){
+                    std::list<vertex_t> current_cycle;
+                    schedule.push_back(current_cycle);
+                }
+                //std::list<vertex_t> current_cycle = schedule[asapClock];
+                schedule[asapClock].push_back(*i);
             }
         }
     }
@@ -453,7 +546,6 @@ void DependencyGraph::max_par_schedule(){
                 maxdist = std::max(clocks_alap[v_target_id]+(getLatency(*r_i)-1),maxdist);
             }
             clocks_alap[*r_i]=maxdist+1;
-            //TODO remove cycle_alap_begin
             ddg[*r_i].schedules[ALAP] =latency-(maxdist+1);
             if(schedule_alap.size() >= (unsigned) maxdist+1){
                 std::list<vertex_t> current_cycle = schedule_alap[maxdist];
@@ -466,7 +558,6 @@ void DependencyGraph::max_par_schedule(){
             }
         }else{
             clocks_alap[*r_i]=0;
-            //TODO remove cycle_alap_begin
             ddg[*r_i].schedules[ALAP]=latency;
             if(schedule_alap.size() >= 1){
                 std::list<vertex_t> current_cycle = schedule_alap[0];

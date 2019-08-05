@@ -29,7 +29,7 @@ class DependencyGraph {
     public:
      DependencyGraph(mem_comp_paramJSON_format _conf): ddg(0), config(_conf) {
             errs()<<"DependencyGraph constructor\n";
-            errs()<<"Latency of MRAM read :"+config.memory_param.mram.read_latency<<"\n";    
+            errs()<<"Latency of MRAM read :"+std::to_string(config.memory_param.mram.read_latency)<<"\n";    
         }; 
     int inst_count=0;
     void populateGraph(BasicBlock *BB);
@@ -40,6 +40,7 @@ class DependencyGraph {
     //TODO 
     bool asap_scheduled=false;
     bool alap_scheduled=false;
+    void computeL2_L1_transfertimes();
     void max_par_schedule();
     void sequential_schedule();
     void regenerateBasicBlock(BasicBlock *BB);

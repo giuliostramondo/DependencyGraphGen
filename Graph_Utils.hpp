@@ -33,7 +33,8 @@ struct Vertex{
     Instruction *inst;
     std::string name;
     bool mark_remove=false;
-
+    std::string arrayName="";
+    int arrayOffset = -1;
     Instruction *elementPtrInst=NULL;
     std::vector<size_t>schedules{0,0,0,0};
     vertex_options info = NA;

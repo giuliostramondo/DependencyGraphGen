@@ -87,6 +87,39 @@ double resources_database::getRegisterFileDoubleBufferArea(int depth, int clockF
     return area;
 }
 
+int resources_database::getL2Area(int depth, int clockFrequency, int bitwidth){
+    std::string query = "select \"Total cell area\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"Bitwidth\"== "+std::to_string(bitwidth)+";";
+    double area=query_double(query);
+    return area;
+}
+int resources_database::getL2SetupLatency(int depth, int clockFrequency, int bitwidth){
+    std::string query = "select \"setup_latency\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+";";
+    int latency=query_int(query);
+    return latency;
+}
+double resources_database::getL2IdleEnergy(int depth, int clockFrequency, int bitwidth){
+    std::string query = "select \"Idle Energy\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"Bitwidth\"== "+std::to_string(bitwidth)+";";
+    double energy=query_double(query);
+    return energy;
+}
+double resources_database::getL2ActiveReadEnergy(int depth, int clockFrequency, int bitwidth){
+    std::string query = "select \"Active Energy Read\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"Bitwidth\"== "+std::to_string(bitwidth)+";";
+    double energy=query_double(query);
+    return energy;
+}
+double resources_database::getL2ActiveWriteEnergy(int depth, int clockFrequency, int bitwidth){
+    std::string query = "select \"Active Energy Write\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"Bitwidth\"== "+std::to_string(bitwidth)+";";
+    double energy=query_double(query);
+    return energy;
+}
+double resources_database::getL2SleepEnergy(int depth, int clockFrequency, int bitwidth){
+    std::string query = "select \"Sleep Energy\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"Bitwidth\"== "+std::to_string(bitwidth)+";";
+    double energy=query_double(query);
+    return energy;
+}
+
+
+
 resources_database::~resources_database(){
     sqlite3_close(DB);
 }
