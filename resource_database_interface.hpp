@@ -37,17 +37,4 @@ class resources_database{
         static int query_int(std::string query);
         static std::string query_string(std::string query);
 };
-/*
-CREATE TABLE sram_l2(
-  "Clock frequency" INTEGER,
-  "IO" INTEGER,
-  "Depth" INTEGER,
-  "Total cell area" REAL,
-  "setup_latency" INTEGER,
-  "Idle Energy" REAL,
-  "Active Energy Read" REAL,
-  "Active Energy Write" REAL,
-  "Sleep Energy" REAL
-);
-*/
 #endif

@@ -88,8 +88,9 @@ namespace {
                 csvFile.open(std::string(ParameterFilename.c_str())+".arch_info.csv");
                 csvFile<<"MaxLatency,ActualMaxLatency,Area,StaticPower,DynamicPower,TotalEnergy,";
                 bool firstArchitecture=true;
+                DG.l2_model.dumpMemoryPartitioning("l2_memory_partitioning.csv");
                 for(unsigned i=DG.schedule.size();i<=DG.schedule_sequential.size();i++){
-                    Architecture a(DG.ddg,i, DG.config);
+                    Architecture a(DG.ddg,i, DG.config,DG.l2_model);
                     //a.generateArchitecturalMapping();
                     a.performALAPSchedule();
                     //a.generateSmallestArchitecturalMapping_Heu();
@@ -111,16 +112,21 @@ namespace {
                     }
 
                     //a.describe();
+                    curr_a->computeSleepAndWriteBack_L2_Ops();
                     curr_a->dumpSchedule();
-                    std::string arcFileName=std::string("Architecture_subgraphs_latency_");
+                    std::string arcFileName=std::string("Architecture_latency_");
                     arcFileName+=std::to_string(i);
                     arcFileName+=".dot";
                     curr_a->write_dot(arcFileName);
-                    std::string arc_schemeFilename=std::string("Architecture_subgraphs_latency_");
+                    std::string arc_schemeFilename=std::string("Architecture_latency_");
                     arc_schemeFilename+=std::to_string(i);
                     arc_schemeFilename+="_schematic.dot";
                     curr_a->write_architecture_dot(arc_schemeFilename);
                     curr_a->appendArchInfoToCSV(std::string(ParameterFilename.c_str())+".arch_info.csv");
+                    std::string arc_l2ControllerFilename=std::string("Architecture_latency_");
+                    arc_l2ControllerFilename+= std::to_string(i);
+                    arc_l2ControllerFilename+= "_l2_memory_controller.csv";
+                    curr_a->l2_model.dumpMemoryOperations(arc_l2ControllerFilename);
                 }
             }
             return false;

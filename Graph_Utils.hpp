@@ -15,6 +15,7 @@
 #include <random>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h> 
+#include <algorithm>
 
 using namespace llvm;
 enum vertex_options{ NA, MRAM,SRAM };
@@ -108,6 +109,7 @@ std::list<std::list<vertex_t>> alltopologicalSort(
         DataDependencyGraph& g); 
 std::list<std::list<vertex_t>> *alltopologicalSort_rev(
         DataDependencyGraph& g, unsigned optLimit); 
+std::list<vertex_t> sortVerticesByASAP(DataDependencyGraph &g);
 class vertex_writer {
     public:
         // constructor - needs reference to graph we are coloring

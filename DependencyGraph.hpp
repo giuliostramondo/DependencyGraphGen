@@ -14,6 +14,7 @@
 #include "Architecture.hpp"
 #include "Graph_Utils.hpp"
 #include "mem_comp_paramJSON.hpp"
+#include "L2_Cache.hpp"
 
 using namespace llvm;
 
@@ -27,7 +28,7 @@ std::string replaceAll(StringRef inString, char toReplace, char replacement);
 
 class DependencyGraph {
     public:
-     DependencyGraph(mem_comp_paramJSON_format _conf): ddg(0), config(_conf) {
+     DependencyGraph(mem_comp_paramJSON_format _conf): ddg(0), config(_conf),l2_model(_conf) {
             errs()<<"DependencyGraph constructor\n";
             errs()<<"Latency of MRAM read :"+std::to_string(config.memory_param.mram.read_latency)<<"\n";    
         }; 
@@ -37,7 +38,6 @@ class DependencyGraph {
     void supernode_opt();
     //TODO 
     void merge_loads();
-    //TODO 
     bool asap_scheduled=false;
     bool alap_scheduled=false;
     void computeL2_L1_transfertimes();
@@ -51,6 +51,7 @@ class DependencyGraph {
     mem_comp_paramJSON_format config;
     std::vector<std::list<vertex_t>> schedule;
     std::vector<std::list<vertex_t>> schedule_sequential;
+    L2_Cache l2_model;
     private:
     std::unordered_map<std::string, Instruction*> nodeNameToInstructionMap;
     std::unordered_map<Instruction*,vertex_t> InstructionToVertexMap;

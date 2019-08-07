@@ -47,8 +47,48 @@ void Architecture::generateSmallestArchitecturalMapping_Heu(){
     
     std::list<vertex_t> instruction_order;
     boost::topological_sort(ddg, std::front_inserter(instruction_order));
+    // Sorting by ASAP gives worst results
+    //instruction_order = sortVerticesByASAP(ddg);
     generateSmallestArchitecturalMapping(instruction_order);
 
+}
+
+void Architecture::computeSleepAndWriteBack_L2_Ops(){
+     vertex_it_t it,vi_end,next;
+    boost::tie(it,vi_end) = vertices(ddg);
+    int l1_write_latency =0;
+    for(next=it;it !=vi_end;it=next){
+        ++next;
+        Instruction *I = ddg[*it].inst;
+        if(isa<StoreInst>(I)){
+            l1_write_latency = getVertexLatency(ddg,*it, config);
+            break;
+        }
+    }   
+    L2_Operation last_l2_op = l2_model.memory_controller.back();
+    int nextAvail_L2Cycle = last_l2_op.clock_tick+ last_l2_op.latency;
+    int sleep_latency = getActualMaxLatency()+l1_write_latency-nextAvail_L2Cycle;
+    l2_model.add_L2_operation(nextAvail_L2Cycle,SLEEP, 0,0,sleep_latency);
+    nextAvail_L2Cycle+= sleep_latency;
+    int write_back_begin_address=-1;
+    int write_back_end_address=-1;
+    for(next=it;it !=vi_end;it=next){
+        ++next;
+        Instruction *I = ddg[*it].inst;
+        if(isa<StoreInst>(I)){
+            std::string arrayName = ddg[*it].arrayName;
+            int arrayOffset = ddg[*it].arrayOffset;
+            int l2_address = l2_model.L2_baseAddress[arrayName]+arrayOffset;
+           if(write_back_begin_address == -1 || write_back_begin_address > l2_address){
+               write_back_begin_address = l2_address;
+           }
+           if(write_back_end_address == -1 || write_back_end_address < l2_address){
+               write_back_end_address = l2_address;
+           }
+        }
+    }   
+    l2_model.add_L2_operation(nextAvail_L2Cycle, WRITE_TO_L2, write_back_begin_address,
+            write_back_end_address, 0);
 }
 
 Architecture* Architecture::generateSmallestArchitecturalMapping_Opt(unsigned optLimit){
@@ -66,7 +106,7 @@ Architecture* Architecture::generateSmallestArchitecturalMapping_Opt(unsigned op
             instruction_order++){
         //Architecture a_current = Architecture(ddg,maxLatency, config);
         errs()<<counter*100/10000<<"%\n";
-        Architecture a_current(ddg,maxLatency,config);
+        Architecture a_current(ddg,maxLatency,config,l2_model);
         a_current.generateSmallestArchitecturalMapping(*instruction_order);
         double currArea = a_current.getArea();
         if(minArea == -1 || currArea < minArea){
@@ -81,7 +121,7 @@ Architecture* Architecture::generateSmallestArchitecturalMapping_Opt(unsigned op
     //schedule_architectural = schedule_architectural_;
     //units = units_;
     //ddg = ddg_;
-    Architecture *best_arc= new Architecture(ddg,maxLatency,config);
+    Architecture *best_arc= new Architecture(ddg,maxLatency,config,l2_model);
     best_arc->generateSmallestArchitecturalMapping(best_topological_order);
     return best_arc;
 }
@@ -469,7 +509,7 @@ std::string Architecture::getCSVResourceHeader(){
         std::string FUname = Instruction::getOpcodeName(opCode);
         resources+=FUname+","; 
     }
-    resources+="L1_Banks,L1_Depth,"; 
+    resources+="L1_Banks,L1_Depth,TotalEnergyIncludingL2,TotalAreaIncudingL2,TotalLatencyIncludingL2WriteBack"; 
     return resources;
 }
 
@@ -493,7 +533,10 @@ void Architecture::appendArchInfoToCSV(std::string csvFileName){
     csvFile<<getTotalPower()<<",";
     csvFile<<getCSVResourceUsage();
     csvFile<<bankNumber<<",";
-    csvFile<<bankDepth<<"\n";
+    csvFile<<bankDepth<<",";
+    csvFile<<getTotalPower()+l2_model.getTotalEnergyConsumed()<<",";
+    csvFile<<getArea()+l2_model.getArea()<<",";
+    csvFile<<l2_model.getNextAvail_L2_Cycle()<<"\n";
     csvFile.close();
 }
 

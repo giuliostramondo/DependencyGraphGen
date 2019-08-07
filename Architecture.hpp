@@ -8,6 +8,7 @@
 #include "llvm/Bitcode/LLVMBitCodes.h"
 #include "Graph_Utils.hpp"
 #include "resource_database_interface.hpp"
+#include "L2_Cache.hpp"
 #include <utility> // for std::pair 
 #include <unordered_map>
 #include <set>
@@ -15,12 +16,13 @@
 #include<iostream>
 #include <memory>
 
+
 using namespace llvm;
 class Architecture{
 
     public:
-        Architecture(DataDependencyGraph& g,int latency,mem_comp_paramJSON_format config): 
-             ddg(g),maxLatency(latency),config(config) {
+        Architecture(DataDependencyGraph& g,int latency,mem_comp_paramJSON_format config,L2_Cache cache_init): 
+             l2_model(cache_init),ddg(g),maxLatency(latency),config(config) {
              };
         void generateArchitecturalMapping();
         void generateSmallestArchitecturalMapping(std::list<vertex_t> instruction_order);
@@ -42,10 +44,11 @@ class Architecture{
         void appendArchInfoToCSV(std::string csvFileName);
         void dumpSchedule();
         std::string getCSVResourceUsage();
+        void computeSleepAndWriteBack_L2_Ops();
         std::string getCSVResourceHeader();
+        L2_Cache l2_model;
 
     private:
-        //TODO Integrate with resource_database_interface
         DataDependencyGraph& ddg;
         int getAVGBankDepth();
         int getMaxBankDepth();

@@ -434,22 +434,24 @@ void DependencyGraph::computeL2_L1_transfertimes(){
            }
        }
     }   
-     std::map<std::string,int> L2_baseAddress;
      int nextAvailableL2Slot =0;
     for(auto arrayInfoIt = arrayInfo_read.begin();
             arrayInfoIt != arrayInfo_read.end();
             arrayInfoIt ++){
         std::string arrayName = arrayInfoIt->first;
         int size = arrayInfoIt->second;
-        L2_baseAddress.insert(std::pair<std::string,int>(arrayName,nextAvailableL2Slot));
+        l2_model.L2_baseAddress.insert(std::pair<std::string,int>(arrayName,nextAvailableL2Slot));
+        l2_model.add_L2_partition(arrayName,nextAvailableL2Slot,size);
         nextAvailableL2Slot+= size;
     }
+    l2_model.add_L2_operation(0,Optype::READ_FROM_L2,0,nextAvailableL2Slot-1,0);
     for(auto arrayInfoIt = arrayInfo_write.begin();
             arrayInfoIt != arrayInfo_write.end();
             arrayInfoIt ++){
         std::string arrayName = arrayInfoIt->first;
         int size = arrayInfoIt->second;
-        L2_baseAddress.insert(std::pair<std::string,int>(arrayName,nextAvailableL2Slot));
+        l2_model.L2_baseAddress.insert(std::pair<std::string,int>(arrayName,nextAvailableL2Slot));
+        l2_model.add_L2_partition(arrayName,nextAvailableL2Slot,size);
         nextAvailableL2Slot+= size;
     }
     // get initial startup time
@@ -459,8 +461,6 @@ void DependencyGraph::computeL2_L1_transfertimes(){
     int startupLatencyL2 = resources_database::getL2SetupLatency(depth_l2,clock_l2,bitwidth_l2);
 
     int elementTransfered_perClock = bitwidth_l2/config.resource_database.bitwidth_register_file;
-    // ASAP read vector time = startuptime + (array base address + offset)/L2ElementPerClock
-   //TODO 
     boost::tie(it,vi_end) = vertices(ddg);
     for(next=it;it !=vi_end;it=next){
         ++next;
@@ -468,7 +468,7 @@ void DependencyGraph::computeL2_L1_transfertimes(){
         if(isa<LoadInst>(I)){
             std::string arrayName = ddg[*it].arrayName;
             int arrayOffset = ddg[*it].arrayOffset;
-            int arrayBaseAddress= L2_baseAddress[arrayName];
+            int arrayBaseAddress= l2_model.L2_baseAddress[arrayName];
             int arrivalTime =  startupLatencyL2 + (arrayBaseAddress + arrayOffset)/elementTransfered_perClock;
             ddg[*it].schedules[ASAP] = arrivalTime;
         }

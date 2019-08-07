@@ -222,6 +222,20 @@ std::list<std::list<vertex_t>>* alltopologicalSort_rev(DataDependencyGraph& g, u
 
 
 
+std::list<vertex_t> sortVerticesByASAP(DataDependencyGraph &g){
+    std::vector<vertex_t> asap_sorted;
+    std::pair<vertex_it_t,vertex_it_t> vp;
+    for(vp=vertices(g);vp.first!=vp.second; ++ vp.first){
+       asap_sorted.push_back(*vp.first); 
+    }
+    std::sort(asap_sorted.begin(),asap_sorted.end(),
+            [&g](vertex_t a, vertex_t b){
+                return g[a].schedules[ASAP]< g[b].schedules[ASAP];
+            });
+    std::list<vertex_t> asap_sorted_list(asap_sorted.begin(),
+                                         asap_sorted.end());
+    return asap_sorted_list;
+}
 //Note: To perform accesses to the database
 //an istance of resources_database needs to be instantiated in the main 
 int getVertexLatency(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_format config){
