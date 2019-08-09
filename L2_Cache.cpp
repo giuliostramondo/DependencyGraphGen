@@ -34,21 +34,25 @@ void L2_Cache::add_L2_operation(int clock, Optype type, int start_addr, int last
     int clock_l2 = config.resource_database.clock_l2;
     int depth_l2 = config.resource_database.depth_l2;
     int bitwidth_l2 = config.resource_database.bitwidth_l2;
-    int startupLatencyL2 = resources_database::getL2SetupLatency(depth_l2,clock_l2,bitwidth_l2);
+    int startupLatencyL2_write = config.resource_database.startup_write_latency_l2;
+    int startupLatencyL2_read = config.resource_database.startup_read_latency_l2;
+    double idleEnergy=resources_database::getL2IdleEnergy(depth_l2,clock_l2,bitwidth_l2);
 
-    int elementTransfered_perClock = bitwidth_l2/config.resource_database.bitwidth_register_file;
-    int totalCycles = (last_addr-start_addr)/elementTransfered_perClock +startupLatencyL2;
+    double elementTransfered_perClock = ((double)bitwidth_l2)/config.resource_database.bitwidth_register_file;
+    int totalCycles = (last_addr-start_addr)/elementTransfered_perClock;
     switch(type){
         case READ_FROM_L2:{
                 double readEnergy=resources_database::getL2ActiveReadEnergy(depth_l2,clock_l2,bitwidth_l2);
                 l2_op.energy= totalCycles * readEnergy;
-                l2_op.latency=totalCycles;
+                l2_op.energy+= startupLatencyL2_read * idleEnergy;
+                l2_op.latency=totalCycles+startupLatencyL2_read;
                 break;
                           }
         case WRITE_TO_L2:{
                 double writeEnergy=resources_database::getL2ActiveWriteEnergy(depth_l2,clock_l2,bitwidth_l2);
                 l2_op.energy= totalCycles * writeEnergy;
-                l2_op.latency=totalCycles;
+                l2_op.energy+= startupLatencyL2_write * idleEnergy;
+                l2_op.latency=totalCycles+startupLatencyL2_write;
                 break;
                          }
         case IDLE:{

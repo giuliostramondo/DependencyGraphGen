@@ -53,6 +53,8 @@ typedef struct mem_comp_paramJSON_format_t{
 		int clock_l2;
 		int bitwidth_l2;
 		int depth_l2;
+		int startup_write_latency_l2;
+		int startup_read_latency_l2;
 	}resource_database;
 } mem_comp_paramJSON_format;
 

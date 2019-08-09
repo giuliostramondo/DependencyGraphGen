@@ -455,12 +455,9 @@ void DependencyGraph::computeL2_L1_transfertimes(){
         nextAvailableL2Slot+= size;
     }
     // get initial startup time
-    int clock_l2 = config.resource_database.clock_l2;
-    int depth_l2 = config.resource_database.depth_l2;
     int bitwidth_l2 = config.resource_database.bitwidth_l2;
-    int startupLatencyL2 = resources_database::getL2SetupLatency(depth_l2,clock_l2,bitwidth_l2);
-
-    int elementTransfered_perClock = bitwidth_l2/config.resource_database.bitwidth_register_file;
+    int startupLatencyL2_read = config.resource_database.startup_read_latency_l2; 
+    double elementTransfered_perClock = ((double)bitwidth_l2)/config.resource_database.bitwidth_register_file;
     boost::tie(it,vi_end) = vertices(ddg);
     for(next=it;it !=vi_end;it=next){
         ++next;
@@ -469,7 +466,7 @@ void DependencyGraph::computeL2_L1_transfertimes(){
             std::string arrayName = ddg[*it].arrayName;
             int arrayOffset = ddg[*it].arrayOffset;
             int arrayBaseAddress= l2_model.L2_baseAddress[arrayName];
-            int arrivalTime =  startupLatencyL2 + (arrayBaseAddress + arrayOffset)/elementTransfered_perClock;
+            int arrivalTime =  startupLatencyL2_read + (arrayBaseAddress + arrayOffset)/elementTransfered_perClock;
             ddg[*it].schedules[ASAP] = arrivalTime;
         }
     }

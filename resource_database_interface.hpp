@@ -25,7 +25,7 @@ class resources_database{
         static double getRegisterFileArea(int depth, int clockFrequency, int bitwidth);
         static double getRegisterFileDoubleBufferArea(int depth, int clockFrequency, int bitwidth);
         static int getL2Area(int depth, int clockFrequency, int bitwidth);
-        static int getL2SetupLatency(int depth, int clockFrequency, int bitwidth);
+        //static int getL2SetupLatency(int depth, int clockFrequency, int bitwidth);
         static double getL2IdleEnergy(int depth, int clockFrequency, int bitwidth);
         static double getL2ActiveReadEnergy(int depth, int clockFrequency, int bitwidth);
         static double getL2ActiveWriteEnergy(int depth, int clockFrequency, int bitwidth);

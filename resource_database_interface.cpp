@@ -92,11 +92,11 @@ int resources_database::getL2Area(int depth, int clockFrequency, int bitwidth){
     double area=query_double(query);
     return area;
 }
-int resources_database::getL2SetupLatency(int depth, int clockFrequency, int bitwidth){
-    std::string query = "select \"setup_latency\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+";";
-    int latency=query_int(query);
-    return latency;
-}
+//int resources_database::getL2SetupLatency(int depth, int clockFrequency, int bitwidth){
+//    std::string query = "select \"setup_latency\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+";";
+//    int latency=query_int(query);
+//    return latency;
+//}
 double resources_database::getL2IdleEnergy(int depth, int clockFrequency, int bitwidth){
     std::string query = "select \"Idle Energy\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+";";
     double energy=query_double(query);

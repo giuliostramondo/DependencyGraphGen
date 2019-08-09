@@ -229,6 +229,20 @@ mem_comp_paramJSON_format parse_mem_comp_paramJSON(const char *filename){
 						param_out.resource_database.depth_l2 = 2048;
 					}
 				}
+				if(Optional<int64_t> resource_database_startup_write_latency_l2 = o_resource_database->getInteger("startup_write_latency_l2")){
+					if(resource_database_startup_write_latency_l2.hasValue()){ 
+						param_out.resource_database.startup_write_latency_l2 = resource_database_startup_write_latency_l2.getValue();
+					}else{ 
+						param_out.resource_database.startup_write_latency_l2 = 2;
+					}
+				}
+				if(Optional<int64_t> resource_database_startup_read_latency_l2 = o_resource_database->getInteger("startup_read_latency_l2")){
+					if(resource_database_startup_read_latency_l2.hasValue()){ 
+						param_out.resource_database.startup_read_latency_l2 = resource_database_startup_read_latency_l2.getValue();
+					}else{ 
+						param_out.resource_database.startup_read_latency_l2 = 2;
+					}
+				}
 			}
 			}
 			else{
@@ -271,5 +285,7 @@ mem_comp_paramJSON_format initConf(){
 	defaultConf.resource_database.clock_l2 = 1000;
 	defaultConf.resource_database.bitwidth_l2 = 64;
 	defaultConf.resource_database.depth_l2 = 2048;
+	defaultConf.resource_database.startup_write_latency_l2 = 2;
+	defaultConf.resource_database.startup_read_latency_l2 = 2;
 	return defaultConf;
 }

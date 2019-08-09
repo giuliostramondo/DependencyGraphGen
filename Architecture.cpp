@@ -468,7 +468,6 @@ double Architecture::getStaticPower(){
     for(units_it = units.begin();units_it != units.end();units_it++){
         std::list<FunctionalUnit> FUList = units_it->second;
         FunctionalUnit firstFU = FUList.front();
-        //double instanceStaticPower = firstFU.getArea(ddg,config,currentBankDepth);
         double instanceStaticPower = firstFU.getStaticPower(ddg,config,currentBankDepth);
         double instancesStaticPower = instanceStaticPower * FUList.size();
         totalStaticPower+= instancesStaticPower;

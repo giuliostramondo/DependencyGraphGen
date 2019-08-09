@@ -42,6 +42,8 @@
     "bitwidth_register_file": 64,
     "clock_l2": 1000,
     "bitwidth_l2": 64,
-    "depth_l2":2048 
+    "depth_l2":2048,
+    "startup_write_latency_l2":2,
+    "startup_read_latency_l2":2
   }
 }
