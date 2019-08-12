@@ -46,10 +46,13 @@ typedef struct mem_comp_paramJSON_format_t{
 		}sram;
 	}memory_param;
 	struct resource_database_t{
+		int technology;
 		int clock_frequency;
 		int bitwidth_adder;
 		int bitwidth_multiplier;
 		int bitwidth_register_file;
+		std::string type_l2;
+		int technology_l2;
 		int clock_l2;
 		int bitwidth_l2;
 		int depth_l2;

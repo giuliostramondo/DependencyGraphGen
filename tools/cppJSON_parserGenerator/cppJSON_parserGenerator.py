@@ -115,7 +115,24 @@ def recParse_function(toParse,nestLevel=0,previousLevelVar="O",variablePath=[]):
         if isinstance(toParse[p],float):
             print("\t"*nestLevel+"float "+p+";")
         if isinstance(toParse[p],str):
-            print("\t"*nestLevel+"std::string "+p+";")
+            #print("\t"*nestLevel+"std::string "+p+";")
+            variableName = p
+            if len(variablePath) > 0:
+                variableName = variablePath[-1]+"_"+p
+            print("\t"*nestLevel+"if(Optional<llvm::StringRef> "+variableName+" = "+previousLevelVar+"->getString(\""+p+"\")){")
+            print("\t"*nestLevel+"\tif("+variableName+".hasValue()){ ")
+            print("\t"*nestLevel+"\t\tparam_out",end="")
+            for i in variablePath:
+                print("."+i,end="")
+            print("."+p+" = "+ variableName+".getValue().str();")
+            print("\t"*nestLevel+"\t}else{ ")
+            print("\t"*nestLevel+"\t\tparam_out",end="")
+            for i in variablePath:
+                print("."+i,end="")
+            print("."+p+" = \""+ str(toParse[p])+"\";")
+            print("\t"*nestLevel+"\t}")
+            print("\t"*nestLevel+"}")
+
     if add_end:
         print("\t"*nestLevel+"}")
         print("\t"*nestLevel+"else{")

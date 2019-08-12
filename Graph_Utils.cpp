@@ -265,7 +265,8 @@ int getVertexLatency(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_form
     }else{
         int ClockFreq=
                config.resource_database.clock_frequency;
-
+        int technology = 
+            config.resource_database.technology;
        if(isa<LoadInst>(I)){
            // if(ddg[v].info == MRAM)
            //   return  config.memory_param.mram.read_latency;
@@ -274,7 +275,7 @@ int getVertexLatency(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_form
             int registerFileBitwidth= 
                config.resource_database.bitwidth_register_file;
            return resources_database::getRegisterFileLatency(
-                   2, ClockFreq, registerFileBitwidth);
+                   2, ClockFreq, registerFileBitwidth, technology);
        }
        if(isa<StoreInst>(I)){
             //if(ddg[v].info == MRAM)
@@ -288,15 +289,16 @@ int getVertexLatency(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_form
             int registerFileBitwidth= 
                config.resource_database.bitwidth_register_file;
            return resources_database::getRegisterFileLatency(
-                   2, ClockFreq, registerFileBitwidth);     
+                   2, ClockFreq, registerFileBitwidth,technology);     
        }
        if(isa<BinaryOperator>(I)){
             if(I->getOpcode() == Instruction::Add){
-                return resources_database::getAdderLatency(ClockFreq);
+
+                return resources_database::getAdderLatency(ClockFreq,technology);
                
             }
             if(I->getOpcode() == Instruction::Mul){
-                return resources_database::getMultiplierLatency(ClockFreq);
+                return resources_database::getMultiplierLatency(ClockFreq, technology);
             }
        }
     }
@@ -322,6 +324,8 @@ double getVertexArea(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_form
    }else{
     int ClockFreq=
                config.resource_database.clock_frequency;
+    int technology = 
+        config.resource_database.technology;
         if(isa<LoadInst>(I) || isa<StoreInst>(I)){
             //if(ddg[v].info == MRAM)
               //return  config.memory_param.mram.area;
@@ -330,20 +334,20 @@ double getVertexArea(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_form
             int registerFileBitwidth= 
                config.resource_database.bitwidth_register_file;
             double result=resources_database::getRegisterFileArea(
-                   registerFileAVGDepth, ClockFreq, registerFileBitwidth);   
+                   registerFileAVGDepth, ClockFreq, registerFileBitwidth,technology);   
             //if no results where found in the db use model
             if(result == NO_RESULTS){
                result = getFromModelRegisterFileArea(registerFileBitwidth,
-                      ClockFreq, registerFileAVGDepth); 
+                      ClockFreq, registerFileAVGDepth,technology); 
             }
             return result;
        }
        if(isa<BinaryOperator>(I)){
             if(I->getOpcode() == Instruction::Add){
-                return resources_database::getAdderArea(ClockFreq);
+                return resources_database::getAdderArea(ClockFreq,technology);
             }
             if(I->getOpcode() == Instruction::Mul){
-                return resources_database::getMultiplierArea(ClockFreq);
+                return resources_database::getMultiplierArea(ClockFreq,technology);
             }
        }
     }
@@ -374,6 +378,8 @@ double getVertexDynamicPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJ
    }else{
     int ClockFreq=
                config.resource_database.clock_frequency;
+    int technology = 
+        config.resource_database.technology;
        if(isa<LoadInst>(I)){
            // if(ddg[v].info == MRAM)
            //   return  config.memory_param.mram.dynamic_read_power;
@@ -382,10 +388,10 @@ double getVertexDynamicPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJ
             int registerFileBitwidth= 
                config.resource_database.bitwidth_register_file;
            double result=resources_database::getRegisterFileActiveEnergy(
-                   registerFileAVGDepth, ClockFreq, registerFileBitwidth);  
+                   registerFileAVGDepth, ClockFreq, registerFileBitwidth, technology);  
            if(result==NO_RESULTS){
                 result=getFromModelRegisterFileActiveEnergy(registerFileBitwidth,
-                        ClockFreq, registerFileAVGDepth);
+                        ClockFreq, registerFileAVGDepth, technology);
            }
            return result;
        }
@@ -397,21 +403,21 @@ double getVertexDynamicPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJ
             int registerFileBitwidth= 
                config.resource_database.bitwidth_register_file;
            double result= resources_database::getRegisterFileActiveEnergy(
-                   registerFileAVGDepth, ClockFreq, registerFileBitwidth);  
+                   registerFileAVGDepth, ClockFreq, registerFileBitwidth, technology);  
            if(result==NO_RESULTS){
                 result=getFromModelRegisterFileActiveEnergy(registerFileBitwidth,
-                        ClockFreq, registerFileAVGDepth);
+                        ClockFreq, registerFileAVGDepth, technology);
            }
            return result;
 
        }
        if(isa<BinaryOperator>(I)){
             if(I->getOpcode() == Instruction::Add){
-                return resources_database::getAdderActiveEnergy(ClockFreq);
+                return resources_database::getAdderActiveEnergy(ClockFreq, technology);
 
             }
             if(I->getOpcode() == Instruction::Mul){
-                return resources_database::getMultiplierActiveEnergy(ClockFreq);
+                return resources_database::getMultiplierActiveEnergy(ClockFreq, technology);
             }
        }
    }
@@ -438,6 +444,8 @@ double getVertexStaticPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJS
    }else{
     int ClockFreq=
                config.resource_database.clock_frequency;
+    int technology = 
+        config.resource_database.technology;
        if(isa<LoadInst>(I) || isa<StoreInst>(I)){
            // if(ddg[v].info == MRAM)
            //   return  config.memory_param.mram.static_power;
@@ -446,21 +454,21 @@ double getVertexStaticPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJS
             int registerFileBitwidth= 
                config.resource_database.bitwidth_register_file;
            double result= resources_database::getRegisterFileIdleEnergy(
-                   registerFileAVGDepth, ClockFreq, registerFileBitwidth);      
+                   registerFileAVGDepth, ClockFreq, registerFileBitwidth, technology);      
            if (result == NO_RESULTS){
                 result = getFromModelRegisterFileIdleEnergy(
                         registerFileBitwidth,ClockFreq,
-                        registerFileAVGDepth);
+                        registerFileAVGDepth,technology);
            }
            return result;
        }
        if(isa<BinaryOperator>(I)){
             if(I->getOpcode() == Instruction::Add){
-                return resources_database::getAdderIdleEnergy(ClockFreq);
+                return resources_database::getAdderIdleEnergy(ClockFreq, technology);
 
             }
             if(I->getOpcode() == Instruction::Mul){
-                return resources_database::getMultiplierIdleEnergy(ClockFreq);
+                return resources_database::getMultiplierIdleEnergy(ClockFreq, technology);
             }
        }
 

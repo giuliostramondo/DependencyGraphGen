@@ -10,26 +10,26 @@
 class resources_database{
     public: 
         resources_database(std::string db_file_name);
-        static int getMultiplierLatency(int clockFrequency);
-        static double getMultiplierIdleEnergy(int clockFrequency);
-        static double getMultiplierActiveEnergy(int clockFrequency);
-        static double getMultiplierArea(int clockFrequency);
-        static int getAdderLatency(int clockFrequency);
-        static double getAdderIdleEnergy(int clockFrequency);
-        static double getAdderActiveEnergy(int clockFrequency);
-        static double getAdderArea(int clockFrequency);
+        static int getMultiplierLatency(int clockFrequency, int technology);
+        static double getMultiplierIdleEnergy(int clockFrequency, int technology);
+        static double getMultiplierActiveEnergy(int clockFrequency, int technology);
+        static double getMultiplierArea(int clockFrequency, int technology);
+        static int getAdderLatency(int clockFrequency,int technology);
+        static double getAdderIdleEnergy(int clockFrequency, int technology);
+        static double getAdderActiveEnergy(int clockFrequency,int technology);
+        static double getAdderArea(int clockFrequency, int technology);
         static std::string getUnit(std::string ColumnName);
-        static int getRegisterFileLatency(int depth, int clockFrequency, int bitwidth);
-        static double getRegisterFileIdleEnergy(int depth, int clockFrequency, int bitwidth);
-        static double getRegisterFileActiveEnergy(int depth, int clockFrequency, int bitwidth);
-        static double getRegisterFileArea(int depth, int clockFrequency, int bitwidth);
-        static double getRegisterFileDoubleBufferArea(int depth, int clockFrequency, int bitwidth);
-        static int getL2Area(int depth, int clockFrequency, int bitwidth);
+        static int getRegisterFileLatency(int depth, int clockFrequency, int bitwidth, int technology);
+        static double getRegisterFileIdleEnergy(int depth, int clockFrequency, int bitwidth, int technology);
+        static double getRegisterFileActiveEnergy(int depth, int clockFrequency, int bitwidth, int technology);
+        static double getRegisterFileArea(int depth, int clockFrequency, int bitwidth, int technology);
+        static double getRegisterFileDoubleBufferArea(int depth, int clockFrequency, int bitwidth, int technology);
+        static int getL2Area(int depth, int clockFrequency, int bitwidth, std::string type, int technology);
         //static int getL2SetupLatency(int depth, int clockFrequency, int bitwidth);
-        static double getL2IdleEnergy(int depth, int clockFrequency, int bitwidth);
-        static double getL2ActiveReadEnergy(int depth, int clockFrequency, int bitwidth);
-        static double getL2ActiveWriteEnergy(int depth, int clockFrequency, int bitwidth);
-        static double getL2SleepEnergy(int depth, int clockFrequency, int bitwidth);
+        static double getL2IdleEnergy(int depth, int clockFrequency, int bitwidth, std::string type, int technology);
+        static double getL2ActiveReadEnergy(int depth, int clockFrequency, int bitwidth, std::string type, int technology);
+        static double getL2ActiveWriteEnergy(int depth, int clockFrequency, int bitwidth, std::string type, int technology);
+        static double getL2SleepEnergy(int depth, int clockFrequency, int bitwidth, std::string type, int technology);
         ~resources_database();
     private:
         static sqlite3* DB;

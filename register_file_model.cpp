@@ -16,21 +16,22 @@ std::map<int,std::map<int,std::pair<double,double>>> LinearModelActiveEnergy={
 };
 
 
-double getFromModelRegisterFileArea(int bitwidth,int clock, int depth){
+//TODO IMPLEMENT DIFFERENT TECHNOLOGIES
+double getFromModelRegisterFileArea(int bitwidth,int clock, int depth, int technology){
     double area_intercept = LinearModelArea[bitwidth][clock].first;
     double area_slope = LinearModelArea[bitwidth][clock].second;
     double area = area_intercept + area_slope * depth;
     return area;
 }
 
-double getFromModelRegisterFileIdleEnergy(int bitwidth,int clock, int depth){
+double getFromModelRegisterFileIdleEnergy(int bitwidth,int clock, int depth, int technology){
     double idle_energy_intercept = LinearModelIdleEnergy[bitwidth][clock].first;
     double idle_energy_slope = LinearModelIdleEnergy[bitwidth][clock].second;
     double idle_energy = idle_energy_intercept + idle_energy_slope * depth;
     return idle_energy;
 }
 
-double getFromModelRegisterFileActiveEnergy(int bitwidth,int clock, int depth){
+double getFromModelRegisterFileActiveEnergy(int bitwidth,int clock, int depth, int technology){
     double active_energy_intercept = LinearModelActiveEnergy[bitwidth][clock].first;
     double active_energy_slope = LinearModelActiveEnergy[bitwidth][clock].second;
     double active_energy = active_energy_intercept + active_energy_slope * depth;

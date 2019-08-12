@@ -180,6 +180,13 @@ mem_comp_paramJSON_format parse_mem_comp_paramJSON(const char *filename){
 				}
 			}
 			if (json::Object* o_resource_database = O->getObject("resource_database")){
+				if(Optional<int64_t> resource_database_technology = o_resource_database->getInteger("technology")){
+					if(resource_database_technology.hasValue()){ 
+						param_out.resource_database.technology = resource_database_technology.getValue();
+					}else{ 
+						param_out.resource_database.technology = 16;
+					}
+				}
 				if(Optional<int64_t> resource_database_clock_frequency = o_resource_database->getInteger("clock_frequency")){
 					if(resource_database_clock_frequency.hasValue()){ 
 						param_out.resource_database.clock_frequency = resource_database_clock_frequency.getValue();
@@ -206,6 +213,20 @@ mem_comp_paramJSON_format parse_mem_comp_paramJSON(const char *filename){
 						param_out.resource_database.bitwidth_register_file = resource_database_bitwidth_register_file.getValue();
 					}else{ 
 						param_out.resource_database.bitwidth_register_file = 64;
+					}
+				}
+				if(Optional<llvm::StringRef> resource_database_type_l2 = o_resource_database->getString("type_l2")){
+					if(resource_database_type_l2.hasValue()){ 
+						param_out.resource_database.type_l2 = resource_database_type_l2.getValue().str();
+					}else{ 
+						param_out.resource_database.type_l2 = "tt0p9v85c";
+					}
+				}
+				if(Optional<int64_t> resource_database_technology_l2 = o_resource_database->getInteger("technology_l2")){
+					if(resource_database_technology_l2.hasValue()){ 
+						param_out.resource_database.technology_l2 = resource_database_technology_l2.getValue();
+					}else{ 
+						param_out.resource_database.technology_l2 = 16;
 					}
 				}
 				if(Optional<int64_t> resource_database_clock_l2 = o_resource_database->getInteger("clock_l2")){
@@ -278,10 +299,12 @@ mem_comp_paramJSON_format initConf(){
 	defaultConf.memory_param.sram.static_power = 4;
 	defaultConf.memory_param.sram.dynamic_read_power = 2;
 	defaultConf.memory_param.sram.dynamic_write_power = 2;
+	defaultConf.resource_database.technology = 16;
 	defaultConf.resource_database.clock_frequency = 1000;
 	defaultConf.resource_database.bitwidth_adder = 64;
 	defaultConf.resource_database.bitwidth_multiplier = 32;
 	defaultConf.resource_database.bitwidth_register_file = 64;
+	defaultConf.resource_database.technology_l2 = 16;
 	defaultConf.resource_database.clock_l2 = 1000;
 	defaultConf.resource_database.bitwidth_l2 = 64;
 	defaultConf.resource_database.depth_l2 = 2048;
