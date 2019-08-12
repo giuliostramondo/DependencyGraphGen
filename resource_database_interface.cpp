@@ -88,7 +88,7 @@ double resources_database::getRegisterFileDoubleBufferArea(int depth, int clockF
 }
 
 int resources_database::getL2Area(int depth, int clockFrequency, int bitwidth, std::string type, int technology){
-    std::string query = "select \"Total cell area\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+" and \"Type\" == "+type+" and \"Technology\" == "+std::to_string(technology)+";";
+    std::string query = "select \"Total cell area\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+" and \"Type\" == \""+type+"\" and \"Technology\" == "+std::to_string(technology)+";";
     double area=query_double(query);
     return area;
 }
@@ -98,22 +98,22 @@ int resources_database::getL2Area(int depth, int clockFrequency, int bitwidth, s
 //    return latency;
 //}
 double resources_database::getL2IdleEnergy(int depth, int clockFrequency, int bitwidth, std::string type, int technology){
-    std::string query = "select \"Idle Energy\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+" and \"Type\" == "+type+" and \"Technology\" == "+std::to_string(technology)+";";
+    std::string query = "select \"Idle Energy\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+" and \"Type\" == \""+type+"\" and \"Technology\" == "+std::to_string(technology)+";";
     double energy=query_double(query);
     return energy;
 }
 double resources_database::getL2ActiveReadEnergy(int depth, int clockFrequency, int bitwidth, std::string type, int technology){
-    std::string query = "select \"Active Energy Read\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+" and \"Type\" == "+type+" and \"Technology\" == "+std::to_string(technology)+";";
+    std::string query = "select \"Active Energy Read\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+" and \"Type\" == \""+type+"\" and \"Technology\" == "+std::to_string(technology)+";";
     double energy=query_double(query);
     return energy;
 }
 double resources_database::getL2ActiveWriteEnergy(int depth, int clockFrequency, int bitwidth, std::string type, int technology){
-    std::string query = "select \"Active Energy Write\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+" and \"Type\" == "+type+" and \"Technology\" == "+std::to_string(technology)+";";
+    std::string query = "select \"Active Energy Write\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+" and \"Type\" == \""+type+"\" and \"Technology\" == "+std::to_string(technology)+";";
     double energy=query_double(query);
     return energy;
 }
 double resources_database::getL2SleepEnergy(int depth, int clockFrequency, int bitwidth, std::string type, int technology){
-    std::string query = "select \"Sleep Energy\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+" and \"Type\" == "+type+" and \"Technology\" == "+std::to_string(technology)+";";
+    std::string query = "select \"Sleep Energy\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+" and \"Type\" == \""+type+"\" and \"Technology\" == "+std::to_string(technology)+";";
     double energy=query_double(query);
     return energy;
 }
