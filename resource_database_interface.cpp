@@ -8,9 +8,10 @@ sqlite3* resources_database::DB = NULL;
 
 resources_database::resources_database(std::string db_file_name){
     sqlite3* DB_tmp;
-    int exit = sqlite3_open("data/new_resource_utilization_data.db",&DB_tmp);
+    int exit = sqlite3_open(db_file_name.c_str(),&DB_tmp);
     if (exit != SQLITE_OK){
         std::cout<< "Error opening the database "<<db_file_name<<std::endl;
+        report_error("Error opening the database "+db_file_name+"\n");
     }else{
         std::cout<<"Db is open"<<std::endl;
     }
@@ -63,31 +64,31 @@ std::string resources_database::getUnit(std::string ColumnName){
 }
 int resources_database::getRegisterFileLatency(int depth, int clockFrequency, int bitwidth,int technology){
     std::string query = "select \"Latency\" from register_file where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"Bitwidth\"== "+std::to_string(bitwidth)+" and \"Technology\" == "+std::to_string(technology)+";";
-    int latency=query_int(query);
+    int latency=query_int(query,false);
     return latency;
 }
 double resources_database::getRegisterFileIdleEnergy(int depth, int clockFrequency, int bitwidth,int technology){
-    std::string query = "select \"Idle Energy\" from register_file where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"Bitwidth\"== "+std::to_string(bitwidth)+" and \"Technology\" == "+std::to_string(technology)+";";
-    double energy=query_double(query);
+    std::string query = "select \"Idle Energy with double buffer\" from register_file where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"Bitwidth\"== "+std::to_string(bitwidth)+" and \"Technology\" == "+std::to_string(technology)+";";
+    double energy=query_double(query,false);
     return energy;
 }
 double resources_database::getRegisterFileActiveEnergy(int depth, int clockFrequency, int bitwidth,int technology){
     std::string query = "select \"Active Energy\" from register_file where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"Bitwidth\"== "+std::to_string(bitwidth)+" and \"Technology\" == "+std::to_string(technology)+";";
-    double energy=query_double(query);
+    double energy=query_double(query,false);
     return energy;
 }
 double resources_database::getRegisterFileArea(int depth, int clockFrequency, int bitwidth,int technology){
-    std::string query = "select \"Total cell area\" from register_file where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"Bitwidth\"== "+std::to_string(bitwidth)+" and \"Technology\" == "+std::to_string(technology)+";";
-    double area=query_double(query);
+    std::string query = "select \"Area with double buffer\" from register_file where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"Bitwidth\"== "+std::to_string(bitwidth)+" and \"Technology\" == "+std::to_string(technology)+";";
+    double area=query_double(query,false);
     return area;
 }
 double resources_database::getRegisterFileDoubleBufferArea(int depth, int clockFrequency, int bitwidth,int technology){
     std::string query = "select \"Area with double buffer\" from register_file where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"Bitwidth\"== "+std::to_string(bitwidth)+" and \"Technology\" == "+std::to_string(technology)+";";
-    double area=query_double(query);
+    double area=query_double(query,false);
     return area;
 }
 
-int resources_database::getL2Area(int depth, int clockFrequency, int bitwidth, std::string type, int technology){
+double resources_database::getL2Area(int depth, int clockFrequency, int bitwidth, std::string type, int technology){
     std::string query = "select \"Total cell area\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+" and \"Type\" == \""+type+"\" and \"Technology\" == "+std::to_string(technology)+";";
     double area=query_double(query);
     return area;
@@ -118,12 +119,22 @@ double resources_database::getL2SleepEnergy(int depth, int clockFrequency, int b
     return energy;
 }
 
+int resources_database::getL2ReadLatency(int depth, int clockFrequency, int bitwidth, std::string type, int technology){
+    std::string query = "select \"Read Latency\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+" and \"Type\" == \""+type+"\" and \"Technology\" == "+std::to_string(technology)+";";
+    int read_latency=query_int(query);
+    return read_latency;
+}
 
+int resources_database::getL2WriteLatency(int depth, int clockFrequency, int bitwidth, std::string type, int technology){
+    std::string query = "select \"Write Latency\" from sram_l2 where \"Clock frequency\" =="+std::to_string(clockFrequency)+" and \"Depth\" == "+std::to_string(depth)+" and \"IO\"== "+std::to_string(bitwidth)+" and \"Type\" == \""+type+"\" and \"Technology\" == "+std::to_string(technology)+";";
+    int write_latency=query_int(query);
+    return write_latency;
+}
 
 resources_database::~resources_database(){
     sqlite3_close(DB);
 }
-double resources_database::query_double(std::string query){
+double resources_database::query_double(std::string query, bool canThrow){
     sqlite3_stmt *stmt;
     int rc = sqlite3_prepare_v2(DB, query.c_str(),-1,&stmt,NULL);
     if(rc != SQLITE_OK){
@@ -138,10 +149,14 @@ double resources_database::query_double(std::string query){
         std::cout <<"error2: "<<sqlite3_errmsg(DB)<<std::endl;
         return 0;
     }
+    if(id == NO_RESULTS && canThrow){
+        report_error("The following query did not produce any results:\n"+query+"\n");
+    }
     sqlite3_finalize(stmt);
     return id; 
+    
 }
-int resources_database::query_int(std::string query){
+int resources_database::query_int(std::string query, bool canThrow){
     sqlite3_stmt *stmt;
     int rc = sqlite3_prepare_v2(DB, query.c_str(),-1,&stmt,NULL);
     if(rc != SQLITE_OK){
@@ -156,11 +171,14 @@ int resources_database::query_int(std::string query){
         std::cout <<"error: "<<sqlite3_errmsg(DB)<<std::endl;
         return 0;
     }
+    if(id == NO_RESULTS && canThrow){
+        report_error("The following query did not produce any results:\n"+query+"\n");
+    }
     sqlite3_finalize(stmt);
     return id; 
 }
 
-std::string resources_database::query_string(std::string query){
+std::string resources_database::query_string(std::string query,bool canThrow){
     sqlite3_stmt *stmt;
     int rc = sqlite3_prepare_v2(DB, query.c_str(),-1,&stmt,NULL);
     if(rc != SQLITE_OK){
@@ -174,6 +192,9 @@ std::string resources_database::query_string(std::string query){
     if (rc != SQLITE_DONE){
         std::cout <<"error: "<<sqlite3_errmsg(DB)<<std::endl;
         return 0;
+    }
+    if(result == "NO_RESULTS" && canThrow){
+        report_error("The following query did not produce any results:\n"+query+"\n");
     }
     sqlite3_finalize(stmt);
     return result; 

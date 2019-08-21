@@ -32,6 +32,7 @@
 #include "mem_comp_paramJSON.hpp"
 #include "DependencyGraph.hpp"
 #include "resource_database_interface.hpp"
+#include "ErrorLog.hpp"
 
 using namespace llvm;
 
@@ -53,7 +54,7 @@ namespace {
             //Source specific to adjacency_list graph https://www.boost.org/doc/libs/1_48_0/libs/graph/doc/adjacency_list.html 
             //This page was used as a reference to link the boost graph to an llvm instruction:https://stackoverflow.com/questions/3100146/adding-custom-vertices-to-a-boost-graph
             mem_comp_paramJSON_format config;
-            resources_database r = resources_database("./data/new_resource_utilization_data.db");
+            resources_database r = resources_database("./data/resource_utilization_data.db");
             if(ParameterFilename.getNumOccurrences() > 0){
                 errs()<<"Passed configuration file to DependencyGraph: "<<ParameterFilename.c_str()<<"\n";   
                 config = parse_mem_comp_paramJSON(ParameterFilename.c_str());
@@ -68,6 +69,7 @@ namespace {
             errs() << "//Iterating over basic blocks of "<< F.getName() << '\n';
             if(F.size()>1){
                 errs() <<"There are "<<F.size()<<" basic blocks in the code, something went wrong during the loop unrolling\nQuitting...\n";
+                report_error("There are "+std::to_string(F.size())+" basic blocks in the code, something went wrong during the loop unrolling\n");
                 return false;
             }
             for(Function::iterator b = F.begin(), be = F.end(); b != be; ++b) {
@@ -89,7 +91,8 @@ namespace {
                 csvFile<<"MaxLatency,ActualMaxLatency,Area,StaticPower,DynamicPower,TotalEnergy,";
                 bool firstArchitecture=true;
                 DG.l2_model.dumpMemoryPartitioning("l2_memory_partitioning.csv");
-                for(unsigned i=DG.schedule.size();i<=DG.schedule_sequential.size();i++){
+                int totalLatencyFromL2= DG.l2_model.getNextAvail_L2_Cycle();
+                for(unsigned i=DG.schedule.size();i<=DG.schedule_sequential.size()+totalLatencyFromL2;i++){
                     Architecture a(DG.ddg,i, DG.config,DG.l2_model);
                     //a.generateArchitecturalMapping();
                     a.performALAPSchedule();
@@ -127,6 +130,8 @@ namespace {
                     arc_l2ControllerFilename+= std::to_string(i);
                     arc_l2ControllerFilename+= "_l2_memory_controller.csv";
                     curr_a->l2_model.dumpMemoryOperations(arc_l2ControllerFilename);
+                    if(curr_a->isMinimal())
+                        break;
                 }
             }
             return false;

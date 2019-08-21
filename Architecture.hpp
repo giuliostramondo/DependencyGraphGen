@@ -47,6 +47,7 @@ class Architecture{
         void computeSleepAndWriteBack_L2_Ops();
         std::string getCSVResourceHeader();
         L2_Cache l2_model;
+        bool isMinimal();
 
     private:
         DataDependencyGraph& ddg;

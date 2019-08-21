@@ -4,6 +4,8 @@
 #include <sqlite3.h>
 #include <iostream>
 #include <string>
+#include "ErrorLog.hpp"
+
 
 #define NO_RESULTS -1
 #define ERROR 0
@@ -24,17 +26,20 @@ class resources_database{
         static double getRegisterFileActiveEnergy(int depth, int clockFrequency, int bitwidth, int technology);
         static double getRegisterFileArea(int depth, int clockFrequency, int bitwidth, int technology);
         static double getRegisterFileDoubleBufferArea(int depth, int clockFrequency, int bitwidth, int technology);
-        static int getL2Area(int depth, int clockFrequency, int bitwidth, std::string type, int technology);
+        static double getL2Area(int depth, int clockFrequency, int bitwidth, std::string type, int technology);
         //static int getL2SetupLatency(int depth, int clockFrequency, int bitwidth);
         static double getL2IdleEnergy(int depth, int clockFrequency, int bitwidth, std::string type, int technology);
         static double getL2ActiveReadEnergy(int depth, int clockFrequency, int bitwidth, std::string type, int technology);
         static double getL2ActiveWriteEnergy(int depth, int clockFrequency, int bitwidth, std::string type, int technology);
         static double getL2SleepEnergy(int depth, int clockFrequency, int bitwidth, std::string type, int technology);
+        static int getL2ReadLatency(int depth, int clockFrequency, int bitwidth, std::string type, int technology);
+        static int getL2WriteLatency(int depth, int clockFrequency, int bitwidth, std::string type, int technology);
+
         ~resources_database();
     private:
         static sqlite3* DB;
-        static double query_double(std::string query);
-        static int query_int(std::string query);
-        static std::string query_string(std::string query);
+        static double query_double(std::string query, bool canThrow=true);
+        static int query_int(std::string query, bool canThrow=true);
+        static std::string query_string(std::string query, bool canThrow=true);
 };
 #endif

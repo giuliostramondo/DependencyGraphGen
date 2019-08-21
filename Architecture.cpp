@@ -245,6 +245,18 @@ void Architecture::describe(){
     }
 }
 
+bool Architecture::isMinimal(){
+    std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
+    for(units_it = units.begin();units_it != units.end();units_it++){
+        std::list<FunctionalUnit> FUList = units_it->second; 
+        size_t count = FUList.size();
+        if(count > 1){
+            return false;  
+        }
+    }
+    return true;
+}
+
 void Architecture::write_architecture_dot(std::string filename){
     std::ofstream output_dot_file;
     output_dot_file.open(filename);

@@ -5,7 +5,7 @@
 #include<utility>
 
 double getFromModelRegisterFileArea(int bitwidth,int clock, int depth,int technology);
-double getFromModelRegisterFileIdleEnergy(int bitwidth,int clock, int depth, int technology);
-double getFromModelRegisterFileActiveEnergy(int bitwidth,int clock, int depth, int technology);
+double getFromModelRegisterFileIdleEnergy(int bitwidth,int clock, int depth,int technology);
+double getFromModelRegisterFileActiveEnergy(int bitwidth,int clock, int dept,int technology);
 
 #endif
