@@ -42,7 +42,7 @@
     "bitwidth_multiplier": 32,
     "bitwidth_register_file": 64,
     "type_l2": "tt0p9v85c",
-    "technology_l2": 16,
+    "technology_l2": 28,
     "clock_l2": 1000,
     "bitwidth_l2": 64,
     "depth_l2":2048,

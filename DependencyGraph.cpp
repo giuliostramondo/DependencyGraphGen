@@ -590,10 +590,35 @@ void DependencyGraph::sequential_schedule(){
     boost::topological_sort(ddg, std::front_inserter(instruction_order));
     for (std::list<vertex_t>::iterator i = instruction_order.begin();
             i != instruction_order.end(); ++i){
-        std::list<vertex_t> newCycle;
-        newCycle.push_back(*i);
-        schedule_sequential.push_back(newCycle);
-        ddg[*i].schedules[SEQUENTIAL] = cycle++;
+
+        if (boost::in_degree (*i, ddg) > 0) {
+            in_edge_it_t j, j_end;
+            int maxLatency = 0;
+            int cycle_due_to_parents;
+            for(boost::tie(j,j_end) = in_edges(*i,ddg); j!= j_end;++j){
+                int v_source_id = source(*j,ddg);
+                //int v_source_additional_latency =ddg[v_source_id].schedules[SEQUENTIAL]+getLatency(v_source_id);
+                int next_free_cycle = ddg[v_source_id].schedules[SEQUENTIAL]+getLatency(v_source_id);
+                cycle_due_to_parents=std::max(next_free_cycle,cycle_due_to_parents); 
+                maxLatency = std::max(getLatency(v_source_id),maxLatency);
+            }
+            int cycle_=cycle;
+            cycle=std::max(cycle_,cycle_due_to_parents);
+            //cycle=std::max(cycle_inc,maxLatency);
+            for(int j=0; j<maxLatency;j++){
+                std::list<vertex_t> newCycle;
+                if(j==maxLatency-1)
+                    newCycle.push_back(*i);
+                schedule_sequential.push_back(newCycle);
+            }
+            ddg[*i].schedules[SEQUENTIAL] = cycle++;
+
+        }else{
+            std::list<vertex_t> newCycle;
+            newCycle.push_back(*i);
+            schedule_sequential.push_back(newCycle);
+            ddg[*i].schedules[SEQUENTIAL] = cycle++;
+        }
     }
 
 }

@@ -339,6 +339,10 @@ double getVertexArea(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJSON_form
             if(result == NO_RESULTS){
                result = getFromModelRegisterFileArea(registerFileBitwidth,
                       ClockFreq, registerFileAVGDepth,technology); 
+               if(result == 0){
+                   report_error("Missing register file info in register file model:\nclock: "+std::to_string(ClockFreq)+"\ndepth: "+std::to_string(registerFileAVGDepth)+"\ntechnology: "+std::to_string(technology)+"nm"+"\nbitwidth:"+std::to_string(registerFileBitwidth));
+                   
+               }
             }
             return result;
        }
@@ -392,6 +396,10 @@ double getVertexDynamicPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJ
            if(result==NO_RESULTS){
                 result=getFromModelRegisterFileActiveEnergy(registerFileBitwidth,
                         ClockFreq, registerFileAVGDepth, technology);
+               if(result == 0){
+                   report_error("Missing register file info in register file model:\nclock: "+std::to_string(ClockFreq)+"\ndepth: "+std::to_string(registerFileAVGDepth)+"\ntechnology: "+std::to_string(technology)+"nm"+"\nbitwidth:"+std::to_string(registerFileBitwidth));
+                   
+               }
            }
            return result;
        }
@@ -407,6 +415,10 @@ double getVertexDynamicPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJ
            if(result==NO_RESULTS){
                 result=getFromModelRegisterFileActiveEnergy(registerFileBitwidth,
                         ClockFreq, registerFileAVGDepth, technology);
+               if(result == 0){
+                   report_error("Missing register file info in register file model:\nclock: "+std::to_string(ClockFreq)+"\ndepth: "+std::to_string(registerFileAVGDepth)+"\ntechnology: "+std::to_string(technology)+"nm"+"\nbitwidth:"+std::to_string(registerFileBitwidth));
+                   
+               }
            }
            return result;
 
@@ -459,6 +471,10 @@ double getVertexStaticPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJS
                 result = getFromModelRegisterFileIdleEnergy(
                         registerFileBitwidth,ClockFreq,
                         registerFileAVGDepth,technology);
+               if(result == 0){
+                   report_error("Missing register file info in register file model:\nclock: "+std::to_string(ClockFreq)+"\ndepth: "+std::to_string(registerFileAVGDepth)+"\ntechnology: "+std::to_string(technology)+"nm"+"\nbitwidth:"+std::to_string(registerFileBitwidth));
+                   
+               }
            }
            return result;
        }

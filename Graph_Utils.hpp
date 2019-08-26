@@ -12,6 +12,7 @@
 #include "mem_comp_paramJSON.hpp"
 #include "resource_database_interface.hpp"
 #include "register_file_model.hpp"
+#include "ErrorLog.hpp"
 #include <random>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h> 
