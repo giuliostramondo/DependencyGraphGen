@@ -15,7 +15,7 @@
 #include<fstream> // To write to file
 #include<iostream>
 #include <memory>
-
+#include "FunctionalUnit.hpp"
 
 using namespace llvm;
 class Architecture{
@@ -44,9 +44,11 @@ class Architecture{
         void appendArchInfoToCSV(std::string csvFileName);
         void dumpSchedule();
         std::string getCSVResourceUsage();
-        void computeSleepAndWriteBack_L2_Ops();
+        void computeIdleAndWriteBack_L2_Ops();
         std::string getCSVResourceHeader();
         L2_Cache l2_model;
+        bool respect_dependencies(std::string arch_errorFilename);
+        bool respect_FU_execution(std::string arch_errorFilename);
         bool isMinimal();
 
     private:
@@ -61,7 +63,13 @@ class Architecture{
         //Each FU contains a list of vertices of the ddg that will execute
         std::map<unsigned,std::list<FunctionalUnit>> units;
         std::vector<std::list<vertex_t>> schedule_alap;
+        //Assign at each clock (used as array index) a list of vertex to 
+        //execute
         std::vector<std::list<vertex_t>> schedule_architectural;
+        //Retreives the FU in which a vertex is executed;
+        std::map<vertex_t,FunctionalUnit> vertexToFU;
+        //Retrieves from a vertex the clock in which it is assigned
+        std::map<vertex_t, unsigned> vertexToClock; 
         
 }; 
 #endif

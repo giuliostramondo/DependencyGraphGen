@@ -6,6 +6,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Bitcode/LLVMBitCodes.h"
+#include "llvm/Support/CommandLine.h"
 #include<fstream> // To write to file
 //Boost graph includes 
 
@@ -28,14 +29,13 @@ std::string replaceAll(StringRef inString, char toReplace, char replacement);
 
 class DependencyGraph {
     public:
-     DependencyGraph(mem_comp_paramJSON_format _conf): ddg(0), config(_conf),l2_model(_conf) {
-            errs()<<"DependencyGraph constructor\n";
-            errs()<<"Latency of MRAM read :"+std::to_string(config.memory_param.mram.read_latency)<<"\n";    
-        }; 
+     DependencyGraph(mem_comp_paramJSON_format _conf, BasicBlock* BB);    
     int inst_count=0;
-    void populateGraph(BasicBlock *BB);
     void write_dot(std::string fileName, Schedule schedule = NONE);
     void supernode_opt();
+    void computeSchedules();
+    void performArchitecturalDSE(std::string ParameterFilename,
+                                               int OptSearchLimit );
     //TODO 
     void merge_loads();
     bool asap_scheduled=false;
@@ -53,6 +53,7 @@ class DependencyGraph {
     std::vector<std::list<vertex_t>> schedule_sequential;
     L2_Cache l2_model;
     private:
+    void populateGraph(BasicBlock *BB);
     std::unordered_map<std::string, Instruction*> nodeNameToInstructionMap;
     std::unordered_map<Instruction*,vertex_t> InstructionToVertexMap;
     std::list<vertex_t> write_nodes;

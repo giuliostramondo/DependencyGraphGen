@@ -492,30 +492,5 @@ double getVertexStaticPower(DataDependencyGraph& ddg,vertex_t v,mem_comp_paramJS
    return 1;
 }
 
-double FunctionalUnit::getArea(DataDependencyGraph& ddg,mem_comp_paramJSON_format config,
-        int registerFileAVGDepth){
-    vertex_t firstInstruction = front();
-    double area =getVertexArea(ddg,firstInstruction,config,registerFileAVGDepth); 
-    return area;
-}
 
-int FunctionalUnit::getLatency(DataDependencyGraph& ddg,mem_comp_paramJSON_format config){
-    vertex_t firstInstruction = front();
-    int latency =getVertexLatency(ddg,firstInstruction,config); 
-    return latency;
-}
-
-double FunctionalUnit::getDynamicPower(DataDependencyGraph& ddg,mem_comp_paramJSON_format config,
-        int registerFileAVGDepth){
-    vertex_t firstInstruction = front();
-    double dyn_power =getVertexDynamicPower(ddg,firstInstruction,config,registerFileAVGDepth); 
-    return dyn_power;
-}
-
-double FunctionalUnit::getStaticPower(DataDependencyGraph& ddg,mem_comp_paramJSON_format config,
-        int registerFileAVGDepth){
-    vertex_t firstInstruction = front();
-    double static_power =getVertexStaticPower(ddg,firstInstruction,config,registerFileAVGDepth); 
-    return static_power;
-}
 

@@ -11,7 +11,7 @@ void Architecture::generateArchitecturalMapping(){
         ++next;
         //create FU
         //std::list<vertex_t> newFUnit;
-        FunctionalUnit newFUnit;
+        FunctionalUnit newFUnit(ddg,config);
         // Add Instruction to new FU
         newFUnit.push_back(*vi); 
         Instruction *I=ddg[*vi].inst; 
@@ -25,7 +25,8 @@ void Architecture::generateArchitecturalMapping(){
             fulabel+="_"+std::to_string(fuList.size());
             newFUnit.label=fulabel;
             fuList.push_back(newFUnit);
-            units[opCode]=fuList; 
+            //units[opCode]=fuList; 
+            units.insert(std::pair<unsigned,std::list<FunctionalUnit>>(opCode,fuList));
             for(auto it=fuList.begin(); it!=fuList.end();it++){
                 for(auto it_FUnit = it->begin(); it_FUnit != it->end();it_FUnit++){
                     errs()<<ddg[*it_FUnit].name;
@@ -46,14 +47,14 @@ void Architecture::generateArchitecturalMapping(){
 void Architecture::generateSmallestArchitecturalMapping_Heu(){
     
     std::list<vertex_t> instruction_order;
-    boost::topological_sort(ddg, std::front_inserter(instruction_order));
-    // Sorting by ASAP gives worst results
-    //instruction_order = sortVerticesByASAP(ddg);
+    //boost::topological_sort(ddg, std::front_inserter(instruction_order));
+    //Sorting by asap the instructions gives better results.
+    instruction_order = sortVerticesByASAP(ddg);
     generateSmallestArchitecturalMapping(instruction_order);
 
 }
 
-void Architecture::computeSleepAndWriteBack_L2_Ops(){
+void Architecture::computeIdleAndWriteBack_L2_Ops(){
      vertex_it_t it,vi_end,next;
     boost::tie(it,vi_end) = vertices(ddg);
     int l1_write_latency =0;
@@ -67,9 +68,9 @@ void Architecture::computeSleepAndWriteBack_L2_Ops(){
     }   
     L2_Operation last_l2_op = l2_model.memory_controller.back();
     int nextAvail_L2Cycle = last_l2_op.clock_tick+ last_l2_op.latency;
-    int sleep_latency = getActualMaxLatency()+l1_write_latency-nextAvail_L2Cycle;
-    l2_model.add_L2_operation(nextAvail_L2Cycle,SLEEP, 0,0,sleep_latency);
-    nextAvail_L2Cycle+= sleep_latency;
+    int idle_latency = getActualMaxLatency()+l1_write_latency-nextAvail_L2Cycle;
+    l2_model.add_L2_operation(nextAvail_L2Cycle,IDLE, 0,0,idle_latency);
+    nextAvail_L2Cycle+= idle_latency;
     int write_back_begin_address=-1;
     int write_back_end_address=-1;
     for(next=it;it !=vi_end;it=next){
@@ -135,7 +136,8 @@ void Architecture::generateSmallestArchitecturalMapping(std::list<vertex_t> inst
             unsigned maxdist = 0;
             for(boost::tie(j,j_end) = in_edges(*i,ddg); j!= j_end;++j){
                 int v_source_id = source(*j,ddg);
-                unsigned sourceArchitecturalASAP=ddg[v_source_id].schedules[ARCHITECTURAL];
+                //unsigned sourceArchitecturalASAP=ddg[v_source_id].schedules[ARCHITECTURAL];
+                unsigned sourceArchitecturalASAP=vertexToClock[v_source_id];
                 maxdist = std::max(sourceArchitecturalASAP+getVertexLatency(ddg,v_source_id,config)-1,maxdist);
             }
             architecturalASAP=maxdist+1;
@@ -143,7 +145,7 @@ void Architecture::generateSmallestArchitecturalMapping(std::list<vertex_t> inst
         Instruction *I=ddg[*i].inst; 
         unsigned opCode = I->getOpcode();
         if(units.find(opCode) != units.end()){
-            std::list<FunctionalUnit> fuList = units.find(opCode)->second;
+            std::list<FunctionalUnit> &fuList = units.find(opCode)->second;
             bool allocated=false;
             std::list<FunctionalUnit>::iterator it,next;
             //Check if instruction is compatible with existing FUs
@@ -155,7 +157,8 @@ void Architecture::generateSmallestArchitecturalMapping(std::list<vertex_t> inst
                     if(architecturalASAP>allocated_clock){
                         allocated_clock=architecturalASAP;
                     }
-                    ddg[*i].schedules[ARCHITECTURAL]=allocated_clock;
+                    //ddg[*i].schedules[ARCHITECTURAL]=allocated_clock;
+                    vertexToClock[*i] = allocated_clock; 
                     if(schedule_architectural.size() > allocated_clock){
                         schedule_architectural[allocated_clock].push_back(*i);
                     }else{
@@ -167,10 +170,16 @@ void Architecture::generateSmallestArchitecturalMapping(std::list<vertex_t> inst
                         
                     }
                     it->earliest_free_slot=
-                        ddg[*i].schedules[ARCHITECTURAL]+getVertexLatency(ddg,*i,config); 
+                        //ddg[*i].schedules[ARCHITECTURAL]+getVertexLatency(ddg,*i,config); 
+                        vertexToClock[*i]+getVertexLatency(ddg,*i,config); 
                     it->push_back(*i);
-                    ddg[*i].FU=it->label;
-                    units[opCode]=fuList;
+                   //ddg[*i].FU=it->label;
+                    //vertexToFU[*i]=&*it;
+                    vertexToFU.insert(std::pair<unsigned,FunctionalUnit>(*i,*it));
+                   
+
+                   // units[opCode]=fuList;
+                    //units.insert(std::pair<unsigned,std::list<FunctionalUnit>>(opCode,fuList));
                     allocated=true;
                     break;
                 }
@@ -178,10 +187,12 @@ void Architecture::generateSmallestArchitecturalMapping(std::list<vertex_t> inst
             }
             if(!allocated){
                 //Add new functional unit and allocate
-                FunctionalUnit newFUnit;
+                FunctionalUnit newFUnit(ddg,config);
                 // Add Instruction to new FU
                 newFUnit.push_back(*i); 
-                ddg[*i].schedules[ARCHITECTURAL]=architecturalASAP;
+                //ddg[*i].schedules[ARCHITECTURAL]=architecturalASAP;
+                
+                vertexToClock[*i]=architecturalASAP;
                 if(schedule_architectural.size() > architecturalASAP){
                     schedule_architectural[architecturalASAP].push_back(*i);
                 }else{
@@ -197,14 +208,18 @@ void Architecture::generateSmallestArchitecturalMapping(std::list<vertex_t> inst
                 fulabel+="_"+std::to_string(fuList.size());
                 newFUnit.label=fulabel;
                 fuList.push_back(newFUnit);
-                ddg[*i].FU=fulabel;
-                units[opCode]=fuList;
+                //ddg[*i].FU=fulabel;
+                //vertexToFU[*i]=&newFUnit;
+                vertexToFU.insert(std::pair<unsigned,FunctionalUnit>(*i,newFUnit));
+                //units[opCode]=fuList;
+                units.insert(std::pair<unsigned,std::list<FunctionalUnit>>(opCode,fuList));
             }
         }else{
             //Add opcode to map
-            FunctionalUnit newFUnit;
+            FunctionalUnit newFUnit(ddg,config);
             newFUnit.push_back(*i); 
-            ddg[*i].schedules[ARCHITECTURAL]=architecturalASAP;
+            //ddg[*i].schedules[ARCHITECTURAL]=architecturalASAP;
+            vertexToClock[*i]=architecturalASAP;
             if(schedule_architectural.size() > architecturalASAP){
                 schedule_architectural[architecturalASAP].push_back(*i);
             }else{
@@ -220,7 +235,9 @@ void Architecture::generateSmallestArchitecturalMapping(std::list<vertex_t> inst
             FULabel+="_"+std::to_string(0);
             newFUnit.label=FULabel;
             newFuList.push_back(newFUnit);
-            ddg[*i].FU=FULabel;
+            //ddg[*i].FU=FULabel;
+            //vertexToFU[*i]=&newFUnit;
+            vertexToFU.insert(std::pair<unsigned,FunctionalUnit>(*i,newFUnit));
             units.insert(std::pair<unsigned,std::list<FunctionalUnit>>(opCode,newFuList));
         }
 
@@ -274,7 +291,10 @@ void Architecture::write_architecture_dot(std::string filename){
                 for(boost::tie(out_edge_it,out_edge_end) = boost::out_edges(*it_FUnit,ddg);
                         out_edge_it != out_edge_end; ++out_edge_it){
                     vertex_t target = boost::target(*out_edge_it,ddg);
-                    std::string target_label= ddg[target].FU;
+                    std::map<vertex_t,FunctionalUnit>::iterator it;
+                    it= vertexToFU.find(target);
+                    FunctionalUnit it_fu = it->second; 
+                    std::string target_label= it_fu.label;
                     edgeFUset.insert(edgeFU(source_label,target_label));
                     errs()<<"adding edge: "<<source_label<<" -> "<<target_label<<"\n";
                 }
@@ -299,6 +319,72 @@ void Architecture::write_architecture_dot(std::string filename){
     output_dot_file.close();
 
 }
+bool Architecture::respect_FU_execution(std::string arch_errorFilename){
+    bool correct=true;
+    std::ofstream arch_errorFile;
+    for(auto units_it = units.begin();units_it != units.end();units_it++){
+        std::list<FunctionalUnit> FUList = units_it->second;
+        for(auto it=FUList.begin(); it!=FUList.end();it++){
+            int latency=getVertexLatency(ddg, it->front(),config);
+            //sort
+            it->sort([this](vertex_t a, vertex_t b){return vertexToClock[a]<vertexToClock[b];});
+            auto inst = it->begin();
+            auto next = inst;
+            next ++;
+            for(;next != it->end();inst++,next++){
+                int next_clock=vertexToClock[*(next)];
+                int inst_clock=vertexToClock[*inst];
+                if(next_clock<inst_clock+latency){
+                    correct=false;
+                   arch_errorFile.open(arch_errorFilename);
+                   arch_errorFile<<"[Broken FU execution] "<<it->label;
+                   arch_errorFile<<" "<<ddg[*inst].name;
+                   arch_errorFile<<" (ID =  "<<std::to_string(*inst);
+                   arch_errorFile<<", CLOCK = "<<std::to_string(inst_clock);
+                   arch_errorFile<<") and "<<ddg[*next].name;
+                   arch_errorFile<<" (ID =  "<<std::to_string(*next);
+                   arch_errorFile<<", CLOCK = "<<std::to_string(next_clock);
+                   arch_errorFile<<") Latency of Op: "<<std::to_string(latency);
+                   arch_errorFile<<"\n";
+                   arch_errorFile.close();
+     
+                }
+            }
+        }
+    }
+    return correct;
+}
+bool Architecture::respect_dependencies(std::string arch_errorFilename){
+    vertex_it_t i,i_end,i_next;
+    in_edge_it_t j, j_end;
+    boost::tie(i,i_end) = vertices(ddg);
+    std::ofstream arch_errorFile;
+    bool correct=true;
+    for(i_next=i;i !=i_end;i=i_next){
+        ++i_next;
+        //Instruction *I = ddg[*i].inst;
+        unsigned i_clock = vertexToClock[*i];
+        if (boost::in_degree(*i,ddg)>0){
+            for(boost::tie(j,j_end) = in_edges(*i,ddg); j!= j_end;++j){
+                int v_source_id = source(*j,ddg);
+                unsigned source_clock = vertexToClock[v_source_id]; 
+                if(source_clock >= i_clock){
+                    correct=false;
+                   arch_errorFile.open(arch_errorFilename);
+                   arch_errorFile<<"[Broken dependency] "<<ddg[v_source_id].name;
+                   arch_errorFile<<" (ID =  "<<std::to_string(v_source_id);
+                   arch_errorFile<<", CLOCK = "<<std::to_string(source_clock);
+                   arch_errorFile<<") -> "<<ddg[*i].name;
+                   arch_errorFile<<" (ID =  "<<std::to_string(*i);
+                   arch_errorFile<<", CLOCK = "<<std::to_string(i_clock);
+                   arch_errorFile<<")\n";
+                   arch_errorFile.close();
+                }
+            } 
+        } 
+    }
+    return correct;
+}
 
 void Architecture::write_dot(std::string filename){
     std::ofstream output_dot_file;
@@ -321,7 +407,7 @@ void Architecture::write_dot(std::string filename){
     }
     vertex_it_t vi,vi_end,next;
     boost::tie(vi,vi_end) = vertices(ddg);
-    vertex_writer vert_writer = vertex_writer(ddg,std::map<vertex_t,std::string>(),ARCHITECTURAL);
+    vertex_writer vert_writer = vertex_writer(ddg,std::map<vertex_t,std::string>(),ARCHITECTURAL,vertexToClock);
     for(next=vi; vi !=vi_end;vi=next){
         ++next;
         output_dot_file << std::to_string(*vi);
@@ -464,7 +550,7 @@ double Architecture::getArea(){
     for(units_it = units.begin();units_it != units.end();units_it++){
         std::list<FunctionalUnit> FUList = units_it->second;
         FunctionalUnit firstFU = FUList.front();
-        double instanceArea = firstFU.getArea(ddg,config,currentBankDepth);
+        double instanceArea = firstFU.getArea();
         double instancesArea = instanceArea * FUList.size();
         totalArea+= instancesArea;
     }
@@ -480,7 +566,7 @@ double Architecture::getStaticPower(){
     for(units_it = units.begin();units_it != units.end();units_it++){
         std::list<FunctionalUnit> FUList = units_it->second;
         FunctionalUnit firstFU = FUList.front();
-        double instanceStaticPower = firstFU.getStaticPower(ddg,config,currentBankDepth);
+        double instanceStaticPower = firstFU.getStaticPower();
         double instancesStaticPower = instanceStaticPower * FUList.size();
         totalStaticPower+= instancesStaticPower;
     }
@@ -496,7 +582,7 @@ double Architecture::getDynamicPower(){
     for(units_it = units.begin();units_it != units.end();units_it++){
         std::list<FunctionalUnit> FUList = units_it->second;
         FunctionalUnit firstFU = FUList.front();
-        double instanceDynamicPower = firstFU.getDynamicPower(ddg,config,currentBankDepth);
+        double instanceDynamicPower = firstFU.getDynamicPower();
 
         double instancesDynamicPower = 0;
         for(auto it=FUList.begin(); it!=FUList.end();it++){

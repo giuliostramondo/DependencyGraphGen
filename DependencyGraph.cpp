@@ -2,6 +2,11 @@
 
 std::unordered_set<Instruction*> removedInstructions;
 
+DependencyGraph::DependencyGraph(mem_comp_paramJSON_format _conf, BasicBlock *BB): ddg(0), config(_conf),l2_model(_conf){
+            errs()<<"DependencyGraph constructor\n";
+            errs()<<"Latency of MRAM read :"+std::to_string(config.memory_param.mram.read_latency)<<"\n";    
+    populateGraph(BB);
+} 
 void DependencyGraph::replaceAndErase(Instruction *I){
     if(I==NULL)return;
     if(I->getParent() == NULL)return;
@@ -24,6 +29,67 @@ std::string replaceAll(StringRef inString, char toReplace, char replacement){
     return str_data;
 }
 
+void DependencyGraph::performArchitecturalDSE(std::string ParameterFilename,
+                                               int OptSearchLimit ){
+    
+                bool firstArchitecture=true;
+                int totalLatencyFromL2= l2_model.getNextAvail_L2_Cycle();
+                for(unsigned i=schedule.size();i<=schedule_sequential.size()+totalLatencyFromL2;i++){
+                    Architecture a(ddg,i, config,l2_model);
+                    a.performALAPSchedule();
+                    Architecture *curr_a;
+                    if(OptSearchLimit!=0){
+                        errs()<<"Selected the BETTER THAN GREEDY algorithm\n";
+                        errs()<<"Optimization limit set to "<<OptSearchLimit<<"\n";
+                        curr_a=a.generateSmallestArchitecturalMapping_Opt(OptSearchLimit);
+                    }else{
+                        errs()<<"Selected the GREEDY algorithm\n";
+                        a.generateSmallestArchitecturalMapping_Heu();
+                        curr_a=&a;
+                    
+                    }
+                    if (firstArchitecture){
+                        std::ofstream csvFile;
+                        csvFile.open(std::string(ParameterFilename.c_str())+".arch_info.csv");
+                        csvFile<<"MaxLatency,ActualMaxLatency,Area,StaticPower,DynamicPower,TotalEnergy,";
+                        csvFile<<curr_a->getCSVResourceHeader()<<"\n";
+                        csvFile.close();
+                        firstArchitecture=false;
+                    }
+
+                    //a.describe();
+                    curr_a->computeIdleAndWriteBack_L2_Ops();
+                    curr_a->dumpSchedule();
+                    std::string baseFileName = std::string("Architecture_latency_");
+                    baseFileName += std::to_string(i);
+                    std::string arcFileName=baseFileName+".dot";
+                    curr_a->write_dot(arcFileName);
+                    std::string arc_schemeFilename=baseFileName+"_schematic.dot";
+                    curr_a->write_architecture_dot(arc_schemeFilename);
+                    curr_a->appendArchInfoToCSV(std::string(ParameterFilename.c_str())+".arch_info.csv");
+                    std::string arc_l2ControllerFilename= baseFileName+ "_l2_memory_controller.csv";
+                    curr_a->l2_model.dumpMemoryOperations(arc_l2ControllerFilename);
+                    std::string architectureErrLog=baseFileName+"_error.log";
+                    curr_a->respect_dependencies(architectureErrLog);
+                    curr_a->respect_FU_execution(architectureErrLog);
+                    if(curr_a->isMinimal())
+                        break;
+                }
+}
+
+
+void DependencyGraph::computeSchedules(){
+    write_dot("DependencyGraph_original_DBG1.dot");
+    supernode_opt();
+    write_dot("DependencyGraph_after_supernode_opt_DBG1.dot");
+    max_par_schedule();
+    write_dot("DependencyGraph_ASAP_ALAP_schedule_DBG1.dot",ASAP_ALAP);
+    sequential_schedule();
+    write_dot("DependencyGraph_SEQUENTIAL_schedule_DBG1.dot",SEQUENTIAL);
+
+    l2_model.dumpMemoryPartitioning("l2_memory_partitioning.csv");
+
+}
 void DependencyGraph::populateGraph(BasicBlock *BB){
     errs() << "populating ddg ... ";
     for(BasicBlock::iterator inst = BB->begin(),inst_e = BB->end(); inst != inst_e; ++inst){
@@ -336,7 +402,22 @@ void DependencyGraph::supernode_opt_inner(unsigned opCode){
     dumpBasicBlockIR("bb_after_instruction_removal.ll",bb);
     regenerateBasicBlock(bb);
     dumpBasicBlockIR("bb_after_instruction_reorder.ll",bb);
-
+    //update read_nodes and write_nodes (after modifying the graph the vertex id might change)
+    read_nodes=std::list<vertex_t>();
+    write_nodes=std::list<vertex_t>();
+    vertex_it_t it_1,vi_end_1,next_1;
+    boost::tie(it_1,vi_end_1) = vertices(ddg);
+    for(next_1=it_1;it_1 !=vi_end_1;it_1=next_1){
+        ++next_1;
+        Instruction *I = ddg[*it_1].inst;
+        if(isa<LoadInst>(I)){
+            read_nodes.push_back(*it_1);
+        }else{
+            if(isa<StoreInst>(I)){
+                write_nodes.push_back(*it_1);
+            }
+        }
+    }
 }
 
 void DependencyGraph::regenerateBasicBlock(BasicBlock *bb){

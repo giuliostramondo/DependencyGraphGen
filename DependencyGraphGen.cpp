@@ -41,7 +41,7 @@ using namespace llvm;
 
 cl::opt<std::string> ParameterFilename("dependencyGraphConf", cl::desc("Specify configuration file for the DependencyGraph module"), cl::value_desc("filename"));
 
-cl::opt<int> OptSearchLimit("dependencyGraphOptLimit", cl::desc("Specify a limit for the search of the optimal solution"), cl::value_desc("integer"));
+cl::opt<int> OptSearchLimit("dependencyGraphOptLimit", cl::desc("Specify a limit for the search of the optimal solution"), cl::value_desc("integer"),cl::init(0));
 
 namespace {
 
@@ -62,78 +62,18 @@ namespace {
                 //TODO Check if file exists
                 config = parse_mem_comp_paramJSON("./configurationFiles/conf_1.json");
             }
-            errs()<< config.compute_param.funtional_unit.mul.latency << "<<LATENCY MUL32\n";
             errs() << "//Data Dependency Graph Generator running on: ";
             errs().write_escaped(F.getName()) << '\n';
-            int block=0;
             errs() << "//Iterating over basic blocks of "<< F.getName() << '\n';
             if(F.size()>1){
                 errs() <<"There are "<<F.size()<<" basic blocks in the code, something went wrong during the loop unrolling\nQuitting...\n";
                 report_error("There are "+std::to_string(F.size())+" basic blocks in the code, something went wrong during the loop unrolling\n");
                 return false;
             }
-            for(Function::iterator b = F.begin(), be = F.end(); b != be; ++b) {
-
-                BasicBlock *BB = &*b;
-                errs()<< "//Block: " << block << '\n';
-                block++;      
-                DependencyGraph DG(config);
-                DG.populateGraph(BB); 
-                DG.write_dot("DependencyGraph_original_DBG1.dot");
-                DG.supernode_opt();
-                DG.write_dot("DependencyGraph_after_supernode_opt_DBG1.dot");
-                DG.max_par_schedule();
-                DG.write_dot("DependencyGraph_ASAP_ALAP_schedule_DBG1.dot",ASAP_ALAP);
-                DG.sequential_schedule();
-                DG.write_dot("DependencyGraph_SEQUENTIAL_schedule_DBG1.dot",SEQUENTIAL);
-                std::ofstream csvFile;
-                csvFile.open(std::string(ParameterFilename.c_str())+".arch_info.csv");
-                csvFile<<"MaxLatency,ActualMaxLatency,Area,StaticPower,DynamicPower,TotalEnergy,";
-                bool firstArchitecture=true;
-                DG.l2_model.dumpMemoryPartitioning("l2_memory_partitioning.csv");
-                int totalLatencyFromL2= DG.l2_model.getNextAvail_L2_Cycle();
-                for(unsigned i=DG.schedule.size();i<=DG.schedule_sequential.size()+totalLatencyFromL2;i++){
-                    Architecture a(DG.ddg,i, DG.config,DG.l2_model);
-                    //a.generateArchitecturalMapping();
-                    a.performALAPSchedule();
-                    //a.generateSmallestArchitecturalMapping_Heu();
-                    Architecture *curr_a;
-                    if(OptSearchLimit.getNumOccurrences()>0){
-                        errs()<<"Selected the BETTER THAN GREEDY algorithm\n";
-                        errs()<<"Optimization limit set to "<<OptSearchLimit<<"\n";
-                        curr_a=a.generateSmallestArchitecturalMapping_Opt(OptSearchLimit);
-                    }else{
-                        errs()<<"Selected the GREEDY algorithm\n";
-                        a.generateSmallestArchitecturalMapping_Heu();
-                        curr_a=&a;
-                    
-                    }
-                    if (firstArchitecture){
-                        csvFile<<curr_a->getCSVResourceHeader()<<"\n";
-                        csvFile.close();
-                        firstArchitecture=false;
-                    }
-
-                    //a.describe();
-                    curr_a->computeSleepAndWriteBack_L2_Ops();
-                    curr_a->dumpSchedule();
-                    std::string arcFileName=std::string("Architecture_latency_");
-                    arcFileName+=std::to_string(i);
-                    arcFileName+=".dot";
-                    curr_a->write_dot(arcFileName);
-                    std::string arc_schemeFilename=std::string("Architecture_latency_");
-                    arc_schemeFilename+=std::to_string(i);
-                    arc_schemeFilename+="_schematic.dot";
-                    curr_a->write_architecture_dot(arc_schemeFilename);
-                    curr_a->appendArchInfoToCSV(std::string(ParameterFilename.c_str())+".arch_info.csv");
-                    std::string arc_l2ControllerFilename=std::string("Architecture_latency_");
-                    arc_l2ControllerFilename+= std::to_string(i);
-                    arc_l2ControllerFilename+= "_l2_memory_controller.csv";
-                    curr_a->l2_model.dumpMemoryOperations(arc_l2ControllerFilename);
-                    if(curr_a->isMinimal())
-                        break;
-                }
-            }
+                BasicBlock *BB = &F.front();
+                DependencyGraph DG(config,BB);
+                DG.computeSchedules();
+                DG.performArchitecturalDSE(ParameterFilename,OptSearchLimit);
             return false;
         }
     };

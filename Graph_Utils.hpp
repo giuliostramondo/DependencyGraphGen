@@ -51,21 +51,6 @@ typedef DataDependencyGraph::in_edge_iterator in_edge_it_t;
 typedef DataDependencyGraph::out_edge_iterator out_edge_it_t;
 typedef DataDependencyGraph::vertex_iterator vertex_it_t;
 
-class FunctionalUnit: public std::list<vertex_t>{
-    public:
-    unsigned opCode;
-    unsigned extra_description;
-    unsigned earliest_free_slot=0;
-    std::string label;
-    int getLatency(DataDependencyGraph& ddg,mem_comp_paramJSON_format config);
-    double getArea(DataDependencyGraph& ddg,mem_comp_paramJSON_format config, 
-            int registerFileAVGDepth = 5);
-    double getStaticPower(DataDependencyGraph& ddg,mem_comp_paramJSON_format config,
-            int registerFileAVGDepth = 5);
-            
-    double getDynamicPower(DataDependencyGraph& ddg,mem_comp_paramJSON_format config,
-            int registerFileAVGDepth = 5);
-};
 
 struct edgeHasher{
     public:
@@ -116,8 +101,8 @@ class vertex_writer {
         // constructor - needs reference to graph we are coloring
         vertex_writer(DataDependencyGraph& g, 
         std::map<vertex_t,std::string> vertices_to_highlight =std::map<vertex_t,std::string>(),
-        Schedule to_print = NONE) : ddg( g ), 
-        vertices_to_highlight(vertices_to_highlight), to_print(to_print) {}
+        Schedule to_print = NONE, std::map<vertex_t,unsigned> architectural_schedule = std::map<vertex_t,unsigned>()) : ddg( g ), 
+        vertices_to_highlight(vertices_to_highlight), to_print(to_print),architectural_schedule(architectural_schedule) {}
     
         // functor that does the coloring
         template <class VertexOrEdge>
@@ -137,6 +122,7 @@ class vertex_writer {
                 std::string cycle_asap; 
                 std::string cycle_alap; 
                 std::string cycle_sequential; 
+                std::string cycle_architectural; 
                 switch(to_print){
                     case ASAP_ALAP:
                         cycle_asap = std::to_string(ddg[e].schedules[ASAP]);
@@ -159,9 +145,19 @@ class vertex_writer {
                         vertex_label.append(cycle_asap);
                         break;
                     case ARCHITECTURAL:
-                        cycle_asap = std::to_string(ddg[e].schedules[ARCHITECTURAL]);
-                        vertex_label.append(".Cycle:");
-                        vertex_label.append(cycle_asap);
+                        //cycle_asap = std::to_string(ddg[e].schedules[ARCHITECTURAL]);
+                        if(isa<LoadInst>(inst)){
+                            cycle_asap = std::to_string(ddg[e].schedules[ASAP]);
+                            cycle_architectural = std::to_string(architectural_schedule.at(e));
+                            vertex_label.append(".ASAPCycle:");
+                            vertex_label.append(cycle_asap);
+                            vertex_label.append(".ArchitecturalCycle:");
+                            vertex_label.append(cycle_asap);
+                        }else{
+                            cycle_asap = std::to_string(architectural_schedule.at(e));
+                            vertex_label.append(".Cycle:");
+                            vertex_label.append(cycle_asap);
+                        }
                         break;
                     case ALAP:
                         cycle_alap = std::to_string(ddg[e].schedules[ALAP]);
@@ -198,6 +194,7 @@ private:
     bool asap_scheduled;
     bool alap_scheduled;
     Schedule to_print;
+    std::map<vertex_t,unsigned> architectural_schedule; 
 
 };
 
