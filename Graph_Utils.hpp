@@ -152,7 +152,7 @@ class vertex_writer {
                             vertex_label.append(".ASAPCycle:");
                             vertex_label.append(cycle_asap);
                             vertex_label.append(".ArchitecturalCycle:");
-                            vertex_label.append(cycle_asap);
+                            vertex_label.append(cycle_architectural);
                         }else{
                             cycle_asap = std::to_string(architectural_schedule.at(e));
                             vertex_label.append(".Cycle:");

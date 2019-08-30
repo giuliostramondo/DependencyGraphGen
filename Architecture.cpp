@@ -240,9 +240,60 @@ void Architecture::generateSmallestArchitecturalMapping(std::list<vertex_t> inst
             vertexToFU.insert(std::pair<unsigned,FunctionalUnit>(*i,newFUnit));
             units.insert(std::pair<unsigned,std::list<FunctionalUnit>>(opCode,newFuList));
         }
-
+    }
+    //Iterate through load l1 modules to let them send data ALAP
+    //We want to store the elemenent in L1 until they are needed
+    auto loadFUs= units.find(Instruction::Load)->second;
+    for(auto FU = loadFUs.begin(); FU!= loadFUs.end(); FU++){
+        //take smallest distance between the sent time and used time
+        std::list<std::pair<vertex_t,int>> element_sortedbyusage= 
+            std::list<std::pair<vertex_t,int>>();
+        int vertexLatency=-1;
+        for(auto inst_it = FU->begin();inst_it!=FU->end();inst_it++){
+            if(vertexLatency == -1){
+                vertexLatency=getVertexLatency(ddg,*inst_it,config);
+            }
+            out_edge_it_t out_j, out_j_end;
+            int min_usage_clock=-1;
+            for(boost::tie(out_j,out_j_end) = out_edges(*inst_it,ddg);out_j!= out_j_end;++out_j){
+                vertex_t user = target(*out_j,ddg);  
+                int element_ALAP_clock=
+                    vertexToClock[user]-vertexLatency;
+                if(min_usage_clock == -1 || element_ALAP_clock< min_usage_clock){
+                    min_usage_clock=element_ALAP_clock;
+                }
+            }
+            if(element_sortedbyusage.size()==0){
+                element_sortedbyusage.push_back(std::pair<vertex_t,int>(*inst_it,min_usage_clock));
+            }else{
+                auto it  = element_sortedbyusage.begin();
+                while(it != element_sortedbyusage.end() &&
+                        it->second > min_usage_clock)
+                    it++;
+                element_sortedbyusage.insert(it,std::pair<vertex_t,int>(*inst_it,min_usage_clock));
+            }
+        }
+        int latest_free_clock=-1;
+        for(auto sorted_vtx_it = element_sortedbyusage.begin();
+               sorted_vtx_it!=element_sortedbyusage.end(); sorted_vtx_it++){
+            int vertex = sorted_vtx_it->first;
+            int usage_clock = sorted_vtx_it->second;
+           if(latest_free_clock == -1){
+               vertexToClock[vertex]=usage_clock;
+              latest_free_clock= usage_clock - vertexLatency; 
+           }else{
+                if(usage_clock < latest_free_clock){
+                    vertexToClock[vertex]=usage_clock;
+                    latest_free_clock=usage_clock-vertexLatency;
+                }else{
+                    vertexToClock[vertex]=latest_free_clock;
+                    latest_free_clock-=vertexLatency;
+                }
+           } 
+        } 
 
     }
+    
 }
 
 void Architecture::describe(){
