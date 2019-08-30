@@ -72,6 +72,7 @@ void DependencyGraph::performArchitecturalDSE(std::string ParameterFilename,
                     std::string architectureErrLog=baseFileName+"_error.log";
                     curr_a->respect_dependencies(architectureErrLog);
                     curr_a->respect_FU_execution(architectureErrLog);
+                    curr_a->L1_sends_doesnt_send_data_before_arrival_fromL2(architectureErrLog);
                     if(curr_a->isMinimal())
                         break;
                 }

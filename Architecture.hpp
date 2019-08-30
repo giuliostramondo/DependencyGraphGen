@@ -49,6 +49,7 @@ class Architecture{
         L2_Cache l2_model;
         bool respect_dependencies(std::string arch_errorFilename);
         bool respect_FU_execution(std::string arch_errorFilename);
+        bool L1_sends_doesnt_send_data_before_arrival_fromL2(std::string arch_errorFilename);
         bool isMinimal();
 
     private:
