@@ -11,7 +11,7 @@ void Architecture::generateArchitecturalMapping(){
         ++next;
         //create FU
         //std::list<vertex_t> newFUnit;
-        FunctionalUnit newFUnit(ddg,config);
+        FunctionalUnit newFUnit(ddg,config,vertexToClock,vertexToFU);
         // Add Instruction to new FU
         newFUnit.push_back(*vi); 
         Instruction *I=ddg[*vi].inst; 
@@ -187,7 +187,7 @@ void Architecture::generateSmallestArchitecturalMapping(std::list<vertex_t> inst
             }
             if(!allocated){
                 //Add new functional unit and allocate
-                FunctionalUnit newFUnit(ddg,config);
+                FunctionalUnit newFUnit(ddg,config,vertexToClock,vertexToFU);
                 // Add Instruction to new FU
                 newFUnit.push_back(*i); 
                 //ddg[*i].schedules[ARCHITECTURAL]=architecturalASAP;
@@ -216,7 +216,7 @@ void Architecture::generateSmallestArchitecturalMapping(std::list<vertex_t> inst
             }
         }else{
             //Add opcode to map
-            FunctionalUnit newFUnit(ddg,config);
+            FunctionalUnit newFUnit(ddg,config,vertexToClock,vertexToFU);
             newFUnit.push_back(*i); 
             //ddg[*i].schedules[ARCHITECTURAL]=architecturalASAP;
             vertexToClock[*i]=architecturalASAP;
@@ -314,6 +314,39 @@ void Architecture::describe(){
             } 
             errs()<<"\n";
         }
+    }
+}
+
+void Architecture::computeRegisterFileAndInstructionMemorySize(){
+    std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
+    for(units_it = units.begin();units_it != units.end();units_it++){
+        std::list<FunctionalUnit>& FUList = units_it->second;
+        for(auto it=FUList.begin(); it!=FUList.end();it++){
+            it->computeRegisterFileAndInstructionMemorySize();
+        } 
+    }
+}
+void Architecture::DumpRegisterFileAllocation(std::string fileBaseName){
+    std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
+    for(units_it = units.begin();units_it != units.end();units_it++){
+        std::list<FunctionalUnit> FUList = units_it->second;
+        for(auto it=FUList.begin(); it!=FUList.end();it++){
+            it->DumpRegisterFileAllocation(fileBaseName);
+        } 
+    }
+}
+void Architecture::DumpFUInfo(std::string fileBaseName){
+    std::string fileName=fileBaseName+"_FU_infos.csv";
+    std::ofstream file;
+    file.open(fileName);
+    file<<"Label,OpArea, OpStaticEnergy, OpDynEnergy,InstMemBitwidth, InstMemDepth,InstMemArea, InstMemStaticEn,InstMemDynEn,InternalRegFileBitwidth,InternalRegFileDepth,InternalRegFileAccesses,InternalRegFileArea, InternalRegFileStaticEn, InternalRegFileDynEn,TotalFUArea,TotalFUStaticEn,TotalFUDynEn\n";
+    file.close();
+    std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
+    for(units_it = units.begin();units_it != units.end();units_it++){
+        std::list<FunctionalUnit> FUList = units_it->second;
+        for(auto it=FUList.begin(); it!=FUList.end();it++){
+            it->appendFUInfo(fileName);
+        } 
     }
 }
 
@@ -617,52 +650,39 @@ int Architecture::getMaxBankDepth(){
 
 double Architecture::getArea(){    
     double totalArea = 0;
-    int currentBankDepth=bankDepth;
-    if(currentBankDepth == 0)
-        currentBankDepth = getMaxBankDepth();
     std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
     for(units_it = units.begin();units_it != units.end();units_it++){
         std::list<FunctionalUnit> FUList = units_it->second;
-        FunctionalUnit firstFU = FUList.front();
-        double instanceArea = firstFU.getArea();
-        double instancesArea = instanceArea * FUList.size();
-        totalArea+= instancesArea;
+        for(auto FU =FUList.begin();FU != FUList.end();FU++){
+            double instanceArea = FU->getArea();
+            totalArea+= instanceArea;
+        }
     }
     return totalArea;
 }
 
 double Architecture::getStaticPower(){
     double totalStaticPower = 0;
-    int currentBankDepth=bankDepth;
-    if(currentBankDepth == 0)
-        currentBankDepth = getMaxBankDepth();
     std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
     for(units_it = units.begin();units_it != units.end();units_it++){
         std::list<FunctionalUnit> FUList = units_it->second;
-        FunctionalUnit firstFU = FUList.front();
-        double instanceStaticPower = firstFU.getStaticPower();
-        double instancesStaticPower = instanceStaticPower * FUList.size();
-        totalStaticPower+= instancesStaticPower;
+        for(auto FU =FUList.begin();FU != FUList.end();FU++){
+            double instanceStaticPower = FU->getStaticPower();
+            totalStaticPower+= instanceStaticPower;
+        }
     }
     return totalStaticPower* getActualMaxLatency();
 }
 
 double Architecture::getDynamicPower(){
     double totalDynamicPower = 0;
-    int currentBankDepth=bankDepth;
-    if(currentBankDepth == 0)
-        currentBankDepth = getMaxBankDepth();
     std::map<unsigned,std::list<FunctionalUnit>>::iterator units_it;
     for(units_it = units.begin();units_it != units.end();units_it++){
         std::list<FunctionalUnit> FUList = units_it->second;
-        FunctionalUnit firstFU = FUList.front();
-        double instanceDynamicPower = firstFU.getDynamicPower();
-
-        double instancesDynamicPower = 0;
-        for(auto it=FUList.begin(); it!=FUList.end();it++){
-           instancesDynamicPower += instanceDynamicPower * it->size(); 
+        for(auto FU =FUList.begin();FU != FUList.end();FU++){
+            double instanceDynamicPower = FU->getStaticPower();
+            totalDynamicPower+= instanceDynamicPower;
         }
-        totalDynamicPower+= instancesDynamicPower;
     }
     return totalDynamicPower;
 }

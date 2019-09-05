@@ -59,6 +59,7 @@ void DependencyGraph::performArchitecturalDSE(std::string ParameterFilename,
 
                     //a.describe();
                     curr_a->computeIdleAndWriteBack_L2_Ops();
+                    curr_a->computeRegisterFileAndInstructionMemorySize();
                     curr_a->dumpSchedule();
                     std::string baseFileName = std::string("Architecture_latency_");
                     baseFileName += std::to_string(i);
@@ -70,9 +71,11 @@ void DependencyGraph::performArchitecturalDSE(std::string ParameterFilename,
                     std::string arc_l2ControllerFilename= baseFileName+ "_l2_memory_controller.csv";
                     curr_a->l2_model.dumpMemoryOperations(arc_l2ControllerFilename);
                     std::string architectureErrLog=baseFileName+"_error.log";
+                    curr_a->DumpRegisterFileAllocation(baseFileName);
                     curr_a->respect_dependencies(architectureErrLog);
                     curr_a->respect_FU_execution(architectureErrLog);
                     curr_a->L1_sends_doesnt_send_data_before_arrival_fromL2(architectureErrLog);
+                    curr_a->DumpFUInfo(baseFileName);
                     if(curr_a->isMinimal())
                         break;
                 }

@@ -50,6 +50,9 @@ class Architecture{
         bool respect_dependencies(std::string arch_errorFilename);
         bool respect_FU_execution(std::string arch_errorFilename);
         bool L1_sends_doesnt_send_data_before_arrival_fromL2(std::string arch_errorFilename);
+        void computeRegisterFileAndInstructionMemorySize();
+        void DumpRegisterFileAllocation(std::string fileBaseName);
+        void DumpFUInfo(std::string fileBaseName);
         bool isMinimal();
 
     private:
