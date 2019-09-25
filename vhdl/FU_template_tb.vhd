@@ -105,14 +105,15 @@ begin
     process
     begin
         r_r_LOAD_INST <= '1';
-        -- add first two inputs
-        --             @ cycle 8  cbOut 1 is input 1    cbOut2 is input 2  cbOut3 is input3
-        r_r_INPUT_INST <= x"08" & "00"                  & "01"             & "10"       &    
+        -- Select Input 1 and Input 2, perform operation on them
+        --             @ cycle 8  cbOut 1 is input 1    cbOut2 is input 2  cbOut3 is input4
+        r_r_INPUT_INST <= x"08" & "00"                  & "01"             & "11"       &    
         --   dont write to REG   r_REG1_s  r_REG2_s   w_REG1_s w_REG2_s  unused demuxes sel,  muxa and muxb sel cb in  
                           "00" & "0000"   & "0000"   & "0000" & "0000"  & "00" & "00"       & "01"            & "01";
         r_r_LOAD_NEXT_INST <= '1';
         wait for 50 ns;
-        -- use previous output on both inputs of the op
+        -- Use the output of the previous computation, forward it two both MuxA and MuxB and add them
+        -- Store the result of the previous computation to REG2
         r_r_LOAD_INST <= '1';
         --             @ cycle 8  cbOut 1 is input 1    cbOut2 is input 2  cbOut3 is input3
         r_r_INPUT_INST <= x"09" & "00"                  & "01"             & "10"       &    
@@ -120,7 +121,8 @@ begin
                           "01" & "0000"   & "0000"   & "0000" & "0010"  & "00" & "00"       & "00"            & "00";
         r_r_LOAD_NEXT_INST <= '1';
         wait for 50 ns;
-        -- store result in register at position 1 
+        -- Write the result of the previous computation to REG1, forward the result of the previous computation 
+        -- To MuxA and MuxB and add them
         r_r_LOAD_INST <= '1';
         --             @ cycle 8  cbOut 1 is input 1    cbOut2 is input 2  cbOut3 is input3
         r_r_INPUT_INST <= x"0a" & "00"                  & "01"             & "10"       &    
@@ -128,7 +130,7 @@ begin
                           "01" & "0000"   & "0000"   & "0000" & "0001"  & "00" & "00"       & "00"            & "00";
         r_r_LOAD_NEXT_INST <= '1';
         wait for 50 ns;
-        -- store result in register at position 1 
+        -- Prefetch value in REG1 for next cycle, forward the result of the previous computation To MuxA and MuxB and add them 
         r_r_LOAD_INST <= '1';
         --             @ cycle 8  cbOut 1 is input 1    cbOut2 is input 2  cbOut3 is input3
         r_r_INPUT_INST <= x"0b" & "00"                  & "01"             & "10"       &    
@@ -136,7 +138,8 @@ begin
                                  "00" & "0001"   & "0001"   & "0000" & "0000"  & "00" & "00"       & "00"            & "00";
         r_r_LOAD_NEXT_INST <= '1';
         wait for 50 ns;
-        -- store result in register at position 1 
+        -- Select Input 1 and send it to MuxA, send the output of the register file to MuxB 
+        -- (it was prefetched the previous cycle), prefetch the value in register 2 and send it to MuxA and MuxB
         r_r_LOAD_INST <= '1';
         --             @ cycle 8  cbOut 1 is input 1    cbOut2 is input 2  cbOut3 is input3
         r_r_INPUT_INST <= x"0c" & "00"                  & "01"             & "10"       &    
@@ -167,9 +170,9 @@ begin
         -- 7th computation clock
         wait for 50 ns;
         -- 8th computation clock
+        --        Input 1        Input 2       Input 3        Input 4
         r_i_FU <= x"00000004" & x"00000003" & x"00000006" & x"00000001"; -- input for cycle 8
         wait for 50 ns;
-
         wait for 50 ns;
         wait for 50 ns;
         wait for 50 ns;

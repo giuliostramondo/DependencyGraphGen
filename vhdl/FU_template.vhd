@@ -235,25 +235,25 @@ begin
                     inputCrossbarSelect := w_OUTPUT_INST(31 downto (31 - 5));
                     in_cb_out3_sel := to_integer(unsigned(inputCrossbarSelect((crossbarSelectBITs)-1 downto 0)));
                    d_in_cb_out3_sel <= in_cb_out3_sel; 
-                   input_crossbar_out3 := i_FU( ((in_cb_out3_sel +1) * (BITWIDTH +1))-1 downto (in_cb_out3_sel * (BITWIDTH+1)));
+                   input_crossbar_out3 := i_FU( (((INPUT_PORTS-1)-in_cb_out3_sel +1) * (BITWIDTH +1))-1 downto (((INPUT_PORTS-1)-in_cb_out3_sel) * (BITWIDTH+1)));
                    d_input_crossbar_out3 <= input_crossbar_out3;
 
                    in_cb_out2_sel := to_integer(unsigned(inputCrossbarSelect((2*(crossbarSelectBITs))-1 downto ((crossbarSelectBITs)))));
                    d_in_cb_out2_sel <= in_cb_out2_sel; 
-                   input_crossbar_out2 := i_FU( ((in_cb_out2_sel +1) * (BITWIDTH +1))-1 downto (in_cb_out2_sel * (BITWIDTH+1)));
+                   input_crossbar_out2 := i_FU( (((INPUT_PORTS-1)-in_cb_out2_sel +1) * (BITWIDTH +1))-1 downto (((INPUT_PORTS-1)-in_cb_out2_sel) * (BITWIDTH+1)));
                    d_input_crossbar_out2<= input_crossbar_out2;
 
                    in_cb_out1_sel := to_integer(unsigned(inputCrossbarSelect((3*(crossbarSelectBITs))-1 downto ((2*(crossbarSelectBITs)))))); 
                    d_in_cb_out1_sel<= in_cb_out1_sel;
-                   input_crossbar_out1 := i_FU( ((in_cb_out1_sel +1) * (BITWIDTH +1))-1 downto (in_cb_out1_sel * (BITWIDTH+1)));
+                   input_crossbar_out1 := i_FU( (((INPUT_PORTS-1)-in_cb_out1_sel +1) * (BITWIDTH +1))-1 downto (((INPUT_PORTS-1)-in_cb_out1_sel) * (BITWIDTH+1)));
                    d_input_crossbar_out1 <= input_crossbar_out1;
                    
                    muxAoutSel := w_OUTPUT_INST(1 downto 0);
                    w_SEL_MUXA <= w_OUTPUT_INST(1 downto 0);
                    muxBoutSel := w_OUTPUT_INST(3 downto 2);
                    w_SEL_MUXB <= w_OUTPUT_INST(3 downto 2);
+
                    opOut <= std_logic_vector(unsigned(muxAout) + unsigned(muxBout));
-                    
                    -- DEBUG MUX A
                     muxa_in1 <= opOut;
                     muxa_in2 <= input_crossbar_out1;
