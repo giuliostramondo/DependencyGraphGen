@@ -11,12 +11,19 @@ entity FU is
                 BITWIDTH : natural; -- 31 -> meaning 32
                 RF_DEPTH: natural; --15 -> meaning 16
                 INPUT_PORTS : natural;
-                OUTPUT_PORTS : natural
+                OUTPUT_PORTS : natural;
+                OPCODE :natural; -- 0 -> ADD, 1 -> MUL
+                IS_MUL: natural -- Set to 1 only if OPCODE is MUL, 0 otherwise
+                                -- This takes into account the fact that the
+                                -- MUL output is 2 times the input BITWIDTH
             );
     port(
         i_clock : in std_logic;
         --specify inputs (number of FUs that sends input to this FU)
-        i_FU : in std_logic_vector(((BITWIDTH +1)*INPUT_PORTS)-1 downto 0);
+        --i_FU : in std_logic_vector(natural(real(IS_MUL)/real(2)*real(BITWIDTH +1)*real(INPUT_PORTS))-1 downto 0);
+        i_FU : in std_logic_vector(((BITWIDTH +1)*INPUT_PORTS)- 
+        IS_MUL*((BITWIDTH +1)/2*INPUT_PORTS)   -1
+        downto 0);
         --i_FU1 : in signed(32 downto 0);
         --i_FU2 : in signed(32 downto 0);
         --i_FU3 : in signed(32 downto 0);
@@ -38,18 +45,7 @@ entity FU is
                 4 -- Select signals for MuxA and MuxB
                 -1
                 downto 0);
-        --BEGIN DEBUG SIGNALS
-        w_SEL_MUXA : out std_logic_vector(1 downto 0);
-        w_SEL_MUXB : out std_logic_vector(1 downto 0);
-        w_MUXA_OUT : out std_logic_vector(BITWIDTH downto 0);
-        w_MUXB_OUT : out std_logic_vector(BITWIDTH downto 0);
-        d_in_cb_out1_sel : out natural range 0 to INPUT_PORTS -1;
-        d_in_cb_out2_sel : out natural range 0 to INPUT_PORTS -1;
-        d_in_cb_out3_sel : out natural range 0 to INPUT_PORTS -1;
-        d_input_crossbar_out1 : out std_logic_vector(BITWIDTH downto 0);
-        d_input_crossbar_out2 : out std_logic_vector(BITWIDTH downto 0);
-        d_input_crossbar_out3 : out std_logic_vector(BITWIDTH downto 0);
-        --END DEBUG SIGNALS
+
         r_RESET : std_logic
     -- SIGNALS FOR REGISTER FILE
 
@@ -69,7 +65,7 @@ architecture rtl of FU is
     --signal inputCrossbar : inputCrossbarType;
     -- The input crossbar has 3 outputs : MuxA, MuxB, RFs
 
-
+    constant INPUT_BITWIDTH : natural :=  ((BITWIDTH +1) - IS_MUL*(BITWIDTH + 1)/2) -1;
 
     constant RFSelectBits : natural := natural(ceil(log2(real(RF_DEPTH))));
           -- natural(ceil(log2(real(INPUT_PORTS)))) * 3 + 2 Bits for reg write enable +
@@ -82,6 +78,10 @@ architecture rtl of FU is
     -- SIGNALS FOR INSTRUCTION MEMORY
     signal w_OUTPUT_INST : std_logic_vector(INSTRUCTION_SIZE-1 downto 0); -- INSTRUCTION_SIZE
     signal w_VALID_INST : std_logic := '0';
+    -- UNDER TEST
+signal muxAout : std_logic_vector(BITWIDTH downto 0);
+signal muxBout : std_logic_vector(BITWIDTH downto 0);
+    --END UNDER TEST
 
     -- SIGNALS FOR REGISTER FILE
     signal w_OUTPUT_A : std_logic_vector(BITWIDTH downto 0);
@@ -90,6 +90,7 @@ architecture rtl of FU is
     signal r_INPUT_2 : std_logic_vector(BITWIDTH downto 0);
     -- SIGNAL FOR FU OUTPUT
     signal opOUT: std_logic_vector(BITWIDTH downto 0) := (OTHERS => '0');
+    signal RESULT: std_logic_vector(BITWIDTH downto 0) := (OTHERS => '0');
 
     -- DEBUG SIGNALS
     signal muxa_in1 :std_logic_vector(BITWIDTH downto 0);
@@ -99,6 +100,18 @@ architecture rtl of FU is
     signal muxb_in2 :std_logic_vector(BITWIDTH downto 0);
     signal muxb_in3 :std_logic_vector(BITWIDTH downto 0);
     -- END DEBUG SIGNALS
+        --BEGIN DEBUG SIGNALS
+    signal w_SEL_MUXA : std_logic_vector(1 downto 0);
+    signal w_SEL_MUXB : std_logic_vector(1 downto 0);
+    signal w_MUXA_OUT : std_logic_vector(BITWIDTH downto 0);
+    signal w_MUXB_OUT : std_logic_vector(BITWIDTH downto 0);
+    signal d_in_cb_out1_sel : natural range 0 to INPUT_PORTS -1;
+    signal d_in_cb_out2_sel : natural range 0 to INPUT_PORTS -1;
+    signal d_in_cb_out3_sel : natural range 0 to INPUT_PORTS -1;
+    signal d_input_crossbar_out1 : std_logic_vector(INPUT_BITWIDTH downto 0);
+    signal d_input_crossbar_out2 : std_logic_vector(INPUT_BITWIDTH downto 0);
+    signal d_input_crossbar_out3 : std_logic_vector(INPUT_BITWIDTH downto 0);
+        --END DEBUG SIGNALS
     component instruction_memory is
     generic (MAX_INSTRUCTION : natural;
              INSTRUCTION_SIZE : natural;
@@ -241,6 +254,14 @@ begin
     genOutputPorts: for i in 0 to (OUTPUT_PORTS-1) generate
             o_FU(((i+1)*(BITWIDTH+1)-1) downto (i*(BITWIDTH+1))) <= opOut;
     end generate genOutputPorts;
+    
+    ADDOP: if OPCODE = 0 generate
+            RESULT <= std_logic_vector(unsigned(muxAout) + unsigned(muxBout));
+    end generate;
+
+    MULOP: if OPCODE = 1 generate
+            RESULT <= std_logic_vector(unsigned(muxAout(((BITWIDTH+1)/2)-1 downto 0)) * unsigned(muxBout(((BITWIDTH+1)/2)-1 downto 0)));
+    end generate;
 
     -- not sure if this should be here, well... if it is not here it does not work, so I guess it should be here
     r_INPUT_2 <= opOut;
@@ -248,13 +269,13 @@ begin
         variable in_cb_out1_sel : natural range 0 to INPUT_PORTS -1;
         variable in_cb_out2_sel : natural range 0 to INPUT_PORTS -1;
         variable in_cb_out3_sel : natural range 0 to INPUT_PORTS -1;
-        variable input_crossbar_out1 : std_logic_vector(BITWIDTH downto 0);
-        variable input_crossbar_out2 : std_logic_vector(BITWIDTH downto 0);
-        variable input_crossbar_out3 : std_logic_vector(BITWIDTH downto 0);
+        variable input_crossbar_out1 : std_logic_vector(INPUT_BITWIDTH downto 0);
+        variable input_crossbar_out2 : std_logic_vector(INPUT_BITWIDTH downto 0);
+        variable input_crossbar_out3 : std_logic_vector(INPUT_BITWIDTH downto 0);
         variable inputCrossbarSelect : std_logic_vector((3*(crossbarSelectBITs))-1 downto 0);
-        variable muxAout : std_logic_vector(BITWIDTH downto 0);
+        --variable muxAout : std_logic_vector(BITWIDTH downto 0);
+        --variable muxBout : std_logic_vector(BITWIDTH downto 0);
         variable muxAoutSel : std_logic_vector(1 downto 0);
-        variable muxBout : std_logic_vector(BITWIDTH downto 0);
         variable muxBoutSel : std_logic_vector(1 downto 0);
 
     begin
@@ -266,17 +287,17 @@ begin
                    inputCrossbarSelect := w_OUTPUT_INST(INSTRUCTION_SIZE-1 downto (INSTRUCTION_SIZE-1 - (crossbarSelectBITs*3 -1 )));
                    in_cb_out3_sel := to_integer(unsigned(inputCrossbarSelect((crossbarSelectBITs)-1 downto 0)));
                    d_in_cb_out3_sel <= in_cb_out3_sel; 
-                   input_crossbar_out3 := i_FU((((INPUT_PORTS-1)-in_cb_out3_sel +1) * (BITWIDTH +1))-1 downto (((INPUT_PORTS-1)-in_cb_out3_sel) * (BITWIDTH+1)));
+                   input_crossbar_out3 := i_FU((((INPUT_PORTS-1)-in_cb_out3_sel +1) * (INPUT_BITWIDTH +1))-1 downto (((INPUT_PORTS-1)-in_cb_out3_sel) * (INPUT_BITWIDTH+1)));
                    d_input_crossbar_out3 <= input_crossbar_out3;
 
                    in_cb_out2_sel := to_integer(unsigned(inputCrossbarSelect((2*(crossbarSelectBITs))-1 downto ((crossbarSelectBITs)))));
                    d_in_cb_out2_sel <= in_cb_out2_sel; 
-                   input_crossbar_out2 := i_FU( (((INPUT_PORTS-1)-in_cb_out2_sel +1) * (BITWIDTH +1))-1 downto (((INPUT_PORTS-1)-in_cb_out2_sel) * (BITWIDTH+1)));
+                   input_crossbar_out2 := i_FU( (((INPUT_PORTS-1)-in_cb_out2_sel +1) * (INPUT_BITWIDTH +1))-1 downto (((INPUT_PORTS-1)-in_cb_out2_sel) * (INPUT_BITWIDTH+1)));
                    d_input_crossbar_out2<= input_crossbar_out2;
 
                    in_cb_out1_sel := to_integer(unsigned(inputCrossbarSelect((3*(crossbarSelectBITs))-1 downto ((2*(crossbarSelectBITs)))))); 
                    d_in_cb_out1_sel<= in_cb_out1_sel;
-                   input_crossbar_out1 := i_FU( (((INPUT_PORTS-1)-in_cb_out1_sel +1) * (BITWIDTH +1))-1 downto (((INPUT_PORTS-1)-in_cb_out1_sel) * (BITWIDTH+1)));
+                   input_crossbar_out1 := i_FU( (((INPUT_PORTS-1)-in_cb_out1_sel +1) * (INPUT_BITWIDTH +1))-1 downto (((INPUT_PORTS-1)-in_cb_out1_sel) * (INPUT_BITWIDTH+1)));
                    d_input_crossbar_out1 <= input_crossbar_out1;
                    
                    muxAoutSel := w_OUTPUT_INST(1 downto 0);
@@ -284,34 +305,47 @@ begin
                    muxBoutSel := w_OUTPUT_INST(3 downto 2);
                    w_SEL_MUXB <= w_OUTPUT_INST(3 downto 2);
 
-                   opOut <= std_logic_vector(unsigned(muxAout) + unsigned(muxBout));
+                   -- opOut <= std_logic_vector(unsigned(muxAout) + unsigned(muxBout));
+                   opOut <= RESULT;
                    -- DEBUG MUX A
                     muxa_in1 <= opOut;
-                    muxa_in2 <= input_crossbar_out1;
+                    muxa_in2(INPUT_BITWIDTH downto 0) <= input_crossbar_out1;
                     muxa_in3 <= w_OUTPUT_A;
                    -- END DEBUG MUX A
+                   --case muxAoutSel is
+                   --    when "00" => muxAout := opOut;
+                   --    when "01" => muxAout := input_crossbar_out1;
+                   --    when "10" => muxAout := w_OUTPUT_A;
+                   --    when others => muxAout := (OTHERS=>'0');
+                   --end case;
                    case muxAoutSel is
-                       when "00" => muxAout := opOut;
-                       when "01" => muxAout := input_crossbar_out1;
-                       when "10" => muxAout := w_OUTPUT_A;
-                       when others => muxAout := (OTHERS=>'0');
+                       when "00" => muxAout <= opOut;
+                       when "01" => muxAout(INPUT_BITWIDTH downto 0) <= input_crossbar_out1;
+                       when "10" => muxAout <= w_OUTPUT_A;
+                       when others => muxAout <= (OTHERS=>'0');
                    end case;
                    w_MUXA_OUT <= muxAout;
                    -- DEBUG MUX B
                     muxb_in1 <= opOut;
-                    muxb_in2 <= input_crossbar_out2;
+                    muxb_in2(INPUT_BITWIDTH downto 0) <= input_crossbar_out2;
                     muxb_in3 <= w_OUTPUT_B;
                    -- END DEBUG MUX B
 
+                   --case muxBoutSel is
+                   --    when "00" => muxBout := opOut;
+                   --    when "01" => muxBout := input_crossbar_out2;
+                   --    when "10" => muxBout := w_OUTPUT_B;
+                   --    when others => muxBout := (OTHERS=>'0');
+                   --end case;          
+                  
                    case muxBoutSel is
-                       when "00" => muxBout := opOut;
-                       when "01" => muxBout := input_crossbar_out2;
-                       when "10" => muxBout := w_OUTPUT_B;
-                       when others => muxBout := (OTHERS=>'0');
-                   end case;          
-                   
+                       when "00" => muxBout <= opOut;
+                       when "01" => muxBout(INPUT_BITWIDTH downto 0) <= input_crossbar_out2;
+                       when "10" => muxBout <= w_OUTPUT_B;
+                       when others => muxBout <= (OTHERS=>'0');
+                   end case;     
                    w_MUXB_OUT <= muxBout;
-                   r_INPUT_1 <= input_crossbar_out3;
+                   r_INPUT_1(INPUT_BITWIDTH downto 0) <= input_crossbar_out3;
 
 
                 end if;

@@ -4,14 +4,14 @@ use ieee.numeric_std.all;
 use IEEE.math_real."ceil";
 use IEEE.math_real."log2";
 
-entity FU_template_tb is
-end FU_template_tb;
+entity FU_template_mul_tb is
+end FU_template_mul_tb;
 
-architecture behave of FU_template_tb is
+architecture behave of FU_template_mul_tb is
     constant c_CLOCK_PERIOD : time := 50 ns;
     signal r_CLOCK: std_logic :='0';
     signal r_i_FU : std_logic_vector((32*4)-1 downto 0);
-    signal w_o_FU : std_logic_vector((32*3)-1 downto 0);
+    signal w_o_FU : std_logic_vector((64*3)-1 downto 0);
     signal r_r_COMPUTING : std_logic := '0';
     signal r_r_LOAD_INST : std_logic := '0';
     signal r_r_LOAD_NEXT_INST : std_logic := '0';
@@ -20,14 +20,14 @@ architecture behave of FU_template_tb is
         --BEGIN DEBUG SIGNALS
     signal w_w_SEL_MUXA : std_logic_vector(1 downto 0);
     signal w_w_SEL_MUXB : std_logic_vector(1 downto 0);
-    signal w_w_MUXA_OUT : std_logic_vector(31 downto 0);
-    signal w_w_MUXB_OUT : std_logic_vector(31 downto 0);
+    signal w_w_MUXA_OUT : std_logic_vector(63 downto 0);
+    signal w_w_MUXB_OUT : std_logic_vector(63 downto 0);
     signal w_d_in_cb_out1_sel : natural range 0 to 4-1;
     signal w_d_in_cb_out2_sel : natural range 0 to 4-1;
     signal w_d_in_cb_out3_sel : natural range 0 to 4-1;
-    signal w_d_input_crossbar_out1 : std_logic_vector(31 downto 0);
-    signal w_d_input_crossbar_out2 : std_logic_vector(31 downto 0);
-    signal w_d_input_crossbar_out3 : std_logic_vector(31 downto 0);
+    signal w_d_input_crossbar_out1 : std_logic_vector(63 downto 0);
+    signal w_d_input_crossbar_out2 : std_logic_vector(63 downto 0);
+    signal w_d_input_crossbar_out3 : std_logic_vector(63 downto 0);
         --END DEBUG SIGNALS
     component FU is
         generic (
@@ -64,6 +64,7 @@ architecture behave of FU_template_tb is
                 -1
                 downto 0);
             r_RESET : in std_logic
+
             );
     end component FU;
 begin
@@ -71,13 +72,13 @@ begin
     UUT: FU
         generic map (
             INSTRUCTIONS => 7,
-            BITWIDTH => 31,
+            BITWIDTH => 63,
             RF_DEPTH => 15,
             INPUT_PORTS => 4,
             OUTPUT_PORTS => 3,
             TOTAL_EXE_CYCLES => 255,
-            OPCODE => 0,
-            IS_MUL => 0
+            OPCODE => 1,
+            IS_MUL => 1
         )
         port map(
             i_clock => r_CLOCK,
@@ -88,6 +89,7 @@ begin
             r_LOAD_NEXT_INST => r_r_LOAD_NEXT_INST,
             r_INPUT_INST => r_r_INPUT_INST,
             r_RESET => r_r_RESET
+
                 );
 
     p_CLK_GEN: process is
@@ -172,5 +174,6 @@ begin
         wait for 50 ns;
         wait for 50 ns;
         wait for 50 ns;
+       
     end process; 
 end behave;
