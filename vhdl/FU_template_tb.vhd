@@ -1,6 +1,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use IEEE.math_real."ceil";
+use IEEE.math_real."log2";
 
 entity FU_template_tb is
 end FU_template_tb;
@@ -13,7 +15,7 @@ architecture behave of FU_template_tb is
     signal r_r_COMPUTING : std_logic := '0';
     signal r_r_LOAD_INST : std_logic := '0';
     signal r_r_LOAD_NEXT_INST : std_logic := '0';
-    signal r_r_INPUT_INST : std_logic_vector(39 downto 0);
+    signal r_r_INPUT_INST : std_logic_vector(35 downto 0);
     signal r_r_RESET : std_logic :='0';
         --BEGIN DEBUG SIGNALS
     signal w_w_SEL_MUXA : std_logic_vector(1 downto 0);
@@ -30,6 +32,7 @@ architecture behave of FU_template_tb is
     component FU is
         generic (
                     INSTRUCTIONS : natural;
+                    TOTAL_EXE_CYCLES : natural;
                     BITWIDTH : natural; -- 31 -> meaning 32
                     RF_DEPTH: natural; --15 -> meaning 16
                     INPUT_PORTS : natural;
@@ -41,27 +44,32 @@ architecture behave of FU_template_tb is
             i_FU : in std_logic_vector(((BITWIDTH +1)*INPUT_PORTS)-1 downto 0);
             --specify outputs (number of FUs that this FU can send the output to)
             o_FU : out std_logic_vector(((BITWIDTH +1)*OUTPUT_PORTS)-1 downto 0);
-        -- SIGNALS FOR INSTRUCTION MEMORY
+            -- SIGNALS FOR INSTRUCTION MEMORY
             r_COMPUTING : in std_logic;
             r_LOAD_INST: in std_logic := '0';
             r_LOAD_NEXT_INST: in std_logic ;
-            r_INPUT_INST : in std_logic_vector(39 downto 0);
+            r_INPUT_INST : in std_logic_vector(
+                natural(ceil(log2(real(TOTAL_EXE_CYCLES+1))))+ -- bit required to ID Clock
+                natural(ceil(log2(real(INPUT_PORTS))))*3 + -- crossbar Select Bits
+                2 + -- Register Write enable bits (input 1 and input 2) 
+                natural(ceil(log2(real(RF_DEPTH)))) * 4 + -- RF select bits
+                4 -- Select signals for MuxA and MuxB
+                -1
+                downto 0);
             r_RESET : in std_logic;
-        --BEGIN DEBUG SIGNALS
-        w_SEL_MUXA : out std_logic_vector(1 downto 0);
-        w_SEL_MUXB : out std_logic_vector(1 downto 0);
-        w_MUXA_OUT : out std_logic_vector(BITWIDTH downto 0);
-        w_MUXB_OUT : out std_logic_vector(BITWIDTH downto 0);
-        d_in_cb_out1_sel : out natural range 0 to INPUT_PORTS -1;
-        d_in_cb_out2_sel : out natural range 0 to INPUT_PORTS -1;
-        d_in_cb_out3_sel : out natural range 0 to INPUT_PORTS -1;
-        d_input_crossbar_out1 : out std_logic_vector(BITWIDTH downto 0);
-        d_input_crossbar_out2 : out std_logic_vector(BITWIDTH downto 0);
-        d_input_crossbar_out3 : out std_logic_vector(BITWIDTH downto 0)
-        --END DEBUG SIGNALS
-
-        );
-       
+            --BEGIN DEBUG SIGNALS
+            w_SEL_MUXA : out std_logic_vector(1 downto 0);
+            w_SEL_MUXB : out std_logic_vector(1 downto 0);
+            w_MUXA_OUT : out std_logic_vector(BITWIDTH downto 0);
+            w_MUXB_OUT : out std_logic_vector(BITWIDTH downto 0);
+            d_in_cb_out1_sel : out natural range 0 to INPUT_PORTS -1;
+            d_in_cb_out2_sel : out natural range 0 to INPUT_PORTS -1;
+            d_in_cb_out3_sel : out natural range 0 to INPUT_PORTS -1;
+            d_input_crossbar_out1 : out std_logic_vector(BITWIDTH downto 0);
+            d_input_crossbar_out2 : out std_logic_vector(BITWIDTH downto 0);
+            d_input_crossbar_out3 : out std_logic_vector(BITWIDTH downto 0)
+            --END DEBUG SIGNALS
+            );
     end component FU;
 begin
     --instantiate the Unit Under Test (UUT)
@@ -71,7 +79,8 @@ begin
             BITWIDTH => 31,
             RF_DEPTH => 15,
             INPUT_PORTS => 4,
-            OUTPUT_PORTS => 3
+            OUTPUT_PORTS => 3,
+            TOTAL_EXE_CYCLES => 255
         )
         port map(
             i_clock => r_CLOCK,
@@ -109,7 +118,7 @@ begin
         --             @ cycle 8  cbOut 1 is input 1    cbOut2 is input 2  cbOut3 is input4
         r_r_INPUT_INST <= x"08" & "00"                  & "01"             & "11"       &    
         --   dont write to REG   r_REG1_s  r_REG2_s   w_REG1_s w_REG2_s  unused demuxes sel,  muxa and muxb sel cb in  
-                          "00" & "0000"   & "0000"   & "0000" & "0000"  & "00" & "00"       & "01"            & "01";
+                          "00" & "0000"   & "0000"   & "0000" & "0000"       & "01"            & "01";
         r_r_LOAD_NEXT_INST <= '1';
         wait for 50 ns;
         -- Use the output of the previous computation, forward it two both MuxA and MuxB and add them
@@ -118,7 +127,7 @@ begin
         --             @ cycle 8  cbOut 1 is input 1    cbOut2 is input 2  cbOut3 is input3
         r_r_INPUT_INST <= x"09" & "00"                  & "01"             & "10"       &    
         --   dont write to REG   r_REG1_s  r_REG2_s   w_REG1_s w_REG2_s  unused demuxes sel,  muxa and muxb sel cb in  
-                          "01" & "0000"   & "0000"   & "0000" & "0010"  & "00" & "00"       & "00"            & "00";
+                          "01" & "0000"   & "0000"   & "0000" & "0010"       & "00"            & "00";
         r_r_LOAD_NEXT_INST <= '1';
         wait for 50 ns;
         -- Write the result of the previous computation to REG1, forward the result of the previous computation 
@@ -127,7 +136,7 @@ begin
         --             @ cycle 8  cbOut 1 is input 1    cbOut2 is input 2  cbOut3 is input3
         r_r_INPUT_INST <= x"0a" & "00"                  & "01"             & "10"       &    
         --   write to REG using input 2   r_REG1_s  r_REG2_s   w_REG1_s w_REG2_s  unused demuxes sel,  muxa and muxb sel cb in  
-                          "01" & "0000"   & "0000"   & "0000" & "0001"  & "00" & "00"       & "00"            & "00";
+                          "01" & "0000"   & "0000"   & "0000" & "0001"      & "00"            & "00";
         r_r_LOAD_NEXT_INST <= '1';
         wait for 50 ns;
         -- Prefetch value in REG1 for next cycle, forward the result of the previous computation To MuxA and MuxB and add them 
@@ -135,7 +144,7 @@ begin
         --             @ cycle 8  cbOut 1 is input 1    cbOut2 is input 2  cbOut3 is input3
         r_r_INPUT_INST <= x"0b" & "00"                  & "01"             & "10"       &    
         --write to REG using input 2   r_REG1_s  r_REG2_s   w_REG1_s w_REG2_s  unused demuxes sel,  muxa and muxb sel cb in  
-                                 "00" & "0001"   & "0001"   & "0000" & "0000"  & "00" & "00"       & "00"            & "00";
+                                 "00" & "0001"   & "0001"   & "0000" & "0000"     & "00"            & "00";
         r_r_LOAD_NEXT_INST <= '1';
         wait for 50 ns;
         -- Select Input 1 and send it to MuxA, send the output of the register file to MuxB 
@@ -144,13 +153,13 @@ begin
         --             @ cycle 8  cbOut 1 is input 1    cbOut2 is input 2  cbOut3 is input3
         r_r_INPUT_INST <= x"0c" & "00"                  & "01"             & "10"       &    
         --   write to REG using input 2   r_REG1_s  r_REG2_s   w_REG1_s w_REG2_s  unused demuxes sel,  muxa and muxb sel cb in  
-                          "00" & "0010"   & "0010"   & "0000" & "0000"  & "00" & "00"       & "01"            & "10";
+                          "00" & "0010"   & "0010"   & "0000" & "0000"  & "01"            & "10";
         r_r_LOAD_NEXT_INST <= '1';
         wait for 50 ns;
         r_r_LOAD_INST <= '1';
         --current_clock <= x"07";
         --current_instruction <= x"77777777";
-        r_r_INPUT_INST <=  x"07" & x"77777777";
+        r_r_INPUT_INST <=  x"07" & x"7777777";
         r_r_LOAD_NEXT_INST <= '0'; 
         wait for 50 ns;
         -- first computation clock

@@ -7,6 +7,7 @@ use IEEE.math_real."log2";
 entity FU is 
     generic (
                 INSTRUCTIONS : natural;
+                TOTAL_EXE_CYCLES : natural;
                 BITWIDTH : natural; -- 31 -> meaning 32
                 RF_DEPTH: natural; --15 -> meaning 16
                 INPUT_PORTS : natural;
@@ -29,7 +30,14 @@ entity FU is
         r_COMPUTING : in std_logic;
         r_LOAD_INST: in std_logic := '0';
         r_LOAD_NEXT_INST: in std_logic ;
-        r_INPUT_INST : std_logic_vector(39 downto 0);
+        r_INPUT_INST : in std_logic_vector(
+                natural(ceil(log2(real(TOTAL_EXE_CYCLES+1))))+ -- bit required to ID Clock
+                natural(ceil(log2(real(INPUT_PORTS))))*3 + -- crossbar Select Bits
+                2 + -- Register Write enable bits (input 1 and input 2) 
+                natural(ceil(log2(real(RF_DEPTH)))) * 4 + -- RF select bits
+                4 -- Select signals for MuxA and MuxB
+                -1
+                downto 0);
         --BEGIN DEBUG SIGNALS
         w_SEL_MUXA : out std_logic_vector(1 downto 0);
         w_SEL_MUXB : out std_logic_vector(1 downto 0);
@@ -50,12 +58,8 @@ end FU;
 
 architecture rtl of FU is 
     --Parametrize the total number of cycles
-    constant TOT_NUM_CYCLES : natural := 200;
-    --Parametrize instruction bits to 20
-    constant INSTRUCTION_SIZE : natural := 20;
     --Cunter that keeps track of the current cycle number
-    signal instruction_count: natural range 0 to TOT_NUM_CYCLES;
-    signal current_instruction: natural range 0 to INSTRUCTION_SIZE;
+    signal instruction_count: natural range 0 to TOTAL_EXE_CYCLES;
 
     --The select signal for the input crossbar needs to be log_2(#inputs)*#outputs
     -- in this case log_2(4)*3 = 6
@@ -65,9 +69,18 @@ architecture rtl of FU is
     --signal inputCrossbar : inputCrossbarType;
     -- The input crossbar has 3 outputs : MuxA, MuxB, RFs
 
-    -- SIGNALS FOR INSTRUCTION MEMORY
 
-    signal w_OUTPUT_INST : std_logic_vector(31 downto 0);
+
+    constant RFSelectBits : natural := natural(ceil(log2(real(RF_DEPTH))));
+          -- natural(ceil(log2(real(INPUT_PORTS)))) * 3 + 2 Bits for reg write enable +
+          -- + natural(ceil(log2(real(RF_DEPTH)))) *4 + 2 bits MuxA + 2 bits MuxB
+
+    constant INSTRUCTION_SIZE :natural := crossbarSelectBITs * 3 + 2 + RFSelectBits *4 + 4;
+    signal current_instruction: natural range 0 to INSTRUCTION_SIZE;
+    constant CycleBitsSize  : natural := natural(ceil(log2(real(TOTAL_EXE_CYCLES))));
+
+    -- SIGNALS FOR INSTRUCTION MEMORY
+    signal w_OUTPUT_INST : std_logic_vector(INSTRUCTION_SIZE-1 downto 0); -- INSTRUCTION_SIZE
     signal w_VALID_INST : std_logic := '0';
 
     -- SIGNALS FOR REGISTER FILE
@@ -87,7 +100,9 @@ architecture rtl of FU is
     signal muxb_in3 :std_logic_vector(BITWIDTH downto 0);
     -- END DEBUG SIGNALS
     component instruction_memory is
-    generic (MAX_INSTRUCTION : natural);
+    generic (MAX_INSTRUCTION : natural;
+             INSTRUCTION_SIZE : natural;
+             TOT_NUM_CYCLES : natural);
         port
         (
         clock : in std_logic;
@@ -108,10 +123,10 @@ architecture rtl of FU is
         -- 6 bits for inputCrossbarSelect
         -- 8 bits for clock (256 TOT_NUM_CYCLE) log_2(TOT_NUM_CYCLE) to identify clock
         ---------------------------------------
-        -- 50 bits total to store
-        input_inst : in std_logic_vector(39 downto 0);
-        -- The actual inst size is 50 - 8 (bit for clock) 32 bits
-        output_inst : out std_logic_vector(31 downto 0);
+        -- 40 bits total to store
+        input_inst : in std_logic_vector(natural(ceil(log2(real(TOTAL_EXE_CYCLES+1))))+ INSTRUCTION_SIZE-1 downto 0);
+        -- The actual inst size is 40 - 8 (bit for clock) 32 bits
+        output_inst : out std_logic_vector(INSTRUCTION_SIZE-1 downto 0); -- INSTRUCTION_SIZE
         valid_inst : out std_logic :='0';
         reset : in std_logic
         );
@@ -125,27 +140,33 @@ architecture rtl of FU is
         );
         port
         (
-        outA: out std_logic_vector(BITWIDTH downto 0);
-        outB: out std_logic_vector(BITWIDTH downto 0);
-        input1: in std_logic_vector(BITWIDTH downto 0);
-        input2: in std_logic_vector(BITWIDTH downto 0);
-        writeEnable1: in std_logic;
-        writeEnable2: in std_logic;
+            outA: out std_logic_vector(BITWIDTH downto 0);
+            outB: out std_logic_vector(BITWIDTH downto 0);
+            input1: in std_logic_vector(BITWIDTH downto 0);
+            input2: in std_logic_vector(BITWIDTH downto 0);
+            writeEnable1: in std_logic;
+            writeEnable2: in std_logic;
 
-        --the select signal needs to be log2(registerfilesize)
-        reg1Sel_read : in std_logic_vector(natural(ceil(log2(real(DEPTH+1))))-1 downto 0);
-        reg2Sel_read : in std_logic_vector(natural(ceil(log2(real(DEPTH+1))))-1 downto 0);
-        reg1Sel_write : in std_logic_vector(natural(ceil(log2(real(DEPTH+1))))-1 downto 0);
-        reg2Sel_write : in std_logic_vector(natural(ceil(log2(real(DEPTH+1))))-1 downto 0);
-        clock : in std_logic;
-        reset : in std_logic
+            --the select signal needs to be log2(registerfilesize)
+            reg1Sel_read : in std_logic_vector(natural(ceil(log2(real(DEPTH+1))))-1 downto 0);
+            reg2Sel_read : in std_logic_vector(natural(ceil(log2(real(DEPTH+1))))-1 downto 0);
+            reg1Sel_write : in std_logic_vector(natural(ceil(log2(real(DEPTH+1))))-1 downto 0);
+            reg2Sel_write : in std_logic_vector(natural(ceil(log2(real(DEPTH+1))))-1 downto 0);
+            clock : in std_logic;
+            reset : in std_logic
         );
     end component register_file;
 
 begin
     --Instantiate the Unit Under Test (UUT)
     IM : instruction_memory
-        generic map (MAX_INSTRUCTION => INSTRUCTIONS) -- meaning from 0 to 7 included (8 total) 
+        generic map (
+            MAX_INSTRUCTION => INSTRUCTIONS,
+          -- natural(ceil(log2(real(INPUT_PORTS)))) * 3 + 2 Bits for reg write enable +
+          -- + natural(ceil(log2(real(RF_DEPTH)))) *4 + 2 bits MuxA + 2 bits MuxB
+            INSTRUCTION_SIZE => INSTRUCTION_SIZE,
+            TOT_NUM_CYCLES => TOTAL_EXE_CYCLES
+        ) -- meaning from 0 to 7 included (8 total) 
         port map (
         clock => i_clock,
         computing => r_COMPUTING ,
@@ -183,14 +204,24 @@ begin
         outB => w_OUTPUT_B,
         input1 => r_INPUT_1,
         input2 => r_INPUT_2,
-        writeEnable1 => w_OUTPUT_INST(31-6),
-        writeEnable2 => w_OUTPUT_INST(31-7),
+        --writeEnable1 => w_OUTPUT_INST(31-6),
+        writeEnable1 => w_OUTPUT_INST(INSTRUCTION_SIZE-1 -crossbarSelectBITs *3),
+        --writeEnable2 => w_OUTPUT_INST(31-7),
+        writeEnable2 => w_OUTPUT_INST(INSTRUCTION_SIZE-1 -crossbarSelectBITs *3-1),
 
         --the select signal needs to be log2(registerfilesize)
-        reg1Sel_read  => w_OUTPUT_INST(31-8 downto 31-8-4+1),
-        reg2Sel_read  => w_OUTPUT_INST(31-8-4 downto 31-8-8+1),
-        reg1Sel_write  => w_OUTPUT_INST(31-8-8 downto 31-8-8-4+1),
-        reg2Sel_write  => w_OUTPUT_INST(31-8-12 downto 31-8-12-4+1),
+        --reg1Sel_read  => w_OUTPUT_INST(31-8 downto 31-8-4+1),
+        reg1Sel_read  => w_OUTPUT_INST(INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 
+                            downto INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - RFSelectBits +1),
+        --reg2Sel_read  => w_OUTPUT_INST(31-8-4 downto 31-8-8+1),
+        reg2Sel_read  => w_OUTPUT_INST(INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - RFSelectBits 
+                            downto INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - 2*RFSelectBits +1),
+        --reg1Sel_write  => w_OUTPUT_INST(31-8-8 downto 31-8-8-4+1),
+        reg1Sel_write  => w_OUTPUT_INST(INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - 2*RFSelectBits 
+        downto INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - 3*RFSelectBits+1),
+        --reg2Sel_write  => w_OUTPUT_INST(31-8-12 downto 31-8-12-4+1),
+        reg2Sel_write  => w_OUTPUT_INST(INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - 3*RFSelectBits 
+        downto INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - 4*RFSelectBits+1),
         clock => i_clock,
         reset  => r_RESET
                  );
@@ -208,7 +239,7 @@ begin
     --end generate genOutputPorts;
     
     genOutputPorts: for i in 0 to (OUTPUT_PORTS-1) generate
-            o_FU((((i+1)*32)-1) downto (i*32)) <= opOut;
+            o_FU(((i+1)*(BITWIDTH+1)-1) downto (i*(BITWIDTH+1))) <= opOut;
     end generate genOutputPorts;
 
     -- not sure if this should be here, well... if it is not here it does not work, so I guess it should be here
@@ -232,10 +263,10 @@ begin
                 if w_VALID_INST = '1' then
                     --here the number of sel bits for the input crossbar is hardcoded (6)
                     --need to parametrize also in instruction memory
-                    inputCrossbarSelect := w_OUTPUT_INST(31 downto (31 - 5));
-                    in_cb_out3_sel := to_integer(unsigned(inputCrossbarSelect((crossbarSelectBITs)-1 downto 0)));
+                   inputCrossbarSelect := w_OUTPUT_INST(INSTRUCTION_SIZE-1 downto (INSTRUCTION_SIZE-1 - (crossbarSelectBITs*3 -1 )));
+                   in_cb_out3_sel := to_integer(unsigned(inputCrossbarSelect((crossbarSelectBITs)-1 downto 0)));
                    d_in_cb_out3_sel <= in_cb_out3_sel; 
-                   input_crossbar_out3 := i_FU( (((INPUT_PORTS-1)-in_cb_out3_sel +1) * (BITWIDTH +1))-1 downto (((INPUT_PORTS-1)-in_cb_out3_sel) * (BITWIDTH+1)));
+                   input_crossbar_out3 := i_FU((((INPUT_PORTS-1)-in_cb_out3_sel +1) * (BITWIDTH +1))-1 downto (((INPUT_PORTS-1)-in_cb_out3_sel) * (BITWIDTH+1)));
                    d_input_crossbar_out3 <= input_crossbar_out3;
 
                    in_cb_out2_sel := to_integer(unsigned(inputCrossbarSelect((2*(crossbarSelectBITs))-1 downto ((crossbarSelectBITs)))));
