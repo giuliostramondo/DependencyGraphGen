@@ -1,5 +1,14 @@
 \section{Introduction}
-This document is a model and instructions for \LaTeX.
-Please observe the conference page limits. And btw be sure to blabla! 
+This work starts from the following two observations:
+\begin{itemize}
+\item The memory system and the processing system are \textit{interdependent} and therefore they should be \textit{co-designed}.
+\item The \textit{data dependencies} of the fixed application impose constaints on the design of both memory and processing systems.
+\end{itemize}
 
-
+Starting from our observations we designed and implemented a framework, which the remaining of this paper describes in detail, which brings the following contributions:
+\begin{itemize}
+\item Modeling of different kind of memory technologies (MRAM,SRAM,eDRAM, etc..).
+\item Modeling of different layers of memory having different clock speed, read/write latency and datawidth.
+\item Automated exploration of different area/latency tradeoffs.
+\item Custom processor design and implementation.
+\end{itemize}
