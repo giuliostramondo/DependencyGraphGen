@@ -55,10 +55,10 @@ Detailed information requred to model the Layer 2 burst accesses are as well con
 The first operation performed by the framework is to compute the transfer time of the application input data from the \textit{Layer 2} memory to the \textit{Later 1} memory. An address in Layer 2 memory is given to the input element used by the application, different datastructures are placed in consecutive memory addresses. The entire data transfer is modeled as a single burst read operation to the \textit{Layer 2} memory (see BACKGROUND). The information required to compute the arrival clock time of each input element to the Layer 1 memory is extracted from teh \textit{Configuration Parameters} and performing static analysis on the input \textit{Application}.
 Using such information  the exact clock at which each input elements arrives in the Layer 1 memory can be computed with:
 $$
-AClk_i = rSL + (L2Add_i+1) * (L1B/L2B) * (L1Clk/L2Clk)
+AClk_i = rSL + L2RL * (L2Add_i+1) * \frac{L1B}{L2B} * \frac{L1Clk}{L2Clk}
 $$
 
-Where $AClk_i$ is the clock at which element i arrives to the Layer 1 memory, $rSL$ is the setup latency of a Layer 2 burst read, $L2Add_i$ is the offset of element i from the beginning of the burst access, $L1B$ is the data bitwidth of the Layer 1 memory, $L2B$ is the data bitwidth of the Layer 2 memory, $L1Clk$ is the clock frequency of the Layer 1 memory and $L2Clk$ is the clock speed of the Layer 2 memory.
+Where $AClk_i$ is the clock at which element i arrives to the Layer 1 memory, $rSL$ is the setup latency of a Layer 2 burst read, $L2RL$ is the Layer 2 read latency - i.e. latency of a single read operation - expressed in number of L2 clock cycles, $L2Add_i$ is the offset of element i from the beginning of the burst access, $L1B$ is the data bitwidth of the Layer 1 memory, $L2B$ is the data bitwidth of the Layer 2 memory, $L1Clk$ is the clock frequency of the Layer 1 memory and $L2Clk$ is the clock speed of the Layer 2 memory.
 
 \subsection{Data Dependency Analysis}
 The \textit{Data Dependency Analysis} module performs three main operations. First, it extracts \textit{Data Dependency Graph} (DDG) from the application. Then, it schedules the DDG using the As Soon As Possible (ASAP) and As Late As Possible (ALAP) methodologies. Finally, it maps instructions in the DDG to hardware components - or Functional Units (FUs) - using a modified version of the \textit{Interval Partitioning} algorithm ADDCITATION.
@@ -75,31 +75,58 @@ The final step of the \textit{Data Dependency Analysis} module - described in~\r
 To generate an hardware architecture behaviorally equivalent to the input application and with the latency identified during the ASAP-ALAP scheduling, there are two main requirements. The first is that each instruction needs to be computed within its ASAP-ALAP interval. The second requirement is that instructions in the original DDG which are executed by the same FU cannot be scheduled at the same time.
 Our Modified Interval Partitioning algorithm - based on the original greedy Interval Partitioning algorithm CITE - is able to generate hardware architectures from a DDG meeting the two requirements described above. The original Interval Partitioning problem addresses the issue of assigning a number of jobs, with known starting and ending time, to the minimum amount of resources ensuring that the jobs assigned to a resource do not overlap. To map the Interval Partitioning formulation to the allocation of instructions to FU, we need to consider application instructions as jobs and FUs as resources. 
 There are however three main differences between our problem and the canonical Interval Partitioning. First, while in the original Interval Partitioning problems jobs are equivalent to each other and can be assigned to any resource, the instructions represent computations. For example a multiply instruction can only be assigned to a multiply FU. To address this issue, we divide our initial problem and we perform multiple time the Interval Partitioning, once per operation type. This ensures a correct allocation of the instruction to FUs performing the same operation. The second difference is due to the \textit{mobility} of our instructions. Each instruction does not have a predefined start and end time, like a job has in the original Interval Partitioning, but it has a time interval - derived with ASAP-ALAP - in which it can be scheduled and a fixed latency. Hence, the start time of an instruction might vary, but once this is fixed, its end time can be derived. The modified Interval Partitioning takes the mobility of an instruction into account allowing a given instruction to start at any time within its allowed interval. The last difference regards the dependencies between instructions. While the original jobs in the Interval Partitioning are intependent from each other, the instructions of an application need to be executed according to their dependencies. This is addressed by ensuring that a given instruction is allocated after its dependencies are allocated and by verifying that its starting time is scheduled after the ending time of its dependencies.
-Listing~\ref{lst:modified_interval_partitioning} shows the pseudocode of our modified interval partitioning algorithm.
-\begin{lstlisting}[language=C, caption={Example of input configuration file}, label={lst:modified_interval_partitioning}]
-sort i in instructions by ASAP[i]
-for each i in instructions
+Listing~\ref{lst:modified_interval_partitioning} shows the pseudocode of our modified interval partitioning algorithm. 
+\begin{lstlisting}[language=Python, caption={Modified Interval Partitioning Algorithm}, label={lst:modified_interval_partitioning}]
+FunctionalUnits=[]
+sort i in Instructions by ASAP[i]
+for each i in Instructions
 	allocated = False
-	earliest_starting_time[i] = ASAP[i]
-	if i has dependencies
-		end_max_time = max end time among all dependencies of i
-		earliest_starting_time[i] = end_max_time
-	for each Functional Unit fu where type(fu) ==  type(i)
-		if ALAP[i] >=  next_free_slot[fu]
-			fu.instructions += [i]
-			schedule[i] = max(earliest_start_time[i],next_free_slot[fu])
-			next_free_slot[fu] = schedule[i] + latency[i]
-			allocated = True
+	schedule[i] = ASAP[i]
+	for d in dep(i)
+		end_time_d = schedule[d] + latency(d)
+		schedule[i] = max(schedule[i],end_time_d)
+	for each fu in FunctionalUnits 
+		if type(fu) ==  type(i)
+			if ALAP[i] >=  next_free_slot[fu]
+				fu += [i]
+				schedule[i] = max(schedule[i],
+					next_free_slot[fu])
+				next_free_slot[fu] = schedule[i] + 
+					latency(i)
+				allocated = True
 	if not allocated
-		create new Functional Unit fu where type(fu) == type(i)
-			fu.instructions += [i]
-			schedule[i] = earliest_start_time[i]
-			next_free_slot[fu] = schedule[i] + latency[i]
+		create new Functional Unit fu
+		type(fu) = type(i)
+		fu += [i]
+		next_free_slot[fu] = schedule[i] + latency(i)
+		FunctionalUnits += [fu]
 
 \end{lstlisting}
+We assume that ASAP and ALAP schedules have been previously performed, hence we can have two datastructures that return the ASAP and ALAP schedules for a given instruction i - e.i. ASAP[i] and ALAP[i]. Instructions is an ordered list of instructions initialized with the instructions of the input application. A Functional Unit is represented as a set containing the instructions that have been allocated to it, and FunctionalUnits is a set containing the Functional Units of the resulting architecture which is initialized as an empty set. The functions latency and dep take an instruction i as input and return respectively the latency of i and a list of intructions i depends on. The function type
+takes as input a Functional Unit or an Instruction and returns the type of operation performed.
+The Modified Interval Partitioning algortihms returns the FunctionalUnits and schedule datastructure. FunctionalUnits contains a set of Functional Units which define the generated architecture, each Functional Unit is a set that contains the instrucitons to be executed. The schedule datastructure will contain the clock at which each instruction of the input application has to be executed.
 
 \subsection{Maximal Parallel Architecture and Maximal Sequential Architecture}
+We refer to output hardware architecture obtained after the \textit{Data Dependency Analysis} module as \textbf{Maximal Parallel Architecture}. This architecture will take full advantage of the parallellism of the application and will perform the computation with the minimal possible latency. However, the Maximal Parallel Architecture will use the maximum number of functional units - in the worst case scenario equivalent to the number of instructions in the application - and it will hence have the worst area.
+At the other end of the spectrum of architectures we can imagine the \textbf{Maximal Sequential Architecture}, where no parallelism is used and the instruction are scheduled sequentially respecting their dependencies. This architecture will have the worst possible latency, however the minimal impact in area - using only one Functional Unit per operation type.
+Probably none of these two architectures will be of direct interest for the user as they represent two extreme cases. The architecture that are most likely to be interesting are the ones between the Maximal Parallel and Maximal Sequential that offer tradeoffs between power, latency and area. Section~\ref{ssec:dse} describes how these intermediate architecures can be procedurally generated.
+
 \subsection{Design Space Exploration}
+\label{ssec:dse}
+The \textit{Design Space Exploration} module procedurally generates hardware architectures, behaviorally equivalent to the input application, which exibit area, latancy and power tradeoffs. 
+The DSE performs an iterative process and outputs, at the end of each iteration, a different hardware architecture. The iterative process start from the \textbf{Maximal Parallel Architecture} and ends when the \textbf{Maximal Sequential Architecture} is generated. 
+An iteration consists of three steps. First, the instructions corresponding to output leaf nodes in the DDG are selected. The ALAP schedule of these iterations is increased by 1. After, the ALAP scheduling of the rest of the nodes in the DDG is updated accordingly. Doing so, the mobility of each instruction node is increased by one. The last step of the DSE consists in performing the Modified Interval Partitioning using the new ALAP schedule. Due to the increased mobility of each instruction the generated architecture is likely to use less Functional Unit.
+The process stops as soon as one iteration generates the \textbf{Maximal Sequential Architecture} which can be recognised because it contains only one Functional Unit per operation type.
+There are two side benefit of our DSE approach. The first is that it can be tuned. By changing the value that is used to increase the ASAP latency - which is one by default - we can tradeoff the speed of the DSE process for the accuracy. The second benefit is that each iteration is independent from the others hence the DSE process can be easily parallelized.
+
+
 \subsection{Layer 2 Write Model}
+The schedule produced by the Modified Interval Partitioning algorithm already takes into account the transfer of the input data between the Layer 2 memory and the Layer 1 memory as explained in~\ref{ssec:l2_read_model}. However, it does not include the transfer of the output data from the Layer 1 memory to the Layer 2 memory - which represents the end of our computation (see~\ref{ssec:system_under_analysis}). But, the result of the scheduling process determines the clock cycle at which the computation is over and the last output is stored in Layer 1 memory. The transfer of the outputs to the Layer 2 memory can therefore start right after the the Custom Processor generates the last output. We model the transfer back to Layer 2 as a burst write access, using the formula below we can derive the overall latency.
+$$
+L2WBL = wSL + L2WL * O * \frac{L2B}{L1B} * \frac{L1Clk}{L2Clk}
+$$
+Where $L2WBL$ is the Layer 2 Write Back Latency, $wSL$ is the setup latency of a Layer 2 burst write, $L2WL$ is the Layer 2 write latency - i.e. latency of a single write operation - expressed in number of L2 clock cycles, $O$ is the total number of output elements,$L2B$ is the data bitwidth of the Layer 2 memory, $L1B$ is the data bitwidth of the Layer 1 memory, $L1Clk$ is the clock frequency of the Layer 1 memory and $L2Clk$ is the clock speed of the Layer 2 memory.
+
 \subsection{Architecture Tradeoffs}
+In section~\ref{
 
