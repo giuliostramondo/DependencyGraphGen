@@ -1,14 +1,42 @@
 \section{Introduction}
-This work starts from the following two observations:
+The interest for application-specific hardware is growing in different fields of computer science, from embedded to High Performance Computing systems. This is mostly due to the end of Dennard Scaling ADDCITATION
+%ADDCITATION ((2013). The End of Dennard Scaling. Accessed: Feb. 2013. [Online].
+%Available: https://cartesianproduct.wordpress.com/2013/04/15/the-endof-dennard-scaling/
+%[3] H. Esmaeilzadeh, E. Blem, R. S. Amant, K. Sankaralingam, and
+%D. Burger, “Dark silicon and the end of multicore scaling,” in Proc.
+%38th Annu. Int. Symp. Comput. Archit. (ISCA), Jun. 2011, pp. 365–376.}
+and the every increasing demand for performance and power. Application-specific hardarware seems to be the solution to face current silicon challenges allowing energy savings and performance increase over general purpose counterparts ADDCITATION.  
+%
+%BibTeX | EndNote | ACM Ref
+%@inproceedings{Hameed:2010:USI:1815961.1815968,
+% author = {Hameed, Rehan and Qadeer, Wajahat and Wachs, Megan and Azizi, Omid and Solomatnikov, Alex and Lee, Benjamin C. and Richardson, Stephen and Kozyrakis, Christos and Horowitz, Mark},
+% title = {Understanding Sources of Inefficiency in General-purpose Chips},
+% booktitle = {Proceedings of the 37th Annual International Symposium on Computer Architecture},
+% series = {ISCA '10},
+% year = {2010},
+% isbn = {978-1-4503-0053-7},
+% location = {Saint-Malo, France},
+% pages = {37--47},
+% numpages = {11},
+% url = {http://doi.acm.org/10.1145/1815961.1815968},
+% doi = {10.1145/1815961.1815968},
+% acmid = {1815968},
+% publisher = {ACM},
+% address = {New York, NY, USA},
+% keywords = {ASIC, chip multiprocessor, customization, energy efficiency, h.264, high performance, tensilica},
+%} 
+Computer Aided Design (CAD) tools are available to help with the increasing complexity of hardware design, and increase the productivity of hardware designers. However, selecting an optimal hardware architecture taking into account the tradeoffs of all the possible design choices is still a challenging task.
+In this work we present \frameworkname, a framework that allows to compare design choices and perform automatic system level design and implementation. We propose a novel memory-driven approach for application-specific hardware design starting from two observations. First, the memory system and the processing system are \textit{interdependent} and therefore they should be \textit{co-designed}. Second, the \textit{data dependencies} of the fixed application impose constaints on the design of both memory and processing systems. Hence, our approach starts from the analysis of an input application and codesigns memory and custom processor. 
+
+Our contribution in this work are as follows:
 \begin{itemize}
-\item The memory system and the processing system are \textit{interdependent} and therefore they should be \textit{co-designed}.
-\item The \textit{data dependencies} of the fixed application impose constaints on the design of both memory and processing systems.
+%\item Modeling of different kind of memory technologies (MRAM,SRAM,eDRAM, etc..).
+\item Modeling of different layers of memory having different technologies, clock speed, read/write latency and datawidth.
+%\item Automated exploration of different area/latency tradeoffs.
+\item Definition of a space of hardware architectures generated from an input application.
+\item Automatic design and implementation of application-specific hardware.
+\item Methodology to compare alternative design choices given an input application.
 \end{itemize}
 
-Starting from our observations we designed and implemented a framework, which the remaining of this paper describes in detail, which brings the following contributions:
-\begin{itemize}
-\item Modeling of different kind of memory technologies (MRAM,SRAM,eDRAM, etc..).
-\item Modeling of different layers of memory having different clock speed, read/write latency and datawidth.
-\item Automated exploration of different area/latency tradeoffs.
-\item Custom processor design and implementation.
-\end{itemize}
+The rest of this paper is organized as follows. We ..
+
