@@ -20,7 +20,11 @@ architecture behave of FU_instruction_memory_tb is
     signal current_instruction : std_logic_vector (31 downto 0);
     -- Component declaration for the Unit Under Test (UUT)
     component instruction_memory is
-    generic (MAX_INSTRUCTION : natural);
+    generic (
+        MAX_INSTRUCTION : natural;
+        INSTRUCTION_SIZE : natural;
+        TOT_NUM_CYCLES : natural
+            );
         port
         (
         clock : in std_logic;
@@ -54,7 +58,13 @@ begin
 
     --Instantiate the Unit Under Test (UUT)
     UUT : instruction_memory
-        generic map (MAX_INSTRUCTION => 7) -- meaning from 0 to 7 included (8 total) 
+        generic map (
+            MAX_INSTRUCTION => 7,
+          -- natural(ceil(log2(real(INPUT_PORTS)))) * 3 + 2 Bits for reg write enable +
+          -- + natural(ceil(log2(real(RF_DEPTH)))) *4 + 2 bits MuxA + 2 bits MuxB
+            INSTRUCTION_SIZE => 32,
+            TOT_NUM_CYCLES => 255
+        ) -- meaning from 0 to 7 included (8 total) 
         port map (
         clock => r_CLOCK,
         computing => r_COMPUTING ,

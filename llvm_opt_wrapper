@@ -14,14 +14,15 @@ else
 
     echo -n "Emitting LLVM_IR..."
     #Emit LLVM-IR
-    clang -emit-llvm -Xclang -disable-O0-optnone $source_file -c -o $initial_bitcode
+    #clang -emit-llvm -Xclang -disable-O0-optnone $source_file -c -o $initial_bitcode
+    /Users/giuliostramondo/ownCloud/PhD/Projects/NokiaInternship/llvm-project/llvm/build/bin/clang -emit-llvm -Xclang -disable-O0-optnone $source_file -c -o $initial_bitcode
     echo " $initial_bitcode"
 
     kernel_bitcode=${initial_bitcode%.bc}_kernel.bc
 
     echo -n "Extracting function $2..."
     #Extract function of interest
-    llvm-extract -func $function_to_analyze $initial_bitcode > $kernel_bitcode 
+    /Users/giuliostramondo/ownCloud/PhD/Projects/NokiaInternship/llvm-project/llvm/build/bin/llvm-extract -func $function_to_analyze $initial_bitcode > $kernel_bitcode 
     echo " $kernel_bitcode"
 
     unrolled_kernel_bitcode=${kernel_bitcode%.bc}_unrolled.bc
@@ -29,13 +30,13 @@ else
     #Perform full loop-unroll
     echo -n "Performing full loop unroll..."
     #opt -mem2reg -simplifycfg -loops -lcssa -loop-simplify -loop-rotate -loop-unroll  -simplifycfg -instnamer $kernel_bitcode -debug > $unrolled_kernel_bitcode
-    opt -mem2reg -simplifycfg -loops -lcssa -loop-simplify -loop-rotate -loop-unroll -loop-rotate -loop-unroll -simplifycfg -instnamer $kernel_bitcode -debug > $unrolled_kernel_bitcode
+    /Users/giuliostramondo/ownCloud/PhD/Projects/NokiaInternship/llvm-project/llvm/build/bin/opt -mem2reg -simplifycfg -loops -lcssa -loop-simplify -loop-rotate -loop-unroll -loop-rotate -loop-unroll -simplifycfg -instnamer $kernel_bitcode -debug > $unrolled_kernel_bitcode
     echo " $unrolled_kernel_bitcode"
     #Generate DataFlowGraph
     if [ "$configuration_file" != "" ];then 
-        ~/Projects/llvm-project/llvm/OBJ_ROOT/bin/opt -load ~/Projects/llvm-project/llvm/OBJ_ROOT_SLIM/lib/LLVMDependencyGraph.so -dependencyGraph $unrolled_kernel_bitcode -dependencyGraphConf $configuration_file -debug > /dev/null 
+       /Users/giuliostramondo/ownCloud/PhD/Projects/NokiaInternship/llvm-project/llvm/build/bin/opt -load /Users/giuliostramondo/ownCloud/PhD/Projects/NokiaInternship/llvm-project/llvm/build/lib/LLVMDependencyGraph.dylib -dependencyGraph $unrolled_kernel_bitcode -dependencyGraphConf $configuration_file -debug > /dev/null 
     else
-        ~/Projects/llvm-project/llvm/OBJ_ROOT/bin/opt -load ~/Projects/llvm-project/llvm/OBJ_ROOT_SLIM/lib/LLVMDependencyGraph.so -dependencyGraph $unrolled_kernel_bitcode -debug > /dev/null 
+        /Users/giuliostramondo/ownCloud/PhD/Projects/NokiaInternship/llvm-project/llvm/build/bin/opt -load /Users/giuliostramondo/ownCloud/PhD/Projects/NokiaInternship/llvm-project/llvm/build/lib/LLVMDependencyGraph.dylib -dependencyGraph $unrolled_kernel_bitcode -debug > /dev/null 
     fi
     # Generate png images from dot files
     # commented out, open dot files with xdot

@@ -11,7 +11,7 @@ void DependencyGraph::replaceAndErase(Instruction *I){
     if(I==NULL)return;
     if(I->getParent() == NULL)return;
     if(removedInstructions.find(I) != removedInstructions.end())return;
-    Value::user_iterator_impl<User> u_it,next;
+    Value::user_iterator u_it,next;
     for (u_it = I->users().begin(); u_it != I->users().end(); u_it=next) {
         next=u_it;
         next++;
