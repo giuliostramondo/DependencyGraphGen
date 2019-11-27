@@ -1,11 +1,11 @@
 \section{Introduction}
-The interest for application-specific hardware is growing in different fields of computer science, from embedded to High Performance Computing systems. This is mostly due to the end of Dennard Scaling~\cite{esmaeilzadeh2011dark}
+The interest for application-specific hardware is increasing, as they provide a feasible solution to allow both energy savings and performance gain over their counterparts~\cite{hameed2010understanding}, thus matching current application demands.
 %ADDCITATION ((2013). The End of Dennard Scaling. Accessed: Feb. 2013. [Online].
 %Available: https://cartesianproduct.wordpress.com/2013/04/15/the-endof-dennard-scaling/
 %[3] H. Esmaeilzadeh, E. Blem, R. S. Amant, K. Sankaralingam, and
 %D. Burger, “Dark silicon and the end of multicore scaling,” in Proc.
 %38th Annu. Int. Symp. Comput. Archit. (ISCA), Jun. 2011, pp. 365–376.}
-and the ever increasing demand for performance and lower power consumption. Application-specific or \textit{custom processor} hardware seems to be the solution to face current silicon challenges allowing energy savings and performance increase over general purpose counterparts~\cite{hameed2010understanding}. With the massive increase in the data handling needed in custom hardware, the \textit{memory system} (both on-chip and off-chip) is becoming a dominant factor affecting the overall performance, power consumption and area usage of the silicon. Since the memory system and the processing system are strongly \textit{interdependent}, they should be \textit{co-designed}. This is especially important for emerging memory technologies, such as MRAM, eDRAM, PCM, RRAM~\cite{mem2016}, that has high integration density and lower power than SRAM, but with different latency for read/write operations
+It has been shown that the memory system (both on-chip and off-chip) has become a dominant factor affecting the overall performance~\cite{williams2009roofline}, power consumption~\cite{dayarathna2015data}, and silicon area usage~\cite{oh2009analytical}. Since the memory system and the processing system are strongly \textit{interdependent}, they should be \textit{co-designed}. This is especially important for emerging memory technologies, such as MRAM, eDRAM, PCM, RRAM~\cite{mem2016}, that have higher integration density and lower power than SRAM, but features different latency for read and write operations.
 
 %
 %BibTeX | EndNote | ACM Ref
@@ -27,8 +27,9 @@ and the ever increasing demand for performance and lower power consumption. Appl
 % keywords = {ASIC, chip multiprocessor, customization, energy efficiency, h.264, high performance, tensilica},
 %} 
 
-Commercial CAD tools~\cite{synopsystool,tensilica,codasiptool} are available to help with the increasing complexity of custom processor design. However, selecting an optimal hardware architecture taking into account the various trade-offs in latency, power consumption and area usage of all the possible design choices is still a challenging task. State-of-the-art design flows for custom processor architecture design-space exploration focus on processor architecture optimization~\cite{Meloni2012,EusseSAMOS2014,Jozwiak2013,Karuri2009} and does not include the Memory System, as illustrated in Figure~\ref{fig:intro}. Co-optimization of processor and memory system (including emerging memories) is typically done by co-simulation of the processor and the memory system and optimizing the cache replacement policy~\cite{4798259,7092595,6271803,Mittal13f}. On the other hand, emerging \emph{spatial architecutres}~\cite{7284058,8686088} for custom processors helps to distribute the program memory and processing elements to achieve maximum performance, but uses "non-custom" and complex interconnect.
-%Papers to cite for CDFG generation and Application Specific High Level Synthesis~\cite{Coussy:2008:HSA:1457713,Kato2008}.
+CAD tools~\cite{synopsystool,tensilica,codasiptool} are available to help with the increasing complexity of custom processor design. However, selecting an optimal hardware architecture, taking into account the various trade-offs in latency, power consumption, and area usage remains a challenging task. State-of-the-art design flows for custom-processor design-space exploration focus on processor architecture optimization~\cite{Meloni2012,EusseSAMOS2014,Jozwiak2013,Karuri2009}, and do not include the memory system, as illustrated in Figure~\ref{fig:intro}. Co-optimization of the processor and the memory system (including emerging memories) is typically done by co-simulation and by optimization the cache replacement policy~\cite{4798259,7092595,6271803,Mittal13f}. 
+%Papers to cite for CDFG generation and Application Specific High LSynthesis~\cite{Coussy:2008:HSA:1457713,Kato2008}.
+One exception are the emerging spatial architectures~\cite{7284058,8686088}, which distribute the program memory and processing elements to achieve maximum performance; however, they use rigid interconnect topologies to allow flexible communication between processing elements leading to larger area and power utilization.
 
 \begin{figure}[ht]
     \centering
@@ -36,19 +37,11 @@ Commercial CAD tools~\cite{synopsystool,tensilica,codasiptool} are available to 
     \caption{Difference between state-of-the-art and the proposed \frameworkname~design flows for custom processor architecture design.}
     \label{fig:intro}
 \end{figure}
-
-Our main contributions in this paper are:
-\begin{itemize}
-\item \frameworkname: An automated framework for memory-aware custom processor architecture design-space exploration and provide different tradeoffs, as shown in Figure~\ref{fig:intro}. The framework supports different kind of memory technologies and configuration of different parameters such as, levels of memory, clock frequency, read/write latency and data width. 
-\item A novel spatial processor architecture template that can be configured at design-time (based on the trade-off from the framework) and allows a faster implementation of an application-specific hardware.
-\item Case-study demonstrating the effectiveness of the framework for a custom processor design using state-of-the-art MRAM and SRAM for memory system.
-
+In this work, we propose \frameworkname, an automated framework for memory-aware custom processor architecture design-space exploration and provide different tradeoffs (\ref{sec:framework}), as shown in Figure~\ref{fig:intro}. The framework supports different kinds of memory technologies and the configuration levels of memory, clock frequency, read/write latency and data width. Moreover, using spatial architectural templates (\ref{sec:arch_template}), \frameworkname~can generate ready-to-use designs for the co-designed processors. These designs can be configured at design-time (based on the trade-off from the framework) and allow a faster prototyping of an application-specific hardware. Finally, to demonstrate the capabilities of \frameworkname, we propose two case-studies analysing custom-processor designs using state-of-the-art MRAM and SRAM for the memory system (\ref{sec:case_studies}).
+ 
+\frameworkname~enables design space exploration for application-specific custom-processors beyond the current state-of-the-art solutions, even enabling a first comparison between different memory technologies, like MRAM and SRAM.
 
 %In this work we present \frameworkname, a framework that allows to compare design choices and perform automatic system level design and implementation. We propose a novel memory-driven approach for application-specific hardware design starting from two observations. First, the memory system and the processing system are \textit{interdependent} and therefore they should be \textit{co-designed}. Second, the \textit{data dependencies} of the fixed application impose constaints on the design of both memory and processing systems. Hence, our approach starts from the analysis of an input application and codesigns memory and custom processor, shown in Figure~\ref{fig:intro}. 
 
 
-\end{itemize}
-
-
-The rest of this paper is organized as follows. We present the \frameworkname~and describe its modules in section~\ref{sec:framework}. We describe our novel spatial processor architecture in section~\ref{sec:arch_template}. We conclude the paper with three case studies demonstrating the capability of \frameworkname.
 

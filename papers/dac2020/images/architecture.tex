@@ -21,9 +21,9 @@
    \begin{scope}[xshift=-7.5cm,yshift=-5cm,very thick,
 		node distance=1.6cm,on grid,>=stealth',
 		block/.style={rectangle,draw,fill=cyan!20,text width=2cm,text centered}]
-\node [event] (memoryl2) {Level 2\\ \small (SRAM, MRAM, eDRAM)};
+\node [event] (memoryl2) {Level 2\\Memory\\ \small (SRAM, MRAM, eDRAM)};
 \node [event,fill=white,below=of memoryl2.south,below=0pt] (separation) {};
-\node [event,below=of separation.south,below=0pt] (memoryl1) {Level 1\\ \small (SRAM)};
+\node [event,below=of separation.south,below=0pt] (memoryl1) {Level 1\\Memory\\ \small (SRAM)};
 \node [block, below=of memoryl1.south,below=0pt] (processor) {Custom\\Processor};
 
 \draw [->] ([xshift=-10pt]memoryl2.north west) -- ([xshift=-10pt,yshift=10pt] processor.south west)

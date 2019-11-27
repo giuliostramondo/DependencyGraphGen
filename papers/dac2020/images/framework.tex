@@ -36,12 +36,13 @@
     \node [event,right=of l21] (ddg_ana){Data Dependency Analysis};
     
     \node [event, right of=ddg_ana] (dse) {Design Space Exploration};
-    \node [block, above=of dse,above=20 pt] (dfg_full) {Maximum Parallel Architecture};
+    \node [block, above=of dse,above=20 pt] (dfg_full) {Most Parallel Architecture};
     \node [block, below=of dse,below=20pt] (dfg_seq) {Most Sequential Architecture};
 %    \node [circle,draw,fill=blue!100,right=of dse,text=white,font=\sffamily] (l22){2};
     \node [event,right=of dse] (l22){Model L2 write};
 
-    \node [block, right of=l22] (dse_analysis) {Architectures Tradeoffs};
+    \node [block, right of=l22] (dse_analysis) {Hardware Architectures};
+    \node [block, right of=dse_analysis] (tradeoff) {Tradeoffs Analysis};
   \node [event,fill=green!20 , below of=dse_analysis, below = -50pt, text width=2.5cm] (impl) {Implementation};
   \node [block, below of=impl, below = -50pt, text width=2.5cm] (rtl) {RTL};
       \node [block, left of=impl] (temp_arch) {Architectural\\Template};
@@ -62,6 +63,7 @@
     \draw [->] (dse) -- (l22);
     \draw [->] (l22) -- (dse_analysis);
     \draw [->, dashed] (dse_analysis) -- (impl);
+    \draw [->] (dse_analysis) -- (tradeoff);
    \draw [->, dashed] (temp_arch) -- (impl);
  \draw [->, dashed] (impl) -- (rtl);
  \draw [-, dashed] (start_dash.west) -- (end_dash.east);
