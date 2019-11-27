@@ -151,37 +151,39 @@ The final stage of the \textit{Data Dependency Analysis} module - described in S
 \label{ssec:modified_interval_partitioning}
 To generate a hardware architecture behaviorally equivalent to the input application and with the latency identified during the ASAP-ALAP scheduling, there are two main requirements: (1) each instruction needs to be computed within its ASAP-ALAP interval, and (2) instructions in the original DDG which are executed by the same FU cannot be scheduled at the same time.
 Our Modified Interval Partitioning (MIP) algorithm - based on the original greedy Interval Partitioning algorithm~\cite{greedyIntervalPartitioning} - is designed to generate hardware architectures from a DDG that meet both requirements. The original Interval Partitioning problem addresses the issue of assigning a number of jobs, with known starting and ending time, to the minimum amount of resources, ensuring that the jobs assigned to a resource do not overlap. To use Interval Partitioning for our problem, we consider instructions as jobs and FUs as resources. There are, however, three main differences between our problem and the canonical Interval Partitioning. 
-First, the original algorithm considers any job can use any resource, while our architecture requires different FUs for different instructions. We therefore perform interval partitioning several times, once for each instruction type (e.g., four times for the graph in Fig. 4). This ensures a correct allocation of the instruction to FUs performing the same operation. Second, due to \textit{mobility}, instructions do not have a fixed starting time. The MIP takes the mobility of an instruction into account allowing a given instruction to start at any time within its allowed interval. Third, and final difference, is that our instructions are dependent on each other , which is not the case for the jobs in the original interval partitioning. To account for this extra constraint, we ensure that any given instruction (1) is only allocated after its dependencies are allocated, and (2) is scheduled to start after the ending time of its dependencies.
-Listing~\ref{lst:modified_interval_partitioning} shows the pseudocode of our modified interval partitioning algorithm. 
-\begin{lstlisting}[language=Python, caption={Modified Interval Partitioning Algorithm}, label={lst:modified_interval_partitioning}]
-FunctionalUnits=[]
-sort i in Instructions by ASAP[i]
-for each i in Instructions
+First, the original algorithm considers any job can use any resource, while our architecture requires different FUs for different instructions. We therefore perform interval partitioning several times, once for each instruction type (e.g., four times for the graph in Fig. 4). This ensures a correct allocation of instructions to FUs performing the same operation. Second, due to \textit{mobility}, instructions do not have a fixed starting time. MIP takes the mobility of an instruction into account by allowing a given instruction to start at any time within its allowed interval. Third, and final difference, is that our instructions are dependent on each other , which is not the case for the jobs in the original interval partitioning. To account for this extra constraint, we ensure that any given instruction (1) is only allocated after its dependencies are allocated, and (2) is scheduled to start after the ending time of its dependencies.
+Listing~\ref{lst:modified_interval_partitioning} presents MIP, in pseudocode. %of our modified interval partitioning algorithm. 
+
+\begin{lstlisting}[language=Python, caption={\small Modified Interval Partitioning Algorithm}, label={lst:modified_interval_partitioning}, basicstyle=\tiny]
+# ASAP[i] and ALAP[i] contain the scheduled cycles for instruction i 
+# SetFUs is the set of functional units in the architecture
+SetFUs=[]
+sort instructions by ASAP[i]
+for each instruction i 
 	allocated = False
-	schedule[i] = ASAP[i]
-	for d in dep(i)
-		end_time_d = schedule[d] + latency(d)
-		schedule[i] = max(schedule[i],end_time_d)
-	for each fu in FunctionalUnits 
-		if type(fu) ==  type(i)
-			if ALAP[i] >=  next_free_slot[fu]
-				fu += [i]
-				schedule[i] = max(schedule[i],
-					next_free_slot[fu])
-				next_free_slot[fu] = schedule[i] + 
-					latency(i)
+	dep_deadline = maximum end-time of all instructions depending on i 
+	schedule[i] = max(ASAP[i], dep_deadline)
+	for each FU in SetFUs
+		if instruction i matches FU 
+			if ALAP[i] >=  next_free_slot[FU]
+				add instruction i to FU 
+				schedule[i] = max(schedule[i], next_free_slot[FU])
+				next_free_slot[FU] = schedule[i] + latency(i)
 				allocated = True
 	if not allocated
-		create new Functional Unit fu
-		type(fu) = type(i)
-		fu += [i]
-		next_free_slot[fu] = schedule[i] + latency(i)
-		FunctionalUnits += [fu]
-
+		create new FU with type(i)
+		add instruction i to FU 
+		next_free_slot[FU] = schedule[i] + latency(i)
+		add FU to setFUs 
 \end{lstlisting}
-We assume that ASAP and ALAP schedules have been previously performed, hence we can have two datastructures that return the ASAP and ALAP schedules for a given instruction i - i.e. ASAP[i] and ALAP[i]. Instructions is an ordered list of instructions initialized with the instructions of the input application. A Functional Unit is represented as a set containing the instructions that have been allocated to it, and FunctionalUnits is a set containing the Functional Units of the resulting architecture which is initialized as an empty set. The functions latency and dep take an instruction i as input and return respectively the latency of i and a list of instructions i depends on. The function type
-takes as input a Functional Unit or an Instruction and returns the type of operation performed.
-The MIP algorithms returns the FunctionalUnits and schedule datastructure. FunctionalUnits contains a set of Functional Units which define the generated architecture, each Functional Unit is a set that contains the instructions to be executed. The schedule datastructure will contain the clock at which each instruction of the input application has to be executed.
+
+%We assume that ASAP and ALAP schedules have been previously performed, hence we can have two datastructures that return the ASAP and ALAP schedules for a given instruction i - i.e. ASAP[i] and ALAP[i]. 
+%Instructions is an ordered list of instructions initialized with the instructions of the input application. 
+%A Functional Unit is represented as a set containing the instructions that have been allocated to it, and FunctionalUnits is a set containing the Functional Units of the resulting architecture which is initialized as an empty set. 
+%The functions latency and dep take an instruction i as input and return respectively the latency of i and a list of instructions i depends on. 
+%The function type takes as input a Functional Unit or an Instruction and returns the type of operation performed.
+
+The MIP algorithm returns the \verb|setFUs| and the \verb|schedule| for the current design: \verb|setFUs| is the list of functional units that form the architecture, with each FU in this set containing the instructions to be executed by that FU, while \verb|schedule| contains the clock cycle at which each instruction is scheduled to be executed.
 
 \subsection{Most Parallel and Most Sequential Architectures}
 The result of the \textit{DDA} module is the \textbf{Most Parallel Architecture (MostPar)}. This architecture takes full advantage of the parallelism of the application and performs the computation with the minimum latency. However, the MostPar uses the maximum number of FUs - in the worst case scenario equivalent to the number of instructions in the application - and it will hence have the worst area.
@@ -250,3 +252,4 @@ For a given input application and a given configuration (see Figure \ref{fig:fra
 %\caption{my fig}
 %\label{fig:main}
 %\end{figure}
+
