@@ -9,7 +9,7 @@ all: analyze_vhdl create_snapshot
 sim:
 	echo "add_wave {{/${TOP_LEVEL_DESIGN}/UUT}}" >> ${BUILD_DIR}/run.tcl
 	echo "run ${SIM_TIME} us" >> ${BUILD_DIR}/run.tcl
-	showcees "cd ${BUILD_DIR};xsim work.${TOP_LEVEL_DESIGN} -gui -tclbatch run.tcl"
+	showcees_no_side "cd ${BUILD_DIR};xsim work.${TOP_LEVEL_DESIGN} -gui -tclbatch run.tcl"
 	rm ${BUILD_DIR}/run.tcl
 
 create_snapshot:

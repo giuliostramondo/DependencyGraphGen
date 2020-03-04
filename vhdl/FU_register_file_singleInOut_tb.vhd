@@ -68,10 +68,24 @@ begin
     process
     begin 
         -- write using input 1 at location 0
+        wait for 25 ns;
         r_WRITE_EN_1 <='1';
         r_INPUT_1 <= x"00000001";
         r_REG1SEL_write <= "0000";
+        r_REG1SEL_read <= "0000";
         wait for 50 ns;
+        
+        -- write using input 2 at location 1
+        r_WRITE_EN_1 <='1';
+        r_INPUT_1 <= x"00000002";
+        r_REG1SEL_write <= "0001";
+        wait for 50 ns;
+        
+          -- write 5 to reg 3
+        r_WRITE_EN_1 <='1';
+        r_INPUT_1 <= x"00000005";
+        r_REG1SEL_write <= "0011";
+        wait for 50 ns;      
         
         -- read using output A from location 0
         r_WRITE_EN_1 <='0';
@@ -79,22 +93,14 @@ begin
         r_REG1SEL_read <= "0000";
         wait for 50 ns;
 
-        -- write using input 2 at location 1
-        r_WRITE_EN_1 <='1';
-        r_INPUT_1 <= x"00000002";
-        r_REG1SEL_write <= "0001";
-        wait for 50 ns;
+
         -- read value at location 1
         r_WRITE_EN_1 <='0';
         r_INPUT_1 <= x"00000000";
         r_REG1SEL_read <= "0001";
         wait for 50 ns;
 
-        -- write 5 to reg 3
-        r_WRITE_EN_1 <='1';
-        r_INPUT_1 <= x"00000005";
-        r_REG1SEL_write <= "0011";
-        wait for 50 ns;
+
         -- read from A reg 3 ( should give 5 in outA)
         r_WRITE_EN_1 <='0';
         r_INPUT_1 <= x"00000000";
