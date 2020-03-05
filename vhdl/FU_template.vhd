@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 use IEEE.math_real."ceil";
 use IEEE.math_real."log2";
 
-entity FU is 
+entity FU is
     generic (
                 INSTRUCTIONS : natural;
                 TOTAL_EXE_CYCLES : natural;
@@ -21,7 +21,7 @@ entity FU is
         i_clock : in std_logic;
         --specify inputs (number of FUs that sends input to this FU)
         --i_FU : in std_logic_vector(natural(real(IS_MUL)/real(2)*real(BITWIDTH +1)*real(INPUT_PORTS))-1 downto 0);
-        i_FU : in std_logic_vector(((BITWIDTH +1)*INPUT_PORTS)- 
+        i_FU : in std_logic_vector(((BITWIDTH +1)*INPUT_PORTS)-
         IS_MUL*((BITWIDTH +1)/2*INPUT_PORTS)   -1
         downto 0);
         --i_FU1 : in signed(32 downto 0);
@@ -40,8 +40,8 @@ entity FU is
         r_INPUT_INST : in std_logic_vector(
                 natural(ceil(log2(real(TOTAL_EXE_CYCLES+1))))+ -- bit required to ID Clock
                 natural(ceil(log2(real(INPUT_PORTS))))*3 + -- crossbar Select Bits
-                2 + -- Register Write enable bits (input 1 and input 2) 
-                natural(ceil(log2(real(RF_DEPTH)))) * 4 + -- RF select bits
+                2 + -- Register Write enable bits (input 1 and input 2)
+                natural(ceil(log2(real(RF_DEPTH+1)))) * 4 + -- RF select bits
                 4 -- Select signals for MuxA and MuxB
                 -1
                 downto 0);
@@ -52,7 +52,7 @@ entity FU is
     );
 end FU;
 
-architecture rtl of FU is 
+architecture rtl of FU is
     --Parametrize the total number of cycles
     --Cunter that keeps track of the current cycle number
     signal instruction_count: natural range 0 to TOTAL_EXE_CYCLES;
@@ -67,7 +67,7 @@ architecture rtl of FU is
 
     constant INPUT_BITWIDTH : natural :=  ((BITWIDTH +1) - IS_MUL*(BITWIDTH + 1)/2) -1;
 
-    constant RFSelectBits : natural := natural(ceil(log2(real(RF_DEPTH))));
+    constant RFSelectBits : natural := natural(ceil(log2(real(RF_DEPTH+1))));
           -- natural(ceil(log2(real(INPUT_PORTS)))) * 3 + 2 Bits for reg write enable +
           -- + natural(ceil(log2(real(RF_DEPTH)))) *4 + 2 bits MuxA + 2 bits MuxB
 
@@ -143,10 +143,10 @@ signal muxBout : std_logic_vector(BITWIDTH downto 0);
         valid_inst : out std_logic :='0';
         reset : in std_logic
         );
-    end component instruction_memory; 
+    end component instruction_memory;
 
     component register_file is
-        generic  
+        generic
         (
             BITWIDTH : natural; --31
             DEPTH: natural -- 15
@@ -179,7 +179,7 @@ begin
           -- + natural(ceil(log2(real(RF_DEPTH)))) *4 + 2 bits MuxA + 2 bits MuxB
             INSTRUCTION_SIZE => INSTRUCTION_SIZE,
             TOT_NUM_CYCLES => TOTAL_EXE_CYCLES
-        ) -- meaning from 0 to 7 included (8 total) 
+        ) -- meaning from 0 to 7 included (8 total)
         port map (
         clock => i_clock,
         computing => r_COMPUTING ,
@@ -207,7 +207,7 @@ begin
         reset => r_RESET
                  );
 
-    RF : register_file 
+    RF : register_file
         generic map (
             BITWIDTH => BITWIDTH,
             DEPTH => RF_DEPTH
@@ -224,16 +224,16 @@ begin
 
         --the select signal needs to be log2(registerfilesize)
         --reg1Sel_read  => w_OUTPUT_INST(31-8 downto 31-8-4+1),
-        reg1Sel_read  => w_OUTPUT_INST(INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 
+        reg1Sel_read  => w_OUTPUT_INST(INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2
                             downto INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - RFSelectBits +1),
         --reg2Sel_read  => w_OUTPUT_INST(31-8-4 downto 31-8-8+1),
-        reg2Sel_read  => w_OUTPUT_INST(INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - RFSelectBits 
+        reg2Sel_read  => w_OUTPUT_INST(INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - RFSelectBits
                             downto INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - 2*RFSelectBits +1),
         --reg1Sel_write  => w_OUTPUT_INST(31-8-8 downto 31-8-8-4+1),
-        reg1Sel_write  => w_OUTPUT_INST(INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - 2*RFSelectBits 
+        reg1Sel_write  => w_OUTPUT_INST(INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - 2*RFSelectBits
         downto INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - 3*RFSelectBits+1),
         --reg2Sel_write  => w_OUTPUT_INST(31-8-12 downto 31-8-12-4+1),
-        reg2Sel_write  => w_OUTPUT_INST(INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - 3*RFSelectBits 
+        reg2Sel_write  => w_OUTPUT_INST(INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - 3*RFSelectBits
         downto INSTRUCTION_SIZE-1 -crossbarSelectBITs*3-2 - 4*RFSelectBits+1),
         clock => i_clock,
         reset  => r_RESET
@@ -250,11 +250,11 @@ begin
     --        o_FU((i*(BITWIDTH))+j) <= opOut(j);
     --    end generate genOutput;
     --end generate genOutputPorts;
-    
+
     genOutputPorts: for i in 0 to (OUTPUT_PORTS-1) generate
             o_FU(((i+1)*(BITWIDTH+1)-1) downto (i*(BITWIDTH+1))) <= opOut;
     end generate genOutputPorts;
-    
+
     ADDOP: if OPCODE = 0 generate
             RESULT <= std_logic_vector(unsigned(muxAout) + unsigned(muxBout));
     end generate;
@@ -286,20 +286,20 @@ begin
                     --need to parametrize also in instruction memory
                    inputCrossbarSelect := w_OUTPUT_INST(INSTRUCTION_SIZE-1 downto (INSTRUCTION_SIZE-1 - (crossbarSelectBITs*3 -1 )));
                    in_cb_out3_sel := to_integer(unsigned(inputCrossbarSelect((crossbarSelectBITs)-1 downto 0)));
-                   d_in_cb_out3_sel <= in_cb_out3_sel; 
+                   d_in_cb_out3_sel <= in_cb_out3_sel;
                    input_crossbar_out3 := i_FU((((INPUT_PORTS-1)-in_cb_out3_sel +1) * (INPUT_BITWIDTH +1))-1 downto (((INPUT_PORTS-1)-in_cb_out3_sel) * (INPUT_BITWIDTH+1)));
                    d_input_crossbar_out3 <= input_crossbar_out3;
 
                    in_cb_out2_sel := to_integer(unsigned(inputCrossbarSelect((2*(crossbarSelectBITs))-1 downto ((crossbarSelectBITs)))));
-                   d_in_cb_out2_sel <= in_cb_out2_sel; 
+                   d_in_cb_out2_sel <= in_cb_out2_sel;
                    input_crossbar_out2 := i_FU( (((INPUT_PORTS-1)-in_cb_out2_sel +1) * (INPUT_BITWIDTH +1))-1 downto (((INPUT_PORTS-1)-in_cb_out2_sel) * (INPUT_BITWIDTH+1)));
                    d_input_crossbar_out2<= input_crossbar_out2;
 
-                   in_cb_out1_sel := to_integer(unsigned(inputCrossbarSelect((3*(crossbarSelectBITs))-1 downto ((2*(crossbarSelectBITs)))))); 
+                   in_cb_out1_sel := to_integer(unsigned(inputCrossbarSelect((3*(crossbarSelectBITs))-1 downto ((2*(crossbarSelectBITs))))));
                    d_in_cb_out1_sel<= in_cb_out1_sel;
                    input_crossbar_out1 := i_FU( (((INPUT_PORTS-1)-in_cb_out1_sel +1) * (INPUT_BITWIDTH +1))-1 downto (((INPUT_PORTS-1)-in_cb_out1_sel) * (INPUT_BITWIDTH+1)));
                    d_input_crossbar_out1 <= input_crossbar_out1;
-                   
+
                    muxAoutSel := w_OUTPUT_INST(1 downto 0);
                    w_SEL_MUXA <= w_OUTPUT_INST(1 downto 0);
                    muxBoutSel := w_OUTPUT_INST(3 downto 2);
@@ -336,14 +336,14 @@ begin
                    --    when "01" => muxBout := input_crossbar_out2;
                    --    when "10" => muxBout := w_OUTPUT_B;
                    --    when others => muxBout := (OTHERS=>'0');
-                   --end case;          
-                  
+                   --end case;
+
                    case muxBoutSel is
                        when "00" => muxBout <= opOut;
                        when "01" => muxBout(INPUT_BITWIDTH downto 0) <= input_crossbar_out2;
                        when "10" => muxBout <= w_OUTPUT_B;
                        when others => muxBout <= (OTHERS=>'0');
-                   end case;     
+                   end case;
                    w_MUXB_OUT <= muxBout;
                    r_INPUT_1(INPUT_BITWIDTH downto 0) <= input_crossbar_out3;
 
@@ -354,4 +354,3 @@ begin
 
     end process;
 end rtl;
-
