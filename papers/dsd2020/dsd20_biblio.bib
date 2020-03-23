@@ -1,5 +1,5 @@
 
-IEEEexample.bib 
+IEEEexample.bib
 V1.12 (2007/01/11)
 Copyright (c) 2002-2007 by Michael Shell
 See: http://www.michaelshell.org/
@@ -9,8 +9,8 @@ This is an example BibTeX database for the official IEEEtran.bst
 BibTeX style file.
 
 Some entries call strings that are defined in the IEEEabrv.bib file.
-Therefore, IEEEabrv.bib should be loaded prior to this file. 
-Usage: 
+Therefore, IEEEabrv.bib should be loaded prior to this file.
+Usage:
 
 \bibliographystyle{./IEEEtran}
 \bibliography{./IEEEabrv,./IEEEexample}
@@ -26,7 +26,7 @@ http://www.ieee.org/
 Legal Notice:
 This code is offered as-is without any warranty either expressed or
 implied; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE! 
+FITNESS FOR A PARTICULAR PURPOSE!
 User assumes all risk.
 In no event shall IEEE or any contributor to this code be liable for
 any damages or losses, including, but not limited to, incidental,
@@ -58,8 +58,8 @@ In particular, full names (not abbreviated with initials) should be
 entered whenever possible as some (non-IEEE) bibliography styles use
 full names. IEEEtran.bst will automatically abbreviate when it encounters
 full names.
- 
- 
+
+
  dennard scaling
 @inproceedings{esmaeilzadeh2011dark,
   title={Dark silicon and the end of multicore scaling},
@@ -68,7 +68,7 @@ full names.
   pages={365--376},
   year={2011},
   organization={IEEE}
-} 
+}
 
 @article{dayarathna2015data,
   title={Data center energy consumption modeling: A survey},
@@ -112,6 +112,48 @@ data dependency graph
   year={2010},
   publisher={ACM}
 }
+HLS BASICS
+@article{hwang1991formal,
+  title={A formal approach to the scheduling problem in high level synthesis},
+  author={Hwang, C-T and Lee, J-H and Hsu, Y-C},
+  journal={IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems},
+  volume={10},
+  number={4},
+  pages={464--475},
+  year={1991},
+  publisher={IEEE}
+}
+
+Trigger architecture
+@article{parashar2014efficient,
+  title={Efficient spatial processing element control via triggered instructions},
+  author={Parashar, Angshuman and Pellauer, Michael and Adler, Michael and Ahsan, Bushra and Crago, Neal and Lustig, Daniel and Pavlov, Vladimir and Zhai, Antonia and Gambhir, Mohit and Jaleel, Aamer and others},
+  journal={IEEE Micro},
+  volume={34},
+  number={3},
+  pages={120--137},
+  year={2014},
+  publisher={IEEE}
+}
+
+Plasticine
+@inproceedings{prabhakar2017plasticine,
+  title={Plasticine: A reconfigurable architecture for parallel patterns},
+  author={Prabhakar, Raghu and Zhang, Yaqi and Koeplinger, David and Feldman, Matt and Zhao, Tian and Hadjis, Stefan and Pedram, Ardavan and Kozyrakis, Christos and Olukotun, Kunle},
+  booktitle={2017 ACM/IEEE 44th Annual International Symposium on Computer Architecture (ISCA)},
+  pages={389--402},
+  year={2017},
+  organization={IEEE}
+}
+
+Spacial Computation
+@inproceedings{budiu2004spatial,
+  title={Spatial computation},
+  author={Budiu, Mihai and Venkataramani, Girish and Chelcea, Tiberiu and Goldstein, Seth Copen},
+  booktitle={Proceedings of the 11th international conference on Architectural support for programming languages and operating systems},
+  pages={14--26},
+  year={2004}
+}
 
 llvm
 @inproceedings{llvm,
@@ -123,6 +165,20 @@ llvm
  acmid = {977673},
  publisher = {IEEE Computer Society},
 }
+
+HLS FLOW BASICS ASAP-ALAP
+@article{hwang1991formal,
+  title={A formal approach to the scheduling problem in high level synthesis},
+  author={Hwang, C-T and Lee, J-H and Hsu, Y-C},
+  journal={IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems},
+  volume={10},
+  number={4},
+  pages={464--475},
+  year={1991},
+  publisher={IEEE}
+}
+
+
 interval partitioning
 @Article{Pedamallu2008,
 author="Pedamallu, Chandra Sekhar
@@ -329,7 +385,7 @@ From the June 2002 issue of "IEEE Transactions on Electron Devices",
 page 996, reference #16.
 @article{IEEEexample:article_typical,
   author        = "S. Zhang and C. Zhu and J. K. O. Sin and P. K. T. Mok",
-  title         = "A Novel Ultrathin Elevated Channel Low-temperature 
+  title         = "A Novel Ultrathin Elevated Channel Low-temperature
                    Poly-{Si} {TFT}",
   journal       = IEEE_J_EDL,
   volume        = "20",
@@ -340,7 +396,7 @@ page 996, reference #16.
 
 
 journal article using et al.
-The (five) authors are actually: F. Delorme, S. Slempkes, G. Alibert, 
+The (five) authors are actually: F. Delorme, S. Slempkes, G. Alibert,
 B. Rose, J. Brandon
 The month (July) was not given here.
 From the September 1998 issue of "IEEE Journal on Selected Areas in
@@ -411,7 +467,7 @@ page 1039, reference #11.
 }
 
 
-journal article with dual months 
+journal article with dual months
 use the BibTeX "#" concatenation operator
 From the March 2002 issue of "IEEE Transactions on Mechatronics",
 page 21, reference #8.
@@ -428,9 +484,9 @@ page 21, reference #8.
 
 
 journal article to be published as a misc entry type
-date information like month and year is optional 
+date information like month and year is optional
 However, the article form like that below may be a better approach.
-From the May 2002 issue of "IEEE Journal of Selected Areas in 
+From the May 2002 issue of "IEEE Journal of Selected Areas in
 Communication", page 725, reference #3.
 @misc{IEEEexample:TBPmisc,
   author        = "M. Coates and A. Hero and R. Nowak and B. Yu",
@@ -514,7 +570,7 @@ page 11, reference #31.
 inbook with chapter number. The pages field could also have been given.
 The chapter number could be changed to something else such as a section
 number via the type field: type = "sec.".
-From the May 2002 issue of "IEEE Transactions on Circuits and Systems---I: 
+From the May 2002 issue of "IEEE Transactions on Circuits and Systems---I:
 Fundamental Applications and Theory", page 638, reference #22.
 @inbook{IEEEexample:inbook,
   author        = "H. E. Rose",
@@ -569,7 +625,7 @@ page 609, reference #3.
   publisher     = "Springer-Verlag",
   address       = "New York",
   year          = "2000"
-  
+
 }
 
 
@@ -604,7 +660,7 @@ page 996, reference #12.
                    and S. Pearson and W. A. Barrow and E. Dickey and K. Ping
                    and C. W. Tang and S. Van. Slyke and
                    F. Chen and J. Shi and J. C. Sturm and M. H. Lu",
-  title         = "Design of an Improved Pixel for a Polysilicon 
+  title         = "Design of an Improved Pixel for a Polysilicon
                    Active-Matrix Organic {LED} Display",
   booktitle     = "{SID} Tech. Dig.",
   volume        = "29",
@@ -701,7 +757,7 @@ page 1087, reference #12.
                    K. Dreyer and Y. Su. and L. E. Nelson and J. E. Johnson
                    and G. Shtengel and A. Bond and D. G. Moodie and
                    A. D. Ellis",
-  title         = "160 {Gbit/s} Single-channel Transmission Over 300 km 
+  title         = "160 {Gbit/s} Single-channel Transmission Over 300 km
                    Nonzero-dispersion Fiber With Semiconductor Based
                    Transmitter and Demultiplexer",
   booktitle     = "Proc. {ECOC}'99",
@@ -786,7 +842,7 @@ From the August 2001 issue of "IEEE/ACM Transactions on Networking",
 page 490, reference #15.
 @techreport{IEEEexample:techrep,
   author        = "R. Jain and K. K. Ramakrishnan and D. M. Chiu",
-  title         = "Congestion Avoidance in Computer Networks with a 
+  title         = "Congestion Avoidance in Computer Networks with a
                    Connectionless Network Layer",
   institution   = "Digital Equipment Corporation",
   address       = "MA",
@@ -848,7 +904,7 @@ page 391, reference #16.
 
 
 
-electronic with a howpublished information field 
+electronic with a howpublished information field
 From the August 2001 issue of "IEEE/ACM Transactions on Networking",
 page 391, reference #7.
 @electronic{IEEEexample:electronhowinfo,
@@ -861,7 +917,7 @@ page 391, reference #7.
 }
 
 
-electronic with a howpublished information field 
+electronic with a howpublished information field
 From the August 2001 issue of "IEEE/ACM Transactions on Networking",
 page 418, reference #31.
 @electronic{IEEEexample:electronhowinfo2,
@@ -898,7 +954,7 @@ The address is that of the assignee. Note that IEEE does not
 display the assignee, the address, and only displays one date.
 (if year is not present, the filed dates are used.) However, this
 information should be entered as other BibTeX styles may use it.
-alternatively, nationality could be entered as "U.S." 
+alternatively, nationality could be entered as "U.S."
 From the April 2000 issue of "IEEE Transactions on Communications",
 page 542, reference #6.
 @patent{IEEEexample:uspat,
@@ -941,7 +997,7 @@ From the April 2000 issue of "IEEE Transactions on Communications",
 page 556, reference #9.
 @patent{IEEEexample:frenchpatreq,
   author        = "F. Kowalik and M. Isard",
-  title         = "Estimateur d'un D{\'e}faut de Fonctionnement 
+  title         = "Estimateur d'un D{\'e}faut de Fonctionnement
                    d'un Modulateur en Quadrature et {\'E}tage de Modulation
                    l'Utilisant",
   language      = "french",
@@ -978,7 +1034,7 @@ to provide one for BibTeX styles that use it.
 From the August 2001 issue of "IEEE/ACM Transactions on Networking",
 page 451, reference #2.
 @standard{IEEEexample:standard,
-  title         = "Wireless {LAN} Medium Access Control {(MAC)} and 
+  title         = "Wireless {LAN} Medium Access Control {(MAC)} and
                    Physical Layer {(PHY)} Specification",
   organization  = "IEEE",
   address       = "Piscataway, NJ",
@@ -1114,7 +1170,7 @@ In German, the first letters of nouns are capitalized, so we do so here.
 From the June 2002 issue of "IEEE Journal in Selected Areas in
 Communication", page 892, reference #9.
 @misc{IEEEexample:miscgermanreg,
-  title         = "{M}essung von {S}t{\"o}rfeldern an {A}nlagen 
+  title         = "{M}essung von {S}t{\"o}rfeldern an {A}nlagen
                    und {L}eitungen der {T}elekommunikation im
                    {F}requenzbereich 9 {kHz} bis 3 {GHz}",
   language      = "german",
@@ -1208,7 +1264,7 @@ CTLuse_paper
 "no" turns off the display of the paper and type fields in inproceedings.
 "yes" enables
 
-CTLuse_forced_etal 
+CTLuse_forced_etal
 "no" turns off the forced use of "et al."
 "yes" enables
 
@@ -1221,7 +1277,7 @@ CTLnames_show_etal
 The number of names that will be shown with a forced "et al.".
 Must be less than or equal to CTLmax_names_forced_etal
 
-CTLuse_alt_spacing 
+CTLuse_alt_spacing
 "no" turns off the alternate interword spacing for entries with URLs.
 "yes" enables
 
@@ -1286,25 +1342,25 @@ month={Feb},}
  isbn = {1402085877, 9781402085871},
  edition = {1st},
  publisher = {Springer Publishing Company, Incorporated},
-} 
+}
 
-@INPROCEEDINGS{Jordans2014, 
-author={R. Jordans and L. Jóźwiak and H. Corporaal}, 
-booktitle={2014 3rd Mediterranean Conference on Embedded Computing (MECO)}, 
-title={{Instruction-set architecture exploration of VLIW ASIPs using a genetic algorithm}}, 
-year={2014}, 
-keywords={Bioinformatics;Computer architecture;Genetic algorithms;Genomics;Optimization;Program processors;Sociology;design space exploration;genetic algorithm;instruction-set very-long instruction word}, 
-doi={10.1109/MECO.2014.6862720}, 
-ISSN={2377-5475}, 
+@INPROCEEDINGS{Jordans2014,
+author={R. Jordans and L. Jóźwiak and H. Corporaal},
+booktitle={2014 3rd Mediterranean Conference on Embedded Computing (MECO)},
+title={{Instruction-set architecture exploration of VLIW ASIPs using a genetic algorithm}},
+year={2014},
+keywords={Bioinformatics;Computer architecture;Genetic algorithms;Genomics;Optimization;Program processors;Sociology;design space exploration;genetic algorithm;instruction-set very-long instruction word},
+doi={10.1109/MECO.2014.6862720},
+ISSN={2377-5475},
 month={June},}
 
-@INPROCEEDINGS{Kato2008, 
-author={Toshiyuki Kato and others}, 
-booktitle={APCCAS 2008 - 2008 IEEE Asia Pacific Conference on Circuits and Systems}, 
-title={{A CDFG generating method from C program for LSI design}}, 
-year={2008}, 
-keywords={C language;circuit CAD;data flow graphs;integrated circuit design;large scale integration;program control structures;program diagnostics;ALU;C program;DSP;LSI design;address operation unit;application program analysis;control data flow graph generating method;optimal hardware assignment;program structure;Cellular phones;Data engineering;Design engineering;Digital signal processing;Flow graphs;Hardware;High level synthesis;Large scale integration;Maintenance engineering;Research and development}, 
-doi={10.1109/APCCAS.2008.4746177}, 
+@INPROCEEDINGS{Kato2008,
+author={Toshiyuki Kato and others},
+booktitle={APCCAS 2008 - 2008 IEEE Asia Pacific Conference on Circuits and Systems},
+title={{A CDFG generating method from C program for LSI design}},
+year={2008},
+keywords={C language;circuit CAD;data flow graphs;integrated circuit design;large scale integration;program control structures;program diagnostics;ALU;C program;DSP;LSI design;address operation unit;application program analysis;control data flow graph generating method;optimal hardware assignment;program structure;Cellular phones;Data engineering;Design engineering;Digital signal processing;Flow graphs;Hardware;High level synthesis;Large scale integration;Maintenance engineering;Research and development},
+doi={10.1109/APCCAS.2008.4746177},
 month={Nov},}
 
 @INPROCEEDINGS{EusseSAMOS2014,
@@ -1438,7 +1494,7 @@ month = nov,
  numpages = {6},
  acmid = {2616632},
  publisher = {European Design and Automation Association},
-} 
+}
 
 @article{Mittal13f,
   author    = {Sparsh Mittal},
@@ -1494,7 +1550,7 @@ isbn="978-3-642-03138-0"
  acmid = {2336662},
  publisher = {Hindawi Publishing Corp.},
  address = {New York, NY, United States}
-} 
+}
 
 @INPROCEEDINGS{synopsystool,
 author={{Synopsys Inc.}},
@@ -1519,5 +1575,3 @@ title={{Codasip Studio}},
 year={2019},
 month={},
 pages={},}
-
-
