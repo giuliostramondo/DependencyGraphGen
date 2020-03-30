@@ -16,7 +16,7 @@
 \end{figure*}
 \section{The \frameworkname~framework}
 \label{sec:framework}
-The framework presented in this work allows the user to \textbf{customize} the different building blocks to be used in the co-design of the custom-processor and memory system, \textbf{explore} custom architectures automatically generated for a given application, and \textbf{estimate} area, power and latency of each one of the architectures. The \frameworkname~framework, illustrated in Figure~\ref{fig:framework} takes two inputs, the \textit{Configuration Parameters} - described in Section~\ref{ssec:conf_param} - and an \textit{Application} - detailed in Section~\ref{ssec:app}, and automatically generates a set of hardware architectures, behaviorally equivalent to the input application.
+The framework presented in this work allows the user to \textbf{customize} the different building blocks to be used in the co-design of the spatial processor and memory system, \textbf{explore} different architectures automatically generated for a given application, and \textbf{estimate} area, power and latency of each one of the architectures. The \frameworkname~framework, illustrated in Figure~\ref{fig:framework} takes two inputs, the \textit{Configuration Parameters} - described in Section~\ref{ssec:conf_param} - and an \textit{Application} - detailed in Section~\ref{ssec:app}, and automatically generates a set of hardware architectures, behaviorally equivalent to the input application.
 %Ana: the sentence below was a repetition - can skip.
 %Additionally, the analysis of area, power and latency of these architectures is automatically produced.
 The generated hardware architectures can be realized as RTL implementations, using the \textit{architectural templates} described in Section~\ref{sec:arch_template}.
@@ -26,9 +26,12 @@ The rest of this section provides a detailed analysis of the design and implemen
 \subsection{Model of Execution}
 \label{ssec:system_under_analysis}
 \vspace{-1mm}
-The system architecture we assume in this work has two levels of memory and a custom processor (Figure~\ref{fig:system}). Level 1 memory (L1M)\footnotemark, the first memory level, and the smaller one in size, uses SRAM as it needs to be physically close to the processor for faster access. The second level - Level 2 memory (L2M)\footnotemark[\value{footnote}] - is larger in size and can be implemented using any memory technology (on-chip or off-chip), even with different access latency for read and write operations. Note that L2M can run at a different clock speend than the processor and L1M.
+The system architecture we assume in this work has two levels of memory and an instruction-grained spatial processor (Figure~\ref{fig:system}). Level 1 memory (L1M)\footnotemark, the first memory level, and the smaller one in size, uses SRAM as it needs to be physically close to the processor for faster access. The second level - Level 2 memory (L2M)\footnotemark[\value{footnote}] - is larger in size and can be implemented using any memory technology (on-chip or off-chip), even with different access latency for read and write operations. Note that L2M can run at a different clock speend than the processor and L1M.
 \footnotetext{These memories are not to be seen as caches; thus, no cache policies are needed: we schedule data movements at design time. This is why we call them "levels" instead of "layers", and we abbreviate them with L1M and L2M instead of L1 and L2.}
 We assume a model of execution following the three steps from Figure~\ref{fig:system}. Initially, all of the required input data for the application are available in L2M. The input data is transferred to the processor, using L1M as intermediate storage (step 1), the data is processed and the results are temporarily stored in L1M (step 2), and, finally, the data from L1M is transferred back to L2M (step 3). Note that our model of execution performs the steps in a pipelined manner, hence only part of the data will be stored in L1M at any given time.
+
+\frameworkname~let the user specify the paramethers of the L2M through the \textit{Configuration Paramenters}. The L2M paramethers are used to model the data transfer between L2M and L1M (see \ref{ssec:layer2_model} and \ref{ssec:l2_read_model}). The L2M model is used to compute arrival time of input elements in the L1M. The arrival time of each element in L1M is then leveraged by our Modified Interval Partitioning (MIP) - see \ref{ssec:modified_interval_partitioning}, which reduces the resouces utilization of \textit{Custom Processor} taking into account to the L2M bandwidth.
+The L1M is composed of multiple banks having different depths. The composition of the L1M is deterimined by the MIP as described in \ref{ssec:arch_tradeoffs}.
 
 %Taking advantage of the possibility to produce stacked chip having levels produced using different manufacturing technologies we are able to explore different memory implementations at the L2 of the memory architecture.
 
@@ -125,8 +128,8 @@ $O$                 & Total number of output elements                           
 \caption{\small Definition of symbols used in the equations}
 \label{table:equation}
 \end{table}
-The schedule produced by the Modified Inteval Partitioning (MIP), discussed in \ref{ssec:modified_interval_partitioning}, uses the arrival clock cycle computed in this phase to determine when each input element will be available for computation in L1M. The latency of the MIP schedule includes therefore the L2M-L1M transfer, and the computation; it does not take into account the L1M-L2M transfer.
-The \textit{Model L2 write} block in Figure \ref{fig:framework} computes the latency of the L1M-L2M transfer (phase 3 in Figure~\ref{fig:system}). The MIP computes the clock cycle at which computation ends (phase 2 in Figure~\ref{fig:system}) and the last data item is written in L1M. The L1M-L2M transfer can start immediately after the last output is generated.
+The schedule produced by the Modified Inteval Partitioning (MIP), discussed in \ref{ssec:modified_interval_partitioning}, uses the arrival clock cycle computed in this phase to determine when each input element will be available for computation in L1M. The latency of the MIP schedule includes therefore the L2M-L1M transfer, and the computation; it does not take into account the L1M-L2M transfer of the results (phase 3 in Figure~\ref{fig:system}).
+The \textit{Model L2 write} block in Figure \ref{fig:framework} computes the latency of the L1M-L2M transfer. The MIP computes the clock cycle at which computation ends (phase 2 in Figure~\ref{fig:system}) and the last data item is written in L1M. The L1M-L2M transfer can start immediately after the last output is generated.
 The latency of the L1M-L2M transfer is calculated using (2),
 \begin{equation}
     WBL_{L2M} = S_w + W_{L2M} * O * \frac{B_{L2M}}{B_{L1M}} * \frac{Clk_{L1M}}{Clk_{L2M}}
@@ -245,9 +248,10 @@ There are two side benefits of our DSE approach. First, the user can tune the gr
 
 \vspace{-1mm}
 \subsection{Architecture Tradeoffs}
+\label{ssec:arch_tradeoffs}
 \vspace{-1mm}
 %In section~\ref{
-For a given input application and a given configuration, \frameworkname~outputs a set of hardware architectures with different area and latency tradeoffs. Figure~\ref{fig:tradeoffs} shows three of the architectures generated during the DSE. Each box represents a FU. The FUs generated from load and store instructions become separate L1M banks. The remaining FUs are obtained from processing instructions. We allow the architectures to have cycles because the circuit is synchronous, and every instruction has been carefully scheduled. A self-loop in a FU indicates data reuse (see Section~\ref{sec:arch_template} for implementation details).
+For a given input application and a given configuration, \frameworkname~outputs a set of hardware architectures with different area and latency tradeoffs. Figure~\ref{fig:tradeoffs} shows three of the architectures generated during the DSE. Each box represents a FU. The FUs generated from load and store instructions become separate L1M banks. As an example, the architecture Figure \ref{fig:inter_arch} has 1 L1M bank to store the input data and 5 banks to store the results. This architecture can therefore receive 1 input element per clock cycle from the L2M, and store up to 5 results per clock in the L1M store banks. The remaining FUs are obtained from computing instructions. We allow the architectures to have cycles because the circuit is synchronous, and every instruction has been carefully scheduled. A self-loop in a FU indicates data reuse (see Section~\ref{sec:arch_template} for implementation details).
 \begin{figure}[ht]
 \centering
 \begin{subfigure}{.4\columnwidth}
