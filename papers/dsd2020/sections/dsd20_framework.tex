@@ -1,12 +1,12 @@
-\begin{figure*}[ht]
+\begin{figure*}[!ht]
 \begin{minipage}{.7\textwidth}
-\includegraphics[width=\textwidth,left]{images/framework.pdf}
+\includegraphics[width=\textwidth,left]{images/framework_v2.pdf}
   \caption{\small \frameworkname~Framework.}{}
   \label{fig:framework}
 \end{minipage}%
-\begin{minipage}{.2\textwidth}
+\begin{minipage}{.3\textwidth}
     \centering
-\includegraphics[width=.5\textwidth]{images/architecture.pdf}
+\includegraphics[width=.5\textwidth]{images/architecture_v2.pdf}
 \caption{\small The system under analysis.
     }
 \label{fig:system}
@@ -54,7 +54,7 @@ A read or write burst access to the L2M is controlled by a Direct Memory Access 
 \subsection{Application}
 \label{ssec:app}
 \vspace{-1mm}
-The framework performs exact data dependency analysis on the input application, thus requiring that the behavior of the application is completely specified at compile-time, and independent from the input data. We currently support C/C++ applications. However, as the framework uses the LLVM Intermediate Representation~\cite{llvm}, it can be easily extended to support other languages as well.
+The framework performs exact data dependency analysis on the input application. The applications that can be used as input to /frameworkname are completely defined at compile time, having control-flow instructions not dependend on input data. We currently support C/C++ applications. However, as the framework uses the LLVM Intermediate Representation~\cite{llvm}, it can be easily extended to support other languages as well.
 %\begin{lstlisting}[language=C, caption={Example of input application, C implementation of a matrix vector multiplication.}, label={lst:matrixvec}]
 %void matrix_vec_kernel(int *A,int *B, int *C){
 %    int sum;
@@ -73,7 +73,7 @@ The framework performs exact data dependency analysis on the input application, 
 \label{ssec:conf_param}
 \vspace{-1mm}
 The second input to the framework is a configuration file for the different building blocks to be used for hardware architecture realization. Through this file, the user can specify: different compute units (e.g. multipliers, adders), process technology to be used (e.g. 16nm, 28nm), the clock frequency of the processor and L1M, and the clock frequency L2M. Moreover, the user can specify the datawidth used by the compute units, L1M and L2M.
-Information to model the L2M burst accesses is also specified in this file: the setup latency for write/read accesses, the type of L2M to be used (e.g. MRAM, SRAM) and the size of the L2M. The different parameters in the configuration file are then used to access a database containing estimates (obtained by synthesis or from specs) of area usage, static and dynamic power, and latency of each of the building blocks.
+Information to model the L2M burst accesses is also specified in this file: the setup latency for write/read accesses, the type of L2M to be used (e.g. MRAM, SRAM) and the size of the L2M. The different parameters in the configuration file are then used to access a database containing estimates (obtained by synthesis or from specs) of area usage, static and dynamic power, and latency of each of the building blocks. Our L1M implementation uses multiple memory banks of different sizes (see \ref{ssec:arch_tradeoffs}), to estimate the resource usage of the different types of these memories we built a linear model using synthesis data which is able to accurately predict area, latency and power consumption.
 
 %\begin{lstlisting}[language=json, caption={Example of input configuration file}, label={lst:conf_file}]
 %{
@@ -246,6 +246,7 @@ There are two side benefits of our DSE approach. First, the user can tune the gr
 %\end{equation}
 %where the symbols have been defined in Table~\ref{table:equation}
 
+
 \vspace{-1mm}
 \subsection{Architecture Tradeoffs}
 \label{ssec:arch_tradeoffs}
@@ -276,6 +277,9 @@ For a given input application and a given configuration, \frameworkname~outputs 
 \label{fig:tradeoffs}
 \end{figure}
 
+
+\subsection{Multi-Configuration Design Space Exploration}
+- Talk about Configuration DSE
 %\begin{figure}
 %
 %\begin{minipage}{.5\linewidth}

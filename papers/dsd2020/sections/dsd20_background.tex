@@ -1,5 +1,8 @@
 \section{Background}
-A \textit{spatial programming} architecture implements an algorithm using a set of \textit{Processing Elements (PEs)} connected together through an on-chip network. The operations performed by the algorithm are mapped on the PEs, which compute in a fine-grained pipeline fashion. There are different kinds of spatial architecture, a good classification can be found in \cite{parashar2014efficient}, shown in Figure \ref{fig:spatial_class}. FPGAs are an example of spatially programmed architectecture in which the PEs implement basic logic operations, and hence are classified as Logic-Grained. Instruction-Grained spatial architecture are instead programmable at instruction level and their PEs implement simplified ALUs. The advantage of using instruction-grained architectures over logic-grained architectures lies in their higher computational density, which results in an higher operational frequency and lower power consumption [add citations]. The Instruction-Grained class is itself composed of architecture having Centralized Control, where a single control unit manages all the PEs, and Distributed Control, where each PE has a built-in control mechanism. Intuitively, an architecture with distributed control is more scalable and has a simpler interconnection network.
+\label{sec:bg}
+A \textit{spatial programming} architecture implements an algorithm using a set of \textit{Processing Elements (PEs)} connected through an on-chip network. The operations performed by the algorithm are mapped on the PEs, which compute in a fine-grained pipeline fashion. There are different kinds of spatial architecture\cite{parashar2014efficient}, one possible classification is shown in Figure \ref{fig:spatial_class}. Spatially programmed architectecture in which the PEs implement basic logic operations, and can be programmed at design-time are \textit{Design-Time Progammable}. To change the functionality of a Design-Time Programmable architecture, the architecture design needs to be modified and re-synthesized. \textit{Compile-Time Programmable} spatial architectures are instead programmable at instruction level and their PEs implement simplified ALUs. The functionality of a \textit{Compile-Time Programmable} spatial accelerator can change by modifying the sequence of instructions it executes.
+The advantage of using \textit{Compile-Time} over \textit{Design-time} programmable architectures lies in their higher computational density of the former, which results in an higher operational frequency and lower power consumption.
+The \textit{Compile-Time Programmable} class is itself composed of architecture having Centralized Control, where a single control unit manages all the PEs, and Distributed Control, where each PE has a built-in control mechanism. Intuitively, an architecture with distributed control is more scalable and has a simpler interconnection network.
 
 $\mu$-Genie generates distributed control spatial architectures optimized for input applications.
 \begin{figure}
@@ -15,9 +18,9 @@ $\mu$-Genie generates distributed control spatial architectures optimized for in
 
         \node[block, text width=2.5cm] (spatial_acc) {Spatially Programmed Accelerators};
         \node[below=of spatial_acc]  (dummy1){};
-        \node[block, left=of dummy1] (logic_grain) {Logic Grained};
+        \node[block, left=of dummy1] (logic_grain) {Design-Time Programmable};
         % \node[below=of logic_grain,yshift=35pt] (fpga) {FPGAs};
-        \node[block, right=of dummy1] (inst) {Instruction Grained};
+        \node[block, right=of dummy1] (inst) {Compile-Time Programmable};
         \node[below=of inst] (dummy2){};
         \node[block, left=of dummy2] (cent_ctrl) {Centralized Control};
         \node[block, right=of dummy2] (dist_ctrl) {Distributed Control};
