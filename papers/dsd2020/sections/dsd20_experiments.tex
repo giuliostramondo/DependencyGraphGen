@@ -56,7 +56,8 @@ Framework & Type (see \ref{sec:bg})    & Application Optimized & Memory Co-Desig
 \cite{parashar2014efficient}               & Distributed Control       & No                    & No               & No                & No                  \\
 \cite{prabhakar2017plasticine}               & Centralized Control       & No                    & No               & No                & Yes, DHDL           \\
 \cite{streamproc2019}               & Distributed Control       & No                    & No               & No                & No           \\
-\cite{budiu2004spatial}               & Design-Time Programmable & Yes                   & No               & No                & Yes, C
+\cite{budiu2004spatial}               & Design-Time Programmable & Yes                   & No               & No                & Yes, C \\
+ \cite{cerqueira2020catena}              & Distributed Control  & Yes                   & No               & Yes                & No
 \end{tabular}
 }
 \caption{Comparison with related work.}
@@ -64,6 +65,7 @@ Framework & Type (see \ref{sec:bg})    & Application Optimized & Memory Co-Desig
 \end{table*}
 
 \subsection{Different Matrix Dimensions}
+\label{ssec:case_study3}
 In this case study we compare three different matrix sizes for MV - 5x5, 10x10 and 15x15, using the same configurations used in~\ref{ssec:case_study2}, to evaluate how the energy consumption of an L2M MRAM scale with respect to an L2M SRAM. Figure~\ref{fig:sram_vs_mram_pareto_vec_sizes} shows the Pareto-optimal architectures generated from each input application. The increase in the matrix size is reflected by an increase in latencyi: all MV-5x5 custom-processors have latencies below 1000ns, MV-10x10 processors latencies range between 1250ns and 2500ns, and the MV-15x15 processors have latencies beyond 2500ns.
 However, the increased number of operations results instead in wider tradeoffs possibilities. Thus, the normalized latency gap between the most energy efficient SRAM and MRAM, decreases with the matrix size, from 82\% for the 5x5, to 42\% for the 10x10 and even 32\% for the 15x15. The reduction in energy consumption between the same pair of results is instead 20\% for the 5x5 and 10x10, while for the 15x15 drops to 16\%. Therefore, as the size of the matrix grows, the benefits in energy consumption when using MRAM technology in the L2M reduce. This is a behaviour caused by the increased number of write operations that have high energy impact when the MRAM technology is used.
 
