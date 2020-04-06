@@ -103,10 +103,10 @@
 		node distance=3cm,on grid,>=stealth',
 		block/.style={rectangle,draw,fill=green!20, minimum height=28pt, minimum width=50pt},
 		comp/.style={circle,draw,fill=orange!40}]
-       \node [event] (mul4) 	at (0,0)	{FU1};
-       \node [event] (mul5) 	[right=of mul4]	{FU2};
-       \node [event] (mul6) 	[right=of mul5]	{FU3};
-       \node [event] (mul7) 	[right=of mul6]	{FU4};
+       \node [event] (mul4) 	at (0,0)	{PE1};
+       \node [event] (mul5) 	[right=of mul4]	{PE2};
+       \node [event] (mul6) 	[right=of mul5]	{PE3};
+       \node [event] (mul7) 	[right=of mul6]	{PE4};
 
        %CROSSBAR
        \node [] (cbtl) [below=of mul4.south west, below=1cm]{};

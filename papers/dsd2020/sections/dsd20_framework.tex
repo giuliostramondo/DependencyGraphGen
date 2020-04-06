@@ -26,12 +26,12 @@ The rest of this section provides a detailed analysis of the design and implemen
 \subsection{Model of Execution}
 \label{ssec:system_under_analysis}
 \vspace{-1mm}
-The system architecture we assume in this work has two levels of memory and an instruction-grained spatial processor (Figure~\ref{fig:system}). Level 1 memory (L1M)\footnotemark, the first memory level, and the smaller one in size, uses SRAM as it needs to be physically close to the processor for faster access. The second level - Level 2 memory (L2M)\footnotemark[\value{footnote}] - is larger in size and can be implemented using any memory technology (on-chip or off-chip), even with different access latency for read and write operations. Note that L2M can run at a different clock speend than the processor and L1M.
+The system architecture we assume in this work has two levels of memory and an instruction-grained spatial processor (Figure~\ref{fig:system}). Level 1 memory (L1M)\footnotemark, the first memory level, and the smaller one in size, uses SRAM as it needs to be physically close to the processor for faster access. The second level - Level 2 memory (L2M)\footnotemark[\value{footnote}] - is larger in size and can be implemented using any memory technology (on-chip or off-chip), even with different access latency for read and write operations. Note that L2M can run at a different clock speed than the processor and L1M.
 \footnotetext{These memories are not to be seen as caches; thus, no cache policies are needed: we schedule data movements at design time. This is why we call them "levels" instead of "layers", and we abbreviate them with L1M and L2M instead of L1 and L2.}
 We assume a model of execution following the three steps from Figure~\ref{fig:system}. Initially, all of the required input data for the application are available in L2M. The input data is transferred to the processor, using L1M as intermediate storage (step 1), the data is processed and the results are temporarily stored in L1M (step 2), and, finally, the data from L1M is transferred back to L2M (step 3). Note that our model of execution performs the steps in a pipelined manner, hence only part of the data will be stored in L1M at any given time.
 
-\frameworkname~let the user specify the paramethers of the L2M through the \textit{Configuration Paramenters}. The L2M paramethers are used to model the data transfer between L2M and L1M (see \ref{ssec:layer2_model} and \ref{ssec:l2_read_model}). The L2M model is used to compute arrival time of input elements in the L1M. The arrival time of each element in L1M is then leveraged by our Modified Interval Partitioning (MIP) - see \ref{ssec:modified_interval_partitioning}, which reduces the resouces utilization of \textit{Custom Processor} taking into account to the L2M bandwidth.
-The L1M is composed of multiple banks having different depths. The composition of the L1M is deterimined by the MIP as described in \ref{ssec:arch_tradeoffs}.
+\frameworkname~let the user specify the parameters of the L2M through the \textit{Configuration Paramenters}. The L2M parameters are used to model the data transfer between L2M and L1M (see \ref{ssec:layer2_model} and \ref{ssec:l2_read_model}). The L2M model is used to compute arrival time of input elements in the L1M. The arrival time of each element in L1M is then leveraged by our Modified Interval Partitioning (MIP) - see \ref{ssec:modified_interval_partitioning}, which reduces the resources utilization of spatial processor taking into account to the L2M bandwidth.
+The L1M is composed of multiple banks having different depths. The composition of the L1M is determined by the MIP as described in \ref{ssec:arch_tradeoffs}.
 
 %Taking advantage of the possibility to produce stacked chip having levels produced using different manufacturing technologies we are able to explore different memory implementations at the L2 of the memory architecture.
 
@@ -54,7 +54,7 @@ A read or write burst access to the L2M is controlled by a Direct Memory Access 
 \subsection{Application}
 \label{ssec:app}
 \vspace{-1mm}
-The framework performs exact data dependency analysis on the input application. The applications that can be used as input to /frameworkname are completely defined at compile time, having control-flow instructions not dependend on input data. We currently support C/C++ applications. However, as the framework uses the LLVM Intermediate Representation~\cite{llvm}, it can be easily extended to support other languages as well.
+The framework performs exact data dependency analysis on the input application. The applications that can be used as input to /frameworkname are completely defined at compile time, having control-flow instructions not dependent on input data. We currently support C/C++ applications. However, as the framework uses the LLVM Intermediate Representation~\cite{llvm}, it can be easily extended to support other languages as well.
 %\begin{lstlisting}[language=C, caption={Example of input application, C implementation of a matrix vector multiplication.}, label={lst:matrixvec}]
 %void matrix_vec_kernel(int *A,int *B, int *C){
 %    int sum;
@@ -72,7 +72,7 @@ The framework performs exact data dependency analysis on the input application. 
 \subsection{Configuration Parameters}
 \label{ssec:conf_param}
 \vspace{-1mm}
-The second input to the framework is a configuration file for the different building blocks to be used for hardware architecture realization. Through this file, the user can specify: different compute units (e.g. multipliers, adders), process technology to be used (e.g. 16nm, 28nm), the clock frequency of the processor and L1M, and the clock frequency L2M. Moreover, the user can specify the datawidth used by the compute units, L1M and L2M.
+The second input to the framework is a configuration file for the different building blocks to be used for hardware architecture realization. Through this file, the user can specify: different compute units (e.g. multipliers, adders), process technology to be used (e.g. 16nm, 28nm), the clock frequency of the processor and L1M, and the clock frequency L2M. Moreover, the user can specify the data-width used by the compute units, L1M and L2M.
 Information to model the L2M burst accesses is also specified in this file: the setup latency for write/read accesses, the type of L2M to be used (e.g. MRAM, SRAM) and the size of the L2M. The different parameters in the configuration file are then used to access a database containing estimates (obtained by synthesis or from specs) of area usage, static and dynamic power, and latency of each of the building blocks. Our L1M implementation uses multiple memory banks of different sizes (see \ref{ssec:arch_tradeoffs}), to estimate the resource usage of the different types of these memories we built a linear model using synthesis data which is able to accurately predict area, latency and power consumption.
 
 %\begin{lstlisting}[language=json, caption={Example of input configuration file}, label={lst:conf_file}]
@@ -99,7 +99,7 @@ Information to model the L2M burst accesses is also specified in this file: the 
 \subsection{L2 Memory Read and Write Modeling}
 \label{ssec:l2_read_model}
 \vspace{-1mm}
-The first operation performed by the framework is to compute the transfer time of the application's input data from L2M to L1M, implemented in the \textit{Model L2 read} block of Figure \ref{fig:framework}. An address in L2M is given to each input element used by the application; different datastructures are placed in consecutive memory addresses. The entire data transfer is modeled as a single burst-read operation from L2M. The information required to compute the arrival clock cycle of each input element to L1M is extracted from the \textit{Configuration Parameters} and performing static analysis on the \textit{Application}.
+The first operation performed by the framework is to compute the transfer time of the application's input data from L2M to L1M, implemented in the \textit{Model L2 read} block of Figure \ref{fig:framework}. An address in L2M is given to each input element used by the application; different data structures are placed in consecutive memory addresses. The entire data transfer is modeled as a single burst-read operation from L2M. The information required to compute the arrival clock cycle of each input element to L1M is extracted from the \textit{Configuration Parameters} and performing static analysis on the \textit{Application}.
 Using this information, the exact clock at which each input elements arrives in L1M can be computed as seen in (1). The equation symbols are described in Table~\ref{table:equation}.
 
 \begin{equation}
@@ -141,7 +141,7 @@ where the symbols have been defined in Table~\ref{table:equation}
 \subsection{Data Dependency Analysis}
 \label{ssec:dda}
 \vspace{-1mm}
-The \textit{Data Dependency Analysis (DDA)} module operates in three stages. The first two stages are the extraction of the \textit{Data Dependency Graph} (DDG)\cite{isoda1983global} from the application and the schedule of the DDG using the As Soon As Possible (ASAP) and As Late As Possible (ALAP) methodologies. These two steps are core elements in the analysis of high level code for hardware design\cite{hwang1991formal}. Finally, the third step (see \ref{ssec:modified_interval_partitioning}) maps DDG instructions to hardware components - or Functional Units (FUs) - using a modified \textit{Interval Partitioning} algorithm~\cite{greedyIntervalPartitioning}.
+The \textit{Data Dependency Analysis (DDA)} module operates in three stages. The first two stages are the extraction of the \textit{Data Dependency Graph} (DDG)\cite{isoda1983global} from the application and the schedule of the DDG using the As Soon As Possible (ASAP) and As Late As Possible (ALAP) methodologies. These two steps are core elements in the analysis of high level code for hardware design\cite{hwang1991formal}. Finally, the third step (see \ref{ssec:modified_interval_partitioning}) maps DDG instructions to hardware components - or PEs - using a modified \textit{Interval Partitioning} algorithm~\cite{greedyIntervalPartitioning}.
 %This next paragraph might be replaced with a reference
 
 To extract the DDG from an application, we use LLVM  and custom transformations. We first convert the input application code to its LLVM Intermediate Representation. We then transform the code into static single assignment (SSA) form and perform full-loop unrolling on all of the application loops. After these transformations, there will be no control flow instructions in the application body, and each variable will be defined only once. It is now possible to follow the definition and use chain of the variables to produce a Data Dependency Graph like the one shown in Figure~\ref{fig:ddg}.
@@ -174,38 +174,38 @@ We further process the obtained DDG, aiming to reduce the length of the path bet
 Once we have the DDG, we apply the ASAP and ALAP scheduling methodologies to the generated DDG. These schedules will associate to each DDG node a clock cycle where the instruction is executed, and \textit{bound} the space of possible architectures by determining the \textit{maximally parallel} architectures. We start by scheduling the input nodes of the DDG using the arrival clock time of their element, computed as explained in Section~\ref{ssec:l2_read_model}, thus taking into account the L2M - L1M transfer time. Next, we determine the minimal latency required to obtain the outputs of the application with the ASAP schedule: starting from the DDG input leafs, each instruction node is scheduled as soon as its dependencies are resolved.
 Once ASAP is completed, we can perform the ALAP scheduling: starting from the output leaf nodes, each node is scheduled as late as possible according to its dependencies. Once ALAP is completed, every node is annotated with an ASAP clock cycle and an ALAP one. The difference between these two clock cycles, called instruction \textit{mobility}, identifies an interval in which the instruction can be scheduled without changing the overall latency of the application.
 
-The final stage of the \textit{Data Dependency Analysis} module - described in Section~\ref{ssec:modified_interval_partitioning} - will allocate the DDG nodes to FUs, leveraging the nodes mobility to minimize the number of FUs of the final hardware architecture.
+The final stage of the \textit{Data Dependency Analysis} module - described in Section~\ref{ssec:modified_interval_partitioning} - will allocate the DDG nodes to PEs, leveraging the nodes mobility to minimize the number of PEs of the final hardware architecture.
 
 \vspace{-2mm}
-\subsection{FU allocation with Modified Interval Partitioning}
+\subsection{PE allocation with Modified Interval Partitioning}
 \label{ssec:modified_interval_partitioning}
 \vspace{-1mm}
-To generate a hardware architecture behaviorally equivalent to the input application and with the latency identified during the ASAP-ALAP scheduling, there are two main requirements: (1) each instruction needs to be computed within its ASAP-ALAP interval, and (2) instructions in the original DDG which are executed by the same FU cannot be scheduled at the same time.
-Our Modified Interval Partitioning (MIP) algorithm - based on the original greedy Interval Partitioning algorithm~\cite{greedyIntervalPartitioning} - is designed to generate hardware architectures from a DDG that meet both requirements. The original Interval Partitioning problem addresses the issue of assigning a number of jobs, with known starting and ending time, to the minimum amount of resources, ensuring that the jobs assigned to a resource do not overlap. To use Interval Partitioning for our problem, we consider instructions as jobs and FUs as resources. There are, however, three main differences between our problem and the canonical Interval Partitioning.
-First, the original algorithm considers any job can use any resource, while our architecture requires different FUs for different instructions. We therefore perform interval partitioning several times, once for each instruction type (e.g., four times for the graph in Fig. 4). This ensures a correct allocation of instructions to FUs performing the same operation. Second, due to \textit{mobility}, instructions do not have a fixed starting time. MIP takes the mobility of an instruction into account by allowing a given instruction to start at any time within its allowed interval. Third, and final difference, is that our instructions are dependent on each other , which is not the case for the jobs in the original interval partitioning. To account for this extra constraint, we ensure that any given instruction (1) is only allocated after its dependencies are allocated, and (2) is scheduled to start after the ending time of its dependencies.
-Listing~\ref{lst:modified_interval_partitioning} presents MIP, in pseudocode. %of our modified interval partitioning algorithm.
+To generate a hardware architecture behaviorally equivalent to the input application and with the latency identified during the ASAP-ALAP scheduling, there are two main requirements: (1) each instruction needs to be computed within its ASAP-ALAP interval, and (2) instructions in the original DDG which are executed by the same PE cannot be scheduled at the same time.
+Our Modified Interval Partitioning (MIP) algorithm - based on the original greedy Interval Partitioning algorithm~\cite{greedyIntervalPartitioning} - is designed to generate hardware architectures from a DDG that meet both requirements. The original Interval Partitioning problem addresses the issue of assigning a number of jobs, with known starting and ending time, to the minimum amount of resources, ensuring that the jobs assigned to a resource do not overlap. To use Interval Partitioning for our problem, we consider instructions as jobs and PEs as resources. There are, however, three main differences between our problem and the canonical Interval Partitioning.
+First, the original algorithm considers any job can use any resource, while our architecture requires different PEs for different instructions. We therefore perform interval partitioning several times, once for each instruction type (e.g., four times for the graph in Fig. 4). This ensures a correct allocation of instructions to PEs performing the same operation. Second, due to \textit{mobility}, instructions do not have a fixed starting time. MIP takes the mobility of an instruction into account by allowing a given instruction to start at any time within its allowed interval. Third, and final difference, is that our instructions are dependent on each other , which is not the case for the jobs in the original interval partitioning. To account for this extra constraint, we ensure that any given instruction (1) is only allocated after its dependencies are allocated, and (2) is scheduled to start after the ending time of its dependencies.
+Listing~\ref{lst:modified_interval_partitioning} presents MIP, in pseudo-code. %of our modified interval partitioning algorithm.
 
 \begin{lstlisting}[language=Python, caption={\small Modified Interval Partitioning Algorithm}, label={lst:modified_interval_partitioning}, basicstyle=\tiny]
 # ASAP[i] and ALAP[i] contain the scheduled cycles for instruction i
-# SetFUs is the set of functional units in the architecture
-SetFUs=[]
+# SetPEs is the set of functional units in the architecture
+SetPEs=[]
 sort instructions by ASAP[i]
 for each instruction i
 	allocated = False
 	dep_deadline = maximum end-time of all instructions depending on i
 	schedule[i] = max(ASAP[i], dep_deadline)
-	for each FU in SetFUs
-		if instruction i matches FU
-			if ALAP[i] >=  next_free_slot[FU]
-				add instruction i to FU
-				schedule[i] = max(schedule[i], next_free_slot[FU])
-				next_free_slot[FU] = schedule[i] + latency(i)
+	for each PE in SetPEs
+		if instruction i matches PE
+			if ALAP[i] >=  next_free_slot[PE]
+				add instruction i to PE
+				schedule[i] = max(schedule[i], next_free_slot[PE])
+				next_free_slot[PE] = schedule[i] + latency(i)
 				allocated = True
 	if not allocated
-		create new FU with type(i)
-		add instruction i to FU
-		next_free_slot[FU] = schedule[i] + latency(i)
-		add FU to setFUs
+		create new PE with type(i)
+		add instruction i to PE
+		next_free_slot[PE] = schedule[i] + latency(i)
+		add PE to setPEs
 \end{lstlisting}
 
 %We assume that ASAP and ALAP schedules have been previously performed, hence we can have two datastructures that return the ASAP and ALAP schedules for a given instruction i - i.e. ASAP[i] and ALAP[i].
@@ -214,24 +214,24 @@ for each instruction i
 %The functions latency and dep take an instruction i as input and return respectively the latency of i and a list of instructions i depends on.
 %The function type takes as input a Functional Unit or an Instruction and returns the type of operation performed.
 
-The MIP algorithm returns \verb|setFUs| and a \verb|schedule| for the current design: \verb|setFUs| is the list of functional units that form the architecture, with each FU containing the instructions it has to execute, while \verb|schedule| contains the clock cycle at which each instruction is scheduled to be executed.
+The MIP algorithm returns \verb|setPEs| and a \verb|schedule| for the current design: \verb|setPEs| is the list of functional units that form the architecture, with each PE containing the instructions it has to execute, while \verb|schedule| contains the clock cycle at which each instruction is scheduled to be executed.
 
 \vspace{-1mm}
 \subsection{Most Parallel and Most Sequential Architectures}
 \vspace{-1mm}
-The result of the \textit{DDA} module is the \textbf{Most Parallel Architecture (MostPar)}. This architecture takes full advantage of the parallelism of the application and performs the computation with the minimum latency. However, the MostPar uses the maximum number of FUs - in the worst case scenario equivalent to the number of instructions in the application - and it will hence have the worst area.
-At the other end of the spectrum of architectures we can imagine the \textbf{MostSeq (MostSeq)}, where no parallelism is used and the instruction are scheduled sequentially respecting their dependencies. This architecture will have the worst possible latency, however the minimal impact in area - using only one FU per operation type.
-Probably none of these two architectures will be of direct interest for the user as they represent two extreme cases. The architecture that are most likely to be interesting are the ones between the \textbf{MostPar} and \textbf{MostSeq} that offer tradeoffs between power, latency and area. Section~\ref{ssec:dse} describes how these intermediate architectures can be procedurally generated.
+The result of the \textit{DDA} module is the \textbf{Most Parallel Architecture (MostPar)}. This architecture takes full advantage of the parallelism of the application and performs the computation with the minimum latency. However, the MostPar uses the maximum number of PEs - in the worst case scenario equivalent to the number of instructions in the application - and it will hence have the worst area.
+At the other end of the spectrum of architectures we can imagine the \textbf{MostSeq (MostSeq)}, where no parallelism is used and the instruction are scheduled sequentially respecting their dependencies. This architecture will have the worst possible latency, however the minimal impact in area - using only one PE per operation type.
+Probably none of these two architectures will be of direct interest for the user as they represent two extreme cases. The architecture that are most likely to be interesting are the ones between the \textbf{MostPar} and \textbf{MostSeq} that offer tradeoffs between power, latency and area. Section~\ref{ssec:dse} describes how these intermediate architectures can be generated.
 
 \vspace{-1mm}
 \subsection{Design Space Exploration}
 \label{ssec:dse}
 \vspace{-1mm}
-The \textit{Design Space Exploration} \frameworkname~module procedurally generates hardware architectures, behaviorally equivalent to the input application, which exhibit area, latency and power tradeoffs.
+The \textit{Design Space Exploration} \frameworkname~module generates hardware architectures, behaviorally equivalent to the input application, which exhibit area, latency and power tradeoffs.
 Our DSE is an iterative process which outputs, at the end of each iteration, a different hardware architecture.
 The iterative process start its sweep from the \textbf{MostPar}, and ends when the \textbf{MostSeq} is generated.
-An iteration consists of three steps. First, the instructions corresponding to output leaf nodes in the DDG are selected. The ALAP schedule of these iterations is increased by 1, and the ALAP scheduling of the rest of the nodes in the DDG is updated accordingly. Consequently, the mobility of each instruction node is increased by one. Finally, the MIP is ran again, using the new ALAP schedule. Due to the increased mobility of each instruction the generated architecture is likely to use less FUs.
-The process stops as soon as one iteration generates the \textbf{MostSeq}, which can be recognized because it contains only one FU per operation type.
+An iteration consists of three steps. First, the instructions corresponding to output leaf nodes in the DDG are selected. The ALAP schedule of these iterations is increased by 1, and the ALAP scheduling of the rest of the nodes in the DDG is updated accordingly. Consequently, the mobility of each instruction node is increased by one. Finally, the MIP is ran again, using the new ALAP schedule. Due to the increased mobility of each instruction the generated architecture is likely to use less PEs.
+The process stops as soon as one iteration generates the \textbf{MostSeq}, which can be recognized because it contains only one PE per operation type.
 
 There are two side benefits of our DSE approach. First, the user can tune the granularity of the exploration: by increasing the ALAP "slack" beyond 1, the exploration speeds-up, but less architectures are generated. Second, the DSE process can be easily parallelised, because its iterations are independent.
 
@@ -252,7 +252,7 @@ There are two side benefits of our DSE approach. First, the user can tune the gr
 \label{ssec:arch_tradeoffs}
 \vspace{-1mm}
 %In section~\ref{
-For a given input application and a given configuration, \frameworkname~outputs a set of hardware architectures with different area and latency tradeoffs. Figure~\ref{fig:tradeoffs} shows three of the architectures generated during the DSE. Each box represents a FU. The FUs generated from load and store instructions become separate L1M banks. As an example, the architecture Figure \ref{fig:inter_arch} has 1 L1M bank to store the input data and 5 banks to store the results. This architecture can therefore receive 1 input element per clock cycle from the L2M, and store up to 5 results per clock in the L1M store banks. The remaining FUs are obtained from computing instructions. We allow the architectures to have cycles because the circuit is synchronous, and every instruction has been carefully scheduled. A self-loop in a FU indicates data reuse (see Section~\ref{sec:arch_template} for implementation details).
+For a given input application and a given configuration, \frameworkname~outputs a set of hardware architectures with different area and latency trade-offs. Figure~\ref{fig:tradeoffs} shows three of the architectures generated during the DSE. Each box represents a PE. The PEs generated from load and store instructions become separate L1M banks. As an example, the architecture Figure \ref{fig:inter_arch} has 1 L1M bank to store the input data and 5 banks to store the results. This architecture can therefore receive 1 input element per clock cycle from the L2M, and store up to 5 results per clock in the L1M store banks. The remaining PEs are obtained from computing instructions. We allow the architectures to have cycles because the circuit is synchronous, and every instruction has been carefully scheduled. A self-loop in a PE indicates data reuse (see Section~\ref{sec:arch_template} for implementation details).
 \begin{figure}[ht]
 \centering
 \begin{subfigure}{.4\columnwidth}
@@ -279,7 +279,7 @@ For a given input application and a given configuration, \frameworkname~outputs 
 
 
 \subsection{Multi-Configuration Design Space Exploration}
-\frameworkname can also perform design space exploration on the configuration parameters (\ref{ssec:conf_param}), generating one configuration file for each combination of configuration parameters and aggregating the architectural tradeoffs. This allows, as an example, to estimate the effect that different clock frequencies or different memory technology have on the area,latency and energy tradeoffs. The use cases discussed in \ref{ssec:case_study2} and \ref{ssec:case_study3} are examples of multi-configuration DSEs.
+\frameworkname~can also perform design space exploration on the configuration parameters (Section~\ref{ssec:conf_param}), generating one configuration file for each combination of configuration parameters and aggregating the architectural trade-offs. This allows, as an example, to estimate the effect that different clock frequencies or different memory technology have on the area,latency and energy trade-offs. The use cases discussed in \ref{ssec:case_study2} and \ref{ssec:case_study3} are examples of multi-configuration DSEs.
 %\begin{figure}
 %
 %\begin{minipage}{.5\linewidth}
