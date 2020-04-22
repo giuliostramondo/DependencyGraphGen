@@ -1,3 +1,27 @@
+\begin{table}[!ht]
+ \resizebox{0.5\textwidth}{!}{%
+\footnotesize
+    \begin{tabular}{|l|l|l|l|l|l|}
+      \hline
+  Framework & Type    & Application & Memory & Architectural& High Level \\
+           & (see \ref{sec:bg})    & Optimized & Co-Design &DSE & Language \\ \hline
+\frameworkname         & Dist. Control       & Yes                   & Yes              & Yes               & Yes, C              \\ \hline
+%            & Control       &                    &               &                &              \\ \hline
+\cite{parashar2014efficient}               & Dist. Control       & No                    & No               & No                & No                  \\ \hline
+%            & Control       &                    &                &                 &                   \\ \hline
+\cite{prabhakar2017plasticine}               & Dist. Control       & No                    & No               & No                & Yes, DHDL         \\ \hline
+            %&        &                     &                &                 & DHDL           \\ \hline
+\cite{streamproc2019}               & Dist. Control       & No                    & No               & No                & No           \\ \hline
+%            & Control       &                     &                &                 &            \\ \hline
+\cite{budiu2004spatial}               & Logic & Yes                   & No               & No                & Yes, C \\
+            & Grained &                    &                &                 &  \\ \hline
+ \cite{cerqueira2020catena}              & Dist. Control  & Yes                   & No               & Yes                & No \\ \hline
+%            & Control  &                    &                &                 &  \\ \hline
+\end{tabular}
+}
+\caption{Comparison with related work.}
+\label{tab:rw}
+\end{table}
 
 \section{Related Work}
 
@@ -9,14 +33,15 @@
 
 
 
-Prior art on design of spacial processor focuses on the hardware architecture of the processor, however, the optimization memory system is only partially taken into account during the design process.
-Table \ref{tab:rw} summarizes the main differences with the related work.
-In \cite{parashar2014efficient} a spacial processor with distributed control across PE using triggered instructions is presented. Their architecture is built around the guarded-action programming paradigm, where guards - boolean expressions specifying if an action is legal - are evaluated by a scheduler and trigger computations. Support for high level languages is missing, so this spatial processor needs to be programmed in a low level guarded-action language and the computation needs to be manually mapped on the PEs. Their memory system consist of two layer of memories (L1 and L2) and a distributed scratchpad memories located within the PE. The design is not tailored for a specific set of applications and they do not perform analysis on the interactions between the memory and processing systems, leaving the modeling of the memory system as future work.
+Previous work on design of spatial processor focuses on the hardware architecture of the processor, while the optimization of the memory system is only partially taken into account.
+In \cite{parashar2014efficient} a spatial processor with distributed control across PE using triggered instructions is presented. Their architecture is built around the guarded-action programming paradigm, where guards - boolean expressions specifying if an action is legal - are evaluated by a scheduler and trigger computations. Support for high level languages is missing, so this spatial processor needs to be programmed in a low level guarded-action language and the computation needs to be manually mapped on the PEs. Their memory system consist of two layer of memories (L1 and L2) and distributed scratchpad memories located within the PEs. The design is not tailored for a specific set of applications and they do not perform analysis on the interactions between the memory and processing systems, leaving the modeling of the memory system as future work.
 
-Plasticine, a spatial processor optimized for the acceleration of parallel patterns is presented in \cite{prabhakar2017plasticine}. Their memory system is composed of Pattern Memory Units (PMUs) which are connected through a network to Pattern Compute Units (PCUs). Although it allows some configurations, Plasticine is not meant to be optimized around specific applications. The input application needs to be written in a language exposing its parallel patterns - Delite Hardware Definition Language (DHDL) - and then it is mapped on the Plasticine architecture. Hence, the number of memory units (PMUs) and processing units (PCUs), and their interconnections are not optimized around specific applications.
+Plasticine, a spatial processor optimized for the acceleration of parallel patterns is presented in \cite{prabhakar2017plasticine}. Their memory system is composed of Pattern Memory Units (PMUs) which are connected through a network to Pattern Compute Units (PCUs). Although it allows some degree of configurations, Plasticine is not meant to be optimized around specific applications. The input application needs to be written in a language exposing its parallel patterns - Delite Hardware Definition Language (DHDL) - and then it is mapped on the Plasticine architecture. Hence, the number of memory units (PMUs) and processing units (PCUs), and their interconnections are not optimized around specific applications.
 
-In \cite{budiu2004spatial}, a framework to generate Application Specific Hardware (ASH) from a C application is presented. The final architecture it produces is asyncrounous, and operation dependencies are handled using a token-based mechanism which is implemented in hardware. The memory system of the architecture consists of a monolitic memory. To handle concurrent memory requests the design uses a hierarchy of busses and arbiters which creates a bottleneck.
+In \cite{budiu2004spatial}, a framework to generate Application Specific Hardware (ASH) from a C application is presented. The final architecture it produces is asyncrounous, and operation dependencies are handled using a token-based mechanism which is implemented in hardware. The memory system of the architecture consists of a monolitic memory. To handle concurrent memory requests the design uses a hierarchy of busses and arbiters, which creates a bottleneck. This means that their memory system is overwhelmed because it is not tailored for the PEs it uses.
 
-Spatially distributed PE's with a dedicated configuration register allows to configure the PE's to one of the operating modes \cite{streamproc2019} at compile time. Few PE's are connected in back-to-back format forming systolic arrays which are then interconnected using an on-chip interconnect. Hence, the processor architecture is quite general-purpose, i.e, the interconnect allows a PE array to be connected to any another PE array. Also, there is no automated design flow to efficiently map algorithms to the processor architecture.
+Spatially distributed PEs with a dedicated configuration register allow to configure the PEs to one of the operating modes \cite{streamproc2019} at compile time. Few PEs are connected in back-to-back, forming systolic arrays which are then interconnected using an on-chip interconnect. Hence, the processor architecture is quite general-purpose, i.e, the interconnect allows a PE array to be connected to any another PE array. However, there is no automated design flow to efficiently map algorithms to the processor architecture.
 
-An intreasting approach in the design of a ultralow-power spatial processors is presented in \cite{cerqueira2020catena}. The authors describe Catena, a distributed control spatial architecture, where multiple techniques - \textit{clock gating}, \textit{power gating} and \textit{voltage boosting} - are applied in a fine-grained way to optimize energy efficiency. These techniques can be used to explore the power/latency tradeoff of specific applications. However, the impact of the memory system on the performace of the design is not modeled and the memory system is not co-designed with the spatial processor and they currently do not have high level languages support.
+An intresting approach is Catena\cite{cerqueira2020catena}, an ultralow-power spatial processor with a distributed architecture, where multiple techniques - \textit{clock gating}, \textit{power gating} and \textit{voltage boosting} - are applied in a fine-grained way to optimize energy efficiency. These techniques can be used to explore the power/latency tradeoff of specific applications. However, the impact of the memory system on the performace of the design is not modeled and the memory system is not co-designed with the spatial processor, potentially resulting in an inefficient utilization of the hardware resources; moreover, Catena lacks high-level language support.
+
+In summary, a comparison of \frameworkname~against existing work is presented in Table \ref{tab:rw}.

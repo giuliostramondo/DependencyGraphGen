@@ -1,12 +1,12 @@
 \section{Introduction}
-In modern embedded and high performance computing systems, there is a growing increasing interest in \textit{spatial processors}, i.e. physically distributed Processing Elements (PEs), as they provide better energy efficiengy and performance over traditional application-specific processors~\cite{parashar2014efficient,prabhakar2017plasticine,budiu2004spatial,streamproc2019,cerqueira2020catena,7284058,8686088}. %thus matching current application demands.
+In modern embedded and high performance computing systems, there is a increasing interest in \textit{spatial processors}, processing architectures consisting of physically distributed Processing Elements (PEs), as they are more energy efficient traditional general purpose processors and reconfigurable hardware accelerators.~\cite{parashar2014efficient,prabhakar2017plasticine,budiu2004spatial,streamproc2019,cerqueira2020catena,7284058,8686088}. %thus matching current application demands.
 %ADDCITATION ((2013). The End of Dennard Scaling. Accessed: Feb. 2013. [Online].
 %Available: https://cartesianproduct.wordpress.com/2013/04/15/the-endof-dennard-scaling/
 %[3] H. Esmaeilzadeh, E. Blem, R. S. Amant, K. Sankaralingam, and
 %D. Burger, “Dark silicon and the end of multicore scaling,” in Proc.
 %38th Annu. Int. Symp. Comput. Archit. (ISCA), Jun. 2011, pp. 365–376.}
-Despite the growing interest, the design and implementation of spatial processors remains challenging due to the lack of automated tools that take the memory-system into account. This is mainly because there is compelling evidence that the memory system (both on-chip and off-chip) has become a dominant factor affecting the overall performance, power consumption, and silicon area usage~\cite{williams2009roofline,dayarathna2015data,oh2009analytical} of spatial processors.
-In fact, given that the memory system and the processing elements in a spatial processor architecture are so tightly \textit{interdependent}, we argue they must be \textit{co-designed}. This is especially important while considering using emerging memory technologies, such as MRAM, eDRAM, PCM, or RRAM~\cite{mem2016} in spatial processors: they have higher integration density and lower power than SRAM, but also come with additional "quirks" (e.g., MRAM features different read and write latencies).
+Despite the growing interest, we are still far from having the right  solutions and automated tools for designing efficient, high-performing spatial processors. An important drawback of existing design solutions is their inability to take the memory system into account, despite compelling evidence that the memory system (both on-chip and off-chip) has become a dominant factor affecting the overall performance, power consumption, and silicon area usage~\cite{williams2009roofline,dayarathna2015data,oh2009analytical}.
+In this work we argue that, given that the memory system and the processing elements in a spatial processor architecture are so tightly \textit{interdependent}, they must be \textit{co-designed} to efficently use the available resources. Co-designing becomes especially important when considering the use of emerging memory technologies, such as MRAM, eDRAM, PCM, or RRAM~\cite{mem2016} in spatial processors: they have higher integration density and lower power than SRAM, but also come with additional "quirks" (e.g., MRAM features different read and write latencies).
 
 %
 %BibTeX | EndNote | ACM Ref
@@ -28,8 +28,8 @@ In fact, given that the memory system and the processing elements in a spatial p
 % keywords = {ASIC, chip multiprocessor, customization, energy efficiency, h.264, high performance, tensilica},
 %}
 
-Many CAD tools~\cite{synopsystool,tensilica,codasiptool} help alleviate the increasing design complexity of typical application-specific processors. However, selecting an optimal spatial processor architecture, taking into account the various trade-offs in latency, power consumption, and area usage still requires extensive design-space exploration (DSE) and cannot be performed using the existing CAD tools.
-In addition, state-of-the-art design flows for application-specific processor design-space exploration focus on processing elements optimization~\cite{Meloni2012,EusseSAMOS2014,Jozwiak2013,Karuri2009}, and do not include the memory system, as illustrated in Figure~\ref{fig:intro}. Instead, co-optimization of the processor and the memory system (including emerging memories) is typically done by co-simulation, and/or by optimizing the cache replacement policy~\cite{4798259,7092595,6271803,Mittal13f}.
+There are CAD tools~\cite{synopsystool,tensilica,codasiptool} that reduce the increasing design complexity of typical application-specific processors. However, selecting an optimal spatial processor architecture, taking into account the various trade-offs in latency, power consumption, and area usage still requires extensive design-space exploration (DSE) and cannot be performed using the existing CAD tools.
+In addition, state-of-the-art design flows for application-specific processor DSE focus on processing elements optimization~\cite{Meloni2012,EusseSAMOS2014,Jozwiak2013,Karuri2009}, and do not include the memory system, as illustrated in Figure~\ref{fig:intro}. Instead, co-optimization of the processor and the memory system (including emerging memories) is typically done through the optimization of cache replacement policies~\cite{4798259,7092595,6271803,Mittal13f}.
 %Papers to cite for CDFG generation and Application Specific High LSynthesis~\cite{Coussy:2008:HSA:1457713,Kato2008}.
 %On the other hand, emerging spatial architectures~\cite{7284058,8686088}, which distribute the program memory and processing elements to achieve maximum performance use rigid interconnect topologies to allow flexible communication between processing elements leading to larger area and power utilization.
 
@@ -40,13 +40,15 @@ In addition, state-of-the-art design flows for application-specific processor de
     \label{fig:intro}
 \end{figure}
 
-This paper presents three main contributions: 
+This paper presents as main contribution \frameworkname~(Section~\ref{sec:framework}), an automated framework for \textit{memory-aware spatial processor design-space exploration}. We highlight as key novelties:
 
-1. We propose \frameworkname (Section~\ref{sec:framework}), a novel automated framework for \textit{memory-aware spatial processor design-space exploration}, which enables users to explore various architectural trade-offs for the joined (processor, memory system) ensemble. The framework allows unprecedented configuration options: memory levels technologies (novel among similar tools), clock frequency (per memory level, also novel), read/write latency (potentially different), and data width. Thus, our \frameworkname~is the first to enable design-space exploration for spatial processors beyond state-of-the-art solutions, even enabling a first comparison between different memory technologies, like MRAM and SRAM (Section~\ref{sec:case_studies}).
+1. Unprecedented configuration options: memory levels technologies (novel among similar tools), clock frequency (per memory level, also novel), different read/write latencies, and data-widths.
 
-2. We present novel PE architecture template (Section~\ref{sec:arch_template}) that can be used by \frameworkname to quickly realize spatial processor implementations. These PE template can be configured at design-time (based on the trade-off analysis input the framework), and allow for fast prototyping of application-specific hardware.
+2. A configurable PE architecture template (Section~\ref{sec:arch_template}) that allows fast prototyping of spatial processor hardware.
 
-3. To demonstrate the capabilities of \frameworkname, we cover three case-studies, showing how spatial processor can be designed for two different applications and many configurations, even those using MRAM or SRAM for the memory system, can be generated, analysed, and compared (Section~\ref{sec:case_studies}).
+3. The Modified Interval Partitioning (MIP) algorithm (Section~\ref{ssec:modified_interval_partitioning}), that enables the memory-aware co-Design Space Exploration (Section~\ref{ssec:dse}).
+
+To demonstrate the capabilities of \frameworkname, we cover three case-studies, showing how a spatial processor can be designed for two different applications and many configurations, including those using MRAM or SRAM for the memory system, can be generated, analysed, and compared (Section~\ref{sec:case_studies}).
 
 
 
