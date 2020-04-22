@@ -50,7 +50,7 @@ Because L2M has higher access latency compared to the L1M and spatial processor,
 %Figure~\ref{fig:l2model}  shows a representation of such access.
 A read or write burst access to the L2M is controlled by a Direct Memory Access (DMA) controller, with the starting address and size of the burst given as input to the DMA. After an initial \textit{setup latency}, the accessed elements are transferred in sequence from the start address to the end address, from L1M to L2M in case of a write, and from L2M to L1M in case of a read.
 
-\section{The \frameworkname: Inputs}
+\section{\frameworkname: Inputs}
 \vspace{-1mm}
 \subsection{Input Application}
 \label{ssec:app}
@@ -96,7 +96,7 @@ Information to model the L2M burst accesses is also specified in this file: the 
 %
 %\end{lstlisting}
 
-\section{The \frameworkname: Analysis}
+\section{\frameworkname: Analysis}
 \vspace{-1mm}
 \subsection{L2 Memory Read and Write Modeling}
 \label{ssec:l2_read_model}
@@ -229,7 +229,7 @@ The result of the \textit{DDA} module is the \textbf{Most Parallel Architecture 
 At the other end of the spectrum of architectures we can imagine the \textbf{Most Sequential Architecture (MostSeq)}, where no parallelism is used and the instruction are scheduled sequentially respecting their dependencies. This architecture will have the worst possible latency, however the minimal impact in area - using only one PE per operation type.
 Probably none of these two architectures will be of direct interest for the user as they represent two extreme cases. Instead, the interesting architectures are the ones \textit{in between} \textbf{MostSeq} and \textbf{MostPar}, because they offer interesting trade-offs between power, latency and area. Section~\ref{ssec:dse} describes how these intermediate architectures can be generated.
 
-\section{The \frameworkname: Design Space Exploration (DSE)}
+\section{\frameworkname: Design Space Exploration (DSE)}
 %\vspace{-1mm}
 %\subsection{Design Space Exploration}
 \label{ssec:dse}
