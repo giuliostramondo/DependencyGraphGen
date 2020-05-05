@@ -1,12 +1,12 @@
 \section{Introduction}
 In modern embedded and high performance computing systems, there is a increasing interest in \textit{spatial processors}, processing architectures consisting of physically distributed Processing Elements (PEs), as they are more energy efficient traditional general purpose processors and reconfigurable hardware accelerators.~\cite{parashar2014efficient,prabhakar2017plasticine,budiu2004spatial,streamproc2019,cerqueira2020catena,7284058,8686088}. %thus matching current application demands.
-%ADDCITATION ((2013). The End of Dennard Scaling. Accessed: Feb. 2013. [Online].
+%ADD CITATION ((2013). The End of Dennard Scaling. Accessed: Feb. 2013. [Online].
 %Available: https://cartesianproduct.wordpress.com/2013/04/15/the-endof-dennard-scaling/
 %[3] H. Esmaeilzadeh, E. Blem, R. S. Amant, K. Sankaralingam, and
 %D. Burger, “Dark silicon and the end of multicore scaling,” in Proc.
 %38th Annu. Int. Symp. Comput. Archit. (ISCA), Jun. 2011, pp. 365–376.}
 Despite the growing interest, we are still far from having the right  solutions and automated tools for designing efficient, high-performance spatial processors. An important drawback of existing design solutions is their inability to take the memory system into account, despite compelling evidence that the memory system (both on-chip and off-chip) has become a dominant factor affecting the overall performance, power consumption, and silicon area usage~\cite{williams2009roofline,dayarathna2015data,oh2009analytical}.
-In this work we argue that, given that the memory system and the processing elements in a spatial processor architecture are so tightly \textit{interdependent}, they must be \textit{co-designed} to efficently use the available resources. A memory-aware design produces spatial architectures having bandwitdth close to the bandwidth of the memory system, effectively reducing the instantiation of unrequired resources. Co-designing becomes especially important when considering the use of emerging memory technologies, such as MRAM, eDRAM, PCM, or RRAM~\cite{mem2016} in spatial processors: they have higher integration density and lower power than SRAM, but also come with additional "quirks" (e.g., MRAM features different read and write latencies).
+In this work we argue that, given that the memory system and the processing elements in a spatial processor architecture are so tightly \textit{interdependent}, they must be \textit{co-designed} to efficiently use the available resources. A memory-aware design produces spatial architectures having bandwidth close to the bandwidth of the memory system, effectively reducing the instantiation of unrequired resources. Co-designing becomes especially important when considering the use of emerging memory technologies, such as MRAM, eDRAM, PCM, or RRAM~\cite{mem2016} in spatial processors: they have higher integration density and lower power than SRAM, but also come with additional "quirks" (e.g., MRAM features different read and write latencies).
 
 %
 %BibTeX | EndNote | ACM Ref
@@ -49,7 +49,7 @@ We highlight as key novelties:
 
 3. The Modified Interval Partitioning (MIP) algorithm (Section~\ref{ssec:modified_interval_partitioning}), that enables the memory-aware co-Design Space Exploration (Section~\ref{ssec:dse}).
 
-To demonstrate the capabilities of \frameworkname, we cover three case-studies, showing how a spatial processor can be designed for two different applications and many configurations, including those using MRAM or SRAM for the memory system, can be generated, analysed, and compared (Section~\ref{sec:case_studies}).
+To demonstrate the capabilities of \frameworkname, we cover three case-studies, showing how a spatial processor can be designed for two different applications and many configurations, including those using MRAM or SRAM for the memory system, can be generated, analyzed, and compared (Section~\ref{sec:case_studies}).
 
 
 

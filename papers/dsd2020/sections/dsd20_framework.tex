@@ -30,7 +30,7 @@ The system architecture we assume in this work has two levels of memory and a sp
 \footnotetext{These memories are not to be seen as caches; thus, no cache policies are needed: we schedule data movements at design time. This is why we call them "levels" instead of "layers", and we abbreviate them with L1M and L2M instead of L1 and L2.}
 We assume a model of execution following the three steps, from Figure~\ref{fig:system}, shown by arrows representing the direction of data flow. Initially, all of the required input data for the application are available in L2M. The input data is transferred to the processor, using L1M as intermediate storage (step 1), the data is processed and the results are temporarily stored in L1M (step 2), and, finally, the data from L1M is transferred back to L2M (step 3). The data transfer between L2M and L1M are handled by a Direct Memory Access (DMA) controller. Note that our model of execution performs the steps in a pipelined manner, hence only part of the data will be stored in L1M at any given time.
 
-\frameworkname~lets the user specify the parameters of the L2M through the \textit{Configuration Parameters}. The L2M parameters are used to model the data transfer between L2M and L1M (see \ref{ssec:layer2_model} and \ref{ssec:l2_read_model}). The L2M model is used to compute arrival time of input elements in the L1M. The arrival time of the element in the L1M is then used by the Modified Interval Partitioning (MIP) algorithm  - see \ref{ssec:modified_interval_partitioning}, to produce spatial architectures having bandwitdth close to the bandwidth of the L2M. This effectively reduces the instantiation of unrequired resources in both the L1M and the spatial procesor.
+\frameworkname~lets the user specify the parameters of the L2M through the \textit{Configuration Parameters}. The L2M parameters are used to model the data transfer between L2M and L1M (see \ref{ssec:layer2_model} and \ref{ssec:l2_read_model}). The L2M model is used to compute arrival time of input elements in the L1M. The arrival time of the element in the L1M is then used by the Modified Interval Partitioning (MIP) algorithm  - see \ref{ssec:modified_interval_partitioning}, to produce spatial architectures having bandwidth close to the bandwidth of the L2M. This effectively reduces the instantiation of unrequired resources in both the L1M and the spatial processor.
 The L1M is composed of multiple banks having different depths. The number and depths of the banks composing the L1M is determined by the MIP as described in \ref{ssec:arch_tradeoffs}.
 
 %Taking advantage of the possibility to produce stacked chip having levels produced using different manufacturing technologies we are able to explore different memory implementations at the L2 of the memory architecture.
@@ -56,7 +56,7 @@ The framework takes two inputs, an \textit{application} (\ref{ssec:app}) and \te
 \subsection{Application}
 \label{ssec:app}
 \vspace{-1mm}
-The applications that can be used as input to \frameworkname~are completely defined at compile time, having control-flow instructions not dependent on input data. Such applications enable the static extraction of data dependency information performed by the \textit{Data Dependency Analisys} module (\ref{ssec:dda}). We currently support C/C++ applications. However, as the framework uses the LLVM Intermediate Representation~\cite{llvm}, it can be easily extended to support other languages as well.
+The applications that can be used as input to \frameworkname~are completely defined at compile time, having control-flow instructions not dependent on input data. Such applications enable the static extraction of data dependency information performed by the \textit{Data Dependency Analysis} module (\ref{ssec:dda}). We currently support C/C++ applications. However, as the framework uses the LLVM Intermediate Representation~\cite{llvm}, it can be easily extended to support other languages as well.
 %\begin{lstlisting}[language=C, caption={Example of input application, C implementation of a matrix vector multiplication.}, label={lst:matrixvec}]
 %void matrix_vec_kernel(int *A,int *B, int *C){
 %    int sum;
@@ -132,7 +132,7 @@ $O$                 & Total number of output elements                           
 \caption{\small Definition of symbols used in the equations}
 \label{table:equation}
 \end{table}
-The schedule produced by the Modified Inteval Partitioning (MIP), discussed in \ref{ssec:modified_interval_partitioning}, uses the arrival clock cycle computed in this phase to determine when each input element will be available for computation in L1M. The latency of the MIP schedule includes therefore the L2M$\rightarrow$L1M transfer, and the computation; it does not take into account the L1M$\rightarrow$L2M transfer of the results (phase 3 in Figure~\ref{fig:system}).
+The schedule produced by the Modified Interval Partitioning (MIP), discussed in \ref{ssec:modified_interval_partitioning}, uses the arrival clock cycle computed in this phase to determine when each input element will be available for computation in L1M. The latency of the MIP schedule includes therefore the L2M$\rightarrow$L1M transfer, and the computation; it does not take into account the L1M$\rightarrow$L2M transfer of the results (phase 3 in Figure~\ref{fig:system}).
 The \textit{Model L2 write} block in Figure \ref{fig:framework} computes the latency of the L1M$\rightarrow$L2M transfer. The MIP computes the clock cycle at which computation ends (phase 2 in Figure~\ref{fig:system}) and the last data item is written in L1M. The L1M$\rightarrow$L2M transfer can start immediately after the last output is generated.
 The latency of the L1M$\rightarrow$L2M transfer is calculated using (2),
 \begin{equation}
@@ -216,7 +216,7 @@ for each instruction i
 		add PE to setPEs
 \end{lstlisting}
 
-%We assume that ASAP and ALAP schedules have been previously performed, hence we can have two datastructures that return the ASAP and ALAP schedules for a given instruction i - i.e. ASAP[i] and ALAP[i].
+%We assume that ASAP and ALAP schedules have been previously performed, hence we can have two data structures that return the ASAP and ALAP schedules for a given instruction i - i.e. ASAP[i] and ALAP[i].
 %Instructions is an ordered list of instructions initialized with the instructions of the input application.
 %A Functional Unit is represented as a set containing the instructions that have been allocated to it, and FunctionalUnits is a set containing the Functional Units of the resulting architecture which is initialized as an empty set.
 %The functions latency and dep take an instruction i as input and return respectively the latency of i and a list of instructions i depends on.
@@ -264,7 +264,7 @@ while(!found_MostSeq)
 An iteration consists of three steps. First, the instructions corresponding to output leaf nodes in the DDG are selected. The ALAP schedule of these iterations is increased by 1 (lines 14-16), and the ALAP scheduling of the rest of the nodes in the DDG is updated accordingly (line 17). Consequently, the mobility of each instruction node is increased by one. Finally, the MIP is ran again (line 18), using the new ALAP schedule. Due to the increased mobility of each instruction the generated architecture is likely to use less PEs.
 The process stops as soon as one iteration generates the \textbf{MostSeq}, which can be recognized because it contains only one PE per operation type (lines 6-13).
 
-There are two side benefits of our DSE approach. First, the user can tune the granularity of the exploration: by increasing the ALAP "slack" beyond 1, the exploration speeds-up, but less architectures are generated. Second, the DSE process can be easily parallelised, because its iterations are independent.
+There are two side benefits of our DSE approach. First, the user can tune the granularity of the exploration: by increasing the ALAP "slack" beyond 1, the exploration speeds-up, but less architectures are generated. Second, the DSE process can be easily parallelized, because its iterations are independent.
 
 %This has been merged with the L2 Memory Read section
 %\vspace{-1mm}
