@@ -26,7 +26,7 @@ In this work we introduce \frameworkname, an automated framework that \textit{ge
         \node[block, right=of dummy1, text width=2.5cm] (inst) {Instruction Grained};
         \node[below=of inst] (dummy2){};
         \node[block, left=of dummy2] (cent_ctrl) {Centralized Control};
-        \node[block, right=of dummy2] (dist_ctrl) {Distributed Control};
+        \node[block, right=of dummy2,fill=yellow!20] (dist_ctrl) {Distributed Control};
         \draw[-] (spatial_acc) -- (logic_grain);
         \draw[-] (spatial_acc) -- (inst);
         \draw[-] (inst) -- (cent_ctrl);

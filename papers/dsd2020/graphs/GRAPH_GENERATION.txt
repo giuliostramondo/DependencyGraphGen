@@ -27,3 +27,25 @@ Energy Pareto Plot - Matrix Mul 10x10
 Energy Plot - Single SRAM configuration
 
 ./make_plot_for_presentation.py --matrix_size 5  --l2_read_setup_latency 2 --l2_write_setup_latency 2 --l2_io 16 --clock 1000 --l2_type tt0p9v85c_powdown --l2_clock 350 --technology 28 --function matrix_vec_kernel --plot_type energy --title "Energy Plot - Single SRAM configuration" --clean
+
+UPDATED PLOTS
+-------------
+
+The 3rd version of the plot was generated form showcees. The experiment script run is the same as above, the location of the result of the experiment is:
+/home/giulio/Projects/Nokia/benchmark/matrix_vector_mul_powerdown_SRAM_VS_MRAM/experiment_1588589771
+
+Energy Pareto - Matrix Vec 5x5,10x10,15x15
+===================================
+./make_plot_for_presentation_v3.py --matrix_size 5 10 15 --l2_read_setup_latency 2 --l2_write_setup_latency 2 --l2_io 16 --clock 400 600 800 1000 1200 1400 1600 1800 2000 --l2_type tt0p9v85c_powdown 1T1MTJ_powdown --l2_clock 350 --technology 28 --function matrix_vec_kernel --plot_type pareto_energy --title "Energy Pareto - Matrix Vec 5x5,10x10,15x15" --clean --save
+
+Energy Pareto - Matrix Vec 10x10
+=====================================
+./make_plot_for_presentation_v3.py --matrix_size 10  --l2_read_setup_latency 2 --l2_write_setup_latency 2 --l2_io 16 --clock 400 600 800 1000 1200 1400 1600 1800 2000 --l2_type tt0p9v85c_powdown 1T1MTJ_powdown --l2_clock 350 --technology 28 --function matrix_vec_kernel --plot_type pareto_energy --title "Energy Pareto - Matrix Vec 10x10" --clean --save
+
+Energy Pareto - Matrix Mul 10x10
+=====================================
+./make_plot_for_presentation_v3.py --matrix_size 10  --l2_read_setup_latency 2 --l2_write_setup_latency 2 --l2_io 16 --clock 400 600 800 1000 1200 1400 1600 1800 2000 --l2_type tt0p9v85c_powdown 1T1MTJ_powdown --l2_clock 350 --technology 28 --function matrix_matrix_kernel --plot_type pareto_energy --title "Energy Pareto - Matrix Mul 10x10 " --clean --save
+
+Energy - Single SRAM configuration
+==================================
+./make_plot_for_presentation_v3.py --matrix_size 5  --l2_read_setup_latency 2 --l2_write_setup_latency 2 --l2_io 16 --clock 1000 --l2_type tt0p9v85c_powdown --l2_clock 350 --technology 28 --function matrix_vec_kernel --plot_type energy --title "Energy - Single SRAM configuration" --clean --save

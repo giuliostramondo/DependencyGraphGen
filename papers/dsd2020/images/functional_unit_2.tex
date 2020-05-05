@@ -22,7 +22,7 @@
     multiplexer/.style={
         draw,
         trapezium,
-        %shape border uses incircle,
+        %shape border uses incircle, 
         shape border rotate=180,
         %minimum size=18pt,
         %minimum height = 0.25cm,
@@ -34,11 +34,11 @@
         minimum width = 0.5cm,
         trapezium left angle=40,
         trapezium right angle=40
-    },
+    }, 
     demultiplexer/.style={
         draw,
         trapezium,
-        %shape border uses incircle,
+        %shape border uses incircle, 
         shape border rotate=0,
         %minimum size=18pt,
         %minimum height = 0.25cm,
@@ -49,7 +49,7 @@
         font=\sffamily,
         minimum width = 0.5cm,
         trapezium left angle=40,
-        trapezium right angle=40
+        trapezium right angle=40          
     },
 % Label style
     label distance=3mm,
@@ -111,16 +111,10 @@
        %CROSSBAR
        \node [] (cbtl) [below=of mul4.south west, below=1cm]{};
        \node [] (cbtr) [below=of mul7.south east, below=1cm]{};
-       \draw (cbtl.center) --  (cbtr.center);
-       \draw (cbtl.center) --  ++ (0,-10pt) coordinate (cbbl);
-       \draw (cbtr.center) --  ++ (0,-10pt) coordinate (cbbr);
-       \draw (cbbl.center) --  (cbbr.center);
-       \draw [-,opacity=0] (cbbl.center) -- (cbbr.center)
-       node [pos=1/2] (cbmidhook){};
-       \draw [-,opacity=0] (cbtl.center) -- (cbtr.center)
-       node [pos=1/2] (ctmidhook){};
-       \draw [-, opacity=0] (ctmidhook.center) -- (cbmidhook.center)
-       node[pos=1/2,opacity=1] (ctexthook){X-bar};
+       \draw (cbtl.center) --  (cbtr.center); 
+       \draw (cbtl.center) --  ++ (0,-10pt) coordinate (cbbl); 
+       \draw (cbtr.center) --  ++ (0,-10pt) coordinate (cbbr); 
+       \draw (cbbl.center) --  (cbbr.center); 
        %END CROSSBAR
 
        %LINKS
@@ -146,8 +140,7 @@
        %         node [pos=2/8] (demrfhook1){}
        %         node [pos=6/8] (demrfhook2){};
        \draw[-,opacity=0] (cbRF.south west) -- (cbRF.south east)
-       node [pos=2/8] (demrfhook1){}
-       node [pos=2/4] (cbRFBmid){}
+                node [pos=2/8] (demrfhook1){}
                 node [pos=6/8] (demrfhook2){};
 
        %\draw [->] (mux3) -- (dem3);
@@ -158,16 +151,12 @@
                 node [pos=3/4] (horizontalmuxahook){};
        \draw [-,opacity=0] (cbRF.north west) -- (cbRF.north east)
             node [pos=2/8] (muxrfCrossbarHook){}
-       node [pos=2/4] (cbRFTmid){}
-       node [pos=6/8] (muxrfAddDemux){};
-
-       \draw [-,opacity=0] (cbRFTmid.center) -- (cbRFBmid.center)
-       node [pos=1/2,opacity=1] (cbRFtexthook){X-bar};
+            node [pos=6/8] (muxrfAddDemux){};
 
        \draw let
             \p1 = (muxrfCrossbarHook),
             \p2 = (cbbr)
-            in
+            in 
             node (crossbarMuxrfHook) at (\x1,\y2){};
         \draw[->] (crossbarMuxrfHook.center) -- (muxrfCrossbarHook.center);
        \node [block] (rf) [below=of demrfhook1,below=5mm,minimum width=20pt,minimum height=30pt] {RF};
@@ -176,42 +165,35 @@
        \node [rectangle, draw, minimum width=65pt, minimum height=10pt,rounded corners=1pt] [below=of rfsmidpoint,below=30pt] (cbRF2) {};
        \draw [-,opacity=0] (cbRF2.north west) -- (cbRF2.north east)
             node [pos=2/8] (cb2RFhook) {}
-        node [pos=2/4] (cbRF2Tmid){}
             node [pos=6/8] (cb2RF2hook) {};
         \draw[->] (rf) -- (cb2RFhook.center);
         \draw[->] (rf2) -- (cb2RF2hook.center);
 
-
         \draw[-,opacity=0] (cbRF2.south west) -- (cbRF2.south east)
             node [pos=2/8] (rfMuxA){}
-        node [pos=2/4] (cbRF2Bmid){}
-        node [pos=6/8] (rfMuxB){};
-
-                 \draw [-,opacity=0] (cbRF2Tmid.center) -- (cbRF2Bmid.center)
-       node [pos=1/2,opacity=1] (cbRF2texthook){X-bar};
-
+            node [pos=6/8] (rfMuxB){};
        %\draw[-] (rf.south west) -- (rf.south east) node [pos=1/2] (rfMuxA){};
        %\draw[-] (rf2.south west) -- (rf2.south east) node [pos=1/2] (rfMuxB){};
 
-
+       
        \node[] (rfMuxA1) [below=of rfMuxA,below=10pt] {};
        \node[] (rfMuxB1) [below=of rfMuxB,below=14pt] {};
-       \draw let
+       \draw let 
             \p1 = (horizontalmuxahook),
             \p2 = (rfMuxA1)
             in
         node (rfMuxA2) at (\x1,\y2) {};
 
-        \draw let
+        \draw let 
             \p1 = (horizontalmuxbhook),
             \p2 = (rfMuxB1)
-            in
+            in 
         node (rfMuxB2) at (\x1,\y2){};
-       \coordinate (coordrfMuxB2) at ($(rfMuxB1)+(rfMuxA2)-(rfMuxA1) +(rfMuxA)-(rfMuxB)+(rfMuxA)-(rfMuxB)$);
+       \coordinate (coordrfMuxB2) at ($(rfMuxB1)+(rfMuxA2)-(rfMuxA1) +(rfMuxA)-(rfMuxB)+(rfMuxA)-(rfMuxB)$); 
 
        \node[] (rfMuxA3) [above=of rfMuxA2,above=110pt]{};
 
-       \draw let
+       \draw let 
             \p1 = (rfMuxA3),
             \p2 = (rfMuxB2),
             \p3 = (rfMuxA2)
@@ -219,28 +201,28 @@
         node (rfMuxB3) at ($(\x2,\y1)- (0,\y3)+(0,\y2)$){};
         \draw [->] (demrfhook1.center)->(rf);
         \draw [->] (demrfhook2.center)->(rf2);
-
+       
        \draw [-] (mux2.bottom right corner) -- (mux2.bottom left corner) node [pos=1/4](mux2crossbarhook){};
        \draw [-] (mux2.bottom right corner) -- (mux2.bottom left corner) node [pos=2/4](mux2RFhook){};
        \draw [-] (mux2.bottom right corner) -- (mux2.bottom left corner) node [pos=3/4](mux2Demuxhook){};
-       \draw let
+       \draw let 
             \p1 = (mux2RFhook),
             \p2 = (rfMuxB3)
             in
             node (rfMuxB4) at (\x1,\y2){};
        \draw[->] (rfMuxB.center) -- (rfMuxB1.center) -- (rfMuxB2.center) -- (rfMuxB3.center) -- (rfMuxB4.center) -- (mux2RFhook.center);
        \draw [-,fill=red] (mux1.bottom right corner) -- (mux1.bottom left corner)node[pos=3/4](muxahookrf){};
-       \draw let
+       \draw let 
             \p1 = (muxahookrf),
             \p2 = (rfMuxA3)
             in
             node (rfMuxA4) at (\x1,\y2){};
        \draw[->] (rfMuxA.center) -- (rfMuxA1.center) -- (rfMuxA2.center) -- (rfMuxA3.center) -- (rfMuxA4.center) -- (muxahookrf.center);
 
-       \draw let
+       \draw let 
             \p1 = (muxrfAddDemux),
             \p2 = (rfMuxA3)
-            in
+            in 
             node (muxrfAddDemux2) at ( \x1,\y2){}
             node (muxrfAddDemux3) at ($(\x1,\y2) + (30pt,0) $){};
        \draw let
@@ -264,13 +246,13 @@
        \draw [-,fill=red] (demuxadd.bottom left corner) -- (demuxadd.bottom right corner)node[pos=4/5](muxahookdemux4){};
 
        \draw [-,fill=red] (mux1.bottom right corner) -- (mux1.bottom left corner)node[pos=1/4](muxahookdemux){};
-        \node[] (demuxAdd1) [below=of muxahookdemux1.center,below=10pt]{};
-        \node[] (demuxAdd4) [above=of muxahookdemux.center,above=15pt]{};
-        \node[] (demuxAdd3) [left=of demuxAdd4.center,left=20pt]{};
-        \draw let
-            \p1 = (demuxAdd1),
-            \p2 = (demuxAdd3)
-            in
+        \node[] (demuxAdd1) [below=of muxahookdemux1.center,below=10pt]{}; 
+        \node[] (demuxAdd4) [above=of muxahookdemux.center,above=15pt]{}; 
+        \node[] (demuxAdd3) [left=of demuxAdd4.center,left=20pt]{}; 
+        \draw let 
+            \p1 = (demuxAdd1), 
+            \p2 = (demuxAdd3) 
+            in 
         node (demuxAdd2) at (\x2,\y1) {};
         \node[] (demuxAdd3) [left=of demuxAdd4.center,left=20pt]{};
         \draw [->] (muxahookdemux1.center) -- (demuxAdd1.center) -- (demuxAdd2.center) -- (demuxAdd3.center) -- (demuxAdd4.center) --(muxahookdemux.center);
@@ -285,7 +267,7 @@
         \draw [-](demuxout.bottom left corner) -- (demuxout.bottom right corner) node [pos=2/4](demuxout2){};
         \draw [-](demuxout.bottom left corner) -- (demuxout.bottom right corner) node [pos=3/4](demuxout3){};
 
-        \draw let
+        \draw let 
             \p1 = (demuxAdd1),
             \p2 = (muxahookdemux3),
             \p3 = (muxahookdemux4)
@@ -293,7 +275,7 @@
             node (demuxAddRF1) at (\x2,\y1){}
             node (demuxAddMuxB) at ($(\x3,\y1) +(0,4pt)$){};
 
-        \draw let
+        \draw let 
             \p1 = (demuxAddRF1),
             \p2 = (muxrfAddDemux3)
             in
@@ -302,7 +284,7 @@
         \draw [->]
        (muxahookdemux3.center) -- (demuxAddRF1.center) -- (muxrfAddDemux4.center) -- (muxrfAddDemux3.center) -- (muxrfAddDemux2.center) -- (muxrfAddDemux.center);
 
-        \draw let
+        \draw let 
             \p1 = (horizontaladdhook),
             \p2 = (demuxAddMuxB)
             in
@@ -316,7 +298,7 @@
             node (demuxAddMuxB3) at ($(\x3,0)+(0,\y2)-(0,4pt) $){};
         \draw[->] (muxahookdemux4.center) -- (demuxAddMuxB.center) -- (demuxAddMuxB1.center) -- (demuxAddMuxB2.center) -- (demuxAddMuxB3.center) -- (mux2Demuxhook.center);
 
-
+        
         \node[](demuxout1hook) [below=of demuxout1,below=5mm] {};
         \node[](demuxout1hookLabel) [below=of demuxout1hook.north,below=0pt,font=\sffamily] {Out1};
         \draw[->] (demuxout1.center) -- (demuxout1hook.center);
@@ -375,3 +357,4 @@
    \end{scope}
 \end{tikzpicture}
 \end{document}
+

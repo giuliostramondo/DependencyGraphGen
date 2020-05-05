@@ -5,8 +5,8 @@ In modern embedded and high performance computing systems, there is a increasing
 %[3] H. Esmaeilzadeh, E. Blem, R. S. Amant, K. Sankaralingam, and
 %D. Burger, “Dark silicon and the end of multicore scaling,” in Proc.
 %38th Annu. Int. Symp. Comput. Archit. (ISCA), Jun. 2011, pp. 365–376.}
-Despite the growing interest, we are still far from having the right  solutions and automated tools for designing efficient, high-performing spatial processors. An important drawback of existing design solutions is their inability to take the memory system into account, despite compelling evidence that the memory system (both on-chip and off-chip) has become a dominant factor affecting the overall performance, power consumption, and silicon area usage~\cite{williams2009roofline,dayarathna2015data,oh2009analytical}.
-In this work we argue that, given that the memory system and the processing elements in a spatial processor architecture are so tightly \textit{interdependent}, they must be \textit{co-designed} to efficently use the available resources. Co-designing becomes especially important when considering the use of emerging memory technologies, such as MRAM, eDRAM, PCM, or RRAM~\cite{mem2016} in spatial processors: they have higher integration density and lower power than SRAM, but also come with additional "quirks" (e.g., MRAM features different read and write latencies).
+Despite the growing interest, we are still far from having the right  solutions and automated tools for designing efficient, high-performance spatial processors. An important drawback of existing design solutions is their inability to take the memory system into account, despite compelling evidence that the memory system (both on-chip and off-chip) has become a dominant factor affecting the overall performance, power consumption, and silicon area usage~\cite{williams2009roofline,dayarathna2015data,oh2009analytical}.
+In this work we argue that, given that the memory system and the processing elements in a spatial processor architecture are so tightly \textit{interdependent}, they must be \textit{co-designed} to efficently use the available resources. A memory-aware design produces spatial architectures having bandwitdth close to the bandwidth of the memory system, effectively reducing the instantiation of unrequired resources. Co-designing becomes especially important when considering the use of emerging memory technologies, such as MRAM, eDRAM, PCM, or RRAM~\cite{mem2016} in spatial processors: they have higher integration density and lower power than SRAM, but also come with additional "quirks" (e.g., MRAM features different read and write latencies).
 
 %
 %BibTeX | EndNote | ACM Ref
@@ -40,7 +40,8 @@ In addition, state-of-the-art design flows for application-specific processor DS
     \label{fig:intro}
 \end{figure}
 
-This paper presents as main contribution \frameworkname~(Section~\ref{sec:framework}), an automated framework for \textit{memory-aware spatial processor design-space exploration}. We highlight as key novelties:
+This paper presents as main contribution \frameworkname~(Section~\ref{sec:framework}), an automated framework for \textit{memory-aware spatial processor design-space exploration}. The framework presented in this work allows the user to \textbf{customize} the different building blocks to be used in the co-design of the spatial processor and memory system, \textbf{explore} different architectures automatically generated for a given application, and \textbf{estimate} area, power and latency of each one of the architectures.
+We highlight as key novelties:
 
 1. Unprecedented configuration options: memory levels technologies (novel among similar tools), clock frequency (per memory level, also novel), different read/write latencies, and data-widths.
 
