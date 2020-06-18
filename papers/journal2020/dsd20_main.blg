@@ -1,0 +1,59 @@
+This is BibTeX, Version 0.99d (TeX Live 2016)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: dsd20_main.aux
+The style file: IEEEtran.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Database file #1: dsd20_biblio.bib
+-- IEEEtran.bst version 1.12 (2007/01/11) by Michael Shell.
+-- http://www.michaelshell.org/tex/ieeetran/bibtex/
+-- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
+Warning--empty year in tensilica
+Warning--empty booktitle in llvm
+
+Done.
+You've used 28 entries,
+            4024 wiz_defined-function locations,
+            967 strings with 12936 characters,
+and the built_in function-call counts, 15525 in all, are:
+= -- 1229
+> -- 264
+< -- 77
++ -- 144
+- -- 52
+* -- 709
+:= -- 2569
+add.period$ -- 60
+call.type$ -- 28
+change.case$ -- 30
+chr.to.int$ -- 168
+cite$ -- 30
+duplicate$ -- 1277
+empty$ -- 1497
+format.name$ -- 75
+if$ -- 3512
+int.to.chr$ -- 0
+int.to.str$ -- 28
+missing$ -- 227
+newline$ -- 111
+num.names$ -- 30
+pop$ -- 522
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 2
+skip$ -- 1210
+stack$ -- 0
+substring$ -- 418
+swap$ -- 837
+text.length$ -- 21
+text.prefix$ -- 0
+top$ -- 5
+type$ -- 28
+warning$ -- 2
+while$ -- 60
+width$ -- 30
+write$ -- 272
+(There were 2 warnings)
