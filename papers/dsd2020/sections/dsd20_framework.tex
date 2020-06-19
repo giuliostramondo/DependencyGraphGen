@@ -22,16 +22,16 @@ The \frameworkname~framework, illustrated in Figure~\ref{fig:framework} takes tw
 The generated hardware architectures can be realized as RTL implementations, using the \textit{architectural templates} described in Section~\ref{sec:arch_template}.
 The rest of this section provides a detailed analysis of the design and implementation of \frameworkname.
 
-\vspace{-1mm}
-\subsection{Model of Execution}
+%\vspace{-1mm}
+%\subsection{Model of Execution}
 \label{ssec:system_under_analysis}
-\vspace{-1mm}
+%\vspace{-1mm}
 The system architecture we assume in this work has two levels of memory and a spatial processor (Figure~\ref{fig:system}). Level 1 memory (L1M)\footnotemark, the first memory level, and the smaller one in size, uses SRAM as it needs to be physically close to the processor for faster access. The second level - Level 2 memory (L2M)\footnotemark[\value{footnote}] - is larger in size and can be implemented using any memory technology (on-chip or off-chip), even with different access latency for read and write operations. Note that L2M can run at a different clock speed and different IO width than the processor and L1M.
 \footnotetext{These memories are not to be seen as caches; thus, no cache policies are needed: we schedule data movements at design time. This is why we call them "levels" instead of "layers", and we abbreviate them with L1M and L2M instead of L1 and L2.}
 We assume a model of execution following the three steps, from Figure~\ref{fig:system}, shown by arrows representing the direction of data flow. Initially, all the required input data for the application are available in L2M. The input data is transferred to the processor, using L1M as intermediate storage (step 1), the data is processed and the results are temporarily stored in L1M (step 2), and, finally, the data from L1M is transferred back to L2M (step 3). The data transfer between L2M and L1M are handled by a Direct Memory Access (DMA) controller. Note that our model of execution performs the steps in a pipelined manner, hence only part of the data will be stored in L1M at any given time.
 
-\frameworkname~lets the user specify the parameters of the L2M through the \textit{Configuration Parameters}. The L2M parameters are used to model the data transfer between L2M and L1M (see \ref{ssec:layer2_model} and \ref{ssec:l2_read_model}). The L2M model is used to compute arrival time of input elements in the L1M. The arrival time of the element in the L1M is then used by the Modified Interval Partitioning (MIP) algorithm  - see \ref{ssec:modified_interval_partitioning}, to produce spatial architectures having bandwidth close to the bandwidth of the L2M. This effectively reduces the instantiation of unrequired resources in both the L1M and the spatial processor.
-The L1M is composed of multiple banks having different depths. The number and depths of the banks composing the L1M is determined by the MIP as described in \ref{ssec:arch_tradeoffs}.
+%\frameworkname~lets the user specify the parameters of the L2M through the \textit{Configuration Parameters}. The L2M parameters are used to model the data transfer between L2M and L1M (see \ref{ssec:layer2_model} and \ref{ssec:l2_read_model}). The L2M model is used to compute arrival time of input elements in the L1M. The arrival time of the element in the L1M is then used by the Modified Interval Partitioning (MIP) algorithm  - see \ref{ssec:modified_interval_partitioning}, to produce spatial architectures having bandwidth close to the bandwidth of the L2M. This effectively reduces the instantiation of unrequired resources in both the L1M and the spatial processor.
+%The L1M is composed of multiple banks having different depths. The number and depths of the banks composing the L1M is determined by the MIP as described in \ref{ssec:arch_tradeoffs}.
 
 %Taking advantage of the possibility to produce stacked chip having levels produced using different manufacturing technologies we are able to explore different memory implementations at the L2 of the memory architecture.
 
@@ -42,20 +42,20 @@ The L1M is composed of multiple banks having different depths. The number and de
 %\label{fig:system}
 %\end{figure}
 
-\vspace{-1mm}
-\subsection{The L2 Memory Model}
+%\vspace{-1mm}
+%\subsection{The L2 Memory Model}
 \label{ssec:layer2_model}
-\vspace{-1mm}
+%\vspace{-1mm}
 Because L2M has higher access latency compared to the L1M and spatial processor, we model the L2M assuming its data is accessed in bursts.
 %Figure~\ref{fig:l2model}  shows a representation of such access.
 A read or write burst access to the L2M is controlled by a Direct Memory Access (DMA) controller, with the starting address and size of the burst given as input to the DMA. After an initial \textit{setup latency}, the accessed elements are transferred in sequence from the start address to the end address, from L1M to L2M in case of a write, and from L2M to L1M in case of a read.
 
 \section{\frameworkname: Inputs}
 This section details the two inputs of \frameworkname: the \textit{application} and the \textit{Configuration Parameters}.
-\vspace{-1mm}
-\subsection{Application}
+%\vspace{-1mm}
+%\subsection{Application}
 \label{ssec:app}
-\vspace{-1mm}
+%\vspace{-1mm}
 The applications that can be used as input to \frameworkname~are completely defined at compile time, having control-flow instructions not dependent on input data. Such applications enable the static extraction of data dependency information performed by the \textit{Data Dependency Analysis} module (\ref{ssec:dda}). We currently support C/C++ applications. However, as the framework uses the LLVM Intermediate Representation~\cite{llvm}, it can be easily extended to support other languages as well.
 %\begin{lstlisting}[language=C, caption={Example of input application, C implementation of a matrix vector multiplication.}, label={lst:matrixvec}]
 %void matrix_vec_kernel(int *A,int *B, int *C){
@@ -70,10 +70,10 @@ The applications that can be used as input to \frameworkname~are completely defi
 %}
 %\end{lstlisting}
 
-\vspace{-1mm}
-\subsection{Configuration Parameters}
+%\vspace{-1mm}
+%\subsection{Configuration Parameters}
 \label{ssec:conf_param}
-\vspace{-1mm}
+%\vspace{-1mm}
 The second input to the framework is a configuration file for the different building blocks to be used for hardware architecture realization. Through this file, the user can specify: different compute units (e.g. multipliers, adders), process technology to be used (e.g. 16nm, 28nm), the clock frequency of the processor and L1M, and the clock frequency L2M. Moreover, the user can specify the data-width used by the compute units, L1M and L2M.
 Information to model the L2M burst accesses is also specified in this file: the setup latency for write/read accesses, the type of L2M to be used (e.g. MRAM, SRAM) and the size of the L2M. The different parameters in the configuration file are then used to access a database containing estimates (obtained by synthesis or from specs) of area usage, static and dynamic power, and latency of each of the building blocks. %Our L1M implementation uses multiple memory banks of different sizes (see \ref{ssec:arch_tradeoffs}). To estimate the resource usage of the different types of these memories we built a linear model, using synthesis data. We compared the ability of our linear model to predict area, latency and power consumption against the data generated using the synthesis tool and we found it to be accurate - less then 2\% error in the area and static energy model and less than 28\% error in the dynamic energy model.
 
@@ -112,7 +112,8 @@ AClk_i = S_r + R_{L2M} * (Add_{L2Mi}+1) * \frac{B_{L1M}}{B_{L2M}} * \frac{Clk_{L
 
 \begin{table}[]
 \centering
-\footnotesize
+%\footnotesize
+\scriptsize
 \begin{tabular}{|l|l|}
 \hline
 \textbf{Symbol} & \textbf{Definition}                                           \\ \hline
@@ -131,6 +132,8 @@ $O$                 & Total number of output elements                           
 \end{tabular}
 \caption{\small Definition of symbols used in the equations}
 \label{table:equation}
+\squeezeup
+\squeezeup
 \end{table}
 The schedule produced by the Modified Interval Partitioning (MIP), discussed in \ref{ssec:modified_interval_partitioning}, uses the arrival clock cycle computed in this phase to determine when each input element will be available for computation in L1M. The latency of the MIP schedule includes therefore the L2M$\rightarrow$L1M transfer, and the computation; it does not take into account the L1M$\rightarrow$L2M transfer of the results (phase 3 in Figure~\ref{fig:system}).
 The \textit{Model L2 write} block in Figure \ref{fig:framework} computes the latency of the L1M$\rightarrow$L2M transfer. The MIP computes the clock cycle at which computation ends (phase 2 in Figure~\ref{fig:system}) and the last data item is written in L1M. The L1M$\rightarrow$L2M transfer can start immediately after the last output is generated.
