@@ -1,0 +1,39 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Background}{}% 2
+\BOOKMARK [1][-]{section.3}{The -Genie framework}{}% 3
+\BOOKMARK [2][-]{subsection.3.1}{Model of Execution}{section.3}% 4
+\BOOKMARK [2][-]{subsection.3.2}{The L2 Memory Model}{section.3}% 5
+\BOOKMARK [1][-]{section.4}{-Genie: Inputs}{}% 6
+\BOOKMARK [2][-]{subsection.4.1}{Application}{section.4}% 7
+\BOOKMARK [2][-]{subsection.4.2}{Configuration Parameters}{section.4}% 8
+\BOOKMARK [1][-]{section.5}{-Genie: Analysis}{}% 9
+\BOOKMARK [2][-]{subsection.5.1}{L2 Memory Read and Write Modeling}{section.5}% 10
+\BOOKMARK [2][-]{subsection.5.2}{Data Dependency Analysis}{section.5}% 11
+\BOOKMARK [2][-]{subsection.5.3}{PE allocation with Modified Interval Partitioning}{section.5}% 12
+\BOOKMARK [2][-]{subsection.5.4}{Most Parallel and Most Sequential Architectures}{section.5}% 13
+\BOOKMARK [1][-]{section.6}{-Genie: Design Space Exploration \(DSE\)}{}% 14
+\BOOKMARK [2][-]{subsection.6.1}{Architecture Tradeoffs}{section.6}% 15
+\BOOKMARK [2][-]{subsection.6.2}{Multi-Configuration Design Space Exploration}{section.6}% 16
+\BOOKMARK [1][-]{section.7}{Architectural Template}{}% 17
+\BOOKMARK [1][-]{section.8}{Case Studies}{}% 18
+\BOOKMARK [2][-]{subsection.8.1}{Single configuration DSE}{section.8}% 19
+\BOOKMARK [2][-]{subsection.8.2}{MRAM vs SRAM Level 2 Memory}{section.8}% 20
+\BOOKMARK [2][-]{subsection.8.3}{Different Matrix Dimensions}{section.8}% 21
+\BOOKMARK [1][-]{section.9}{Related Work}{}% 22
+\BOOKMARK [1][-]{section.10}{Conclusion and Future Work}{}% 23
+\BOOKMARK [1][-]{section.11}{Method}{}% 24
+\BOOKMARK [1][-]{section.12}{Efficiency metrics}{}% 25
+\BOOKMARK [1][-]{section.13}{Merging method for architectures}{}% 26
+\BOOKMARK [2][-]{subsection.13.1}{Isolating the mcs}{section.13}% 27
+\BOOKMARK [2][-]{subsection.13.2}{Mapping leftovers}{section.13}% 28
+\BOOKMARK [2][-]{subsection.13.3}{Completing the graph}{section.13}% 29
+\BOOKMARK [1][-]{section.14}{Design-space exploration for efficiency}{}% 30
+\BOOKMARK [1][-]{section.15}{Implementation}{}% 31
+\BOOKMARK [1][-]{section.16}{Empirical Evaluation}{}% 32
+\BOOKMARK [1][-]{section.17}{Architecture merging validation}{}% 33
+\BOOKMARK [1][-]{section.18}{Method evaluation}{}% 34
+\BOOKMARK [2][-]{subsection.18.1}{Findings}{section.18}% 35
+\BOOKMARK [2][-]{subsection.18.2}{Relative merging efficiency}{section.18}% 36
+\BOOKMARK [2][-]{subsection.18.3}{Merged architecture trade-offs}{section.18}% 37
+\BOOKMARK [1][-]{section.19}{Programming the PEs}{}% 38
+\BOOKMARK [1][-]{section.20}{Requirements}{}% 39

@@ -1,0 +1,48 @@
+%TODO, remove figure or reuse the one in [1] and update accordingly the terminology
+\section{Background}
+\label{sec:bg}
+
+A \textit{spatial processor} architecture consists of a set of physically distributed PEs with dedicated control units interconnected using an on-chip interconnect. The operations that need to be performed by an algorithm are mapped on the PEs, which compute in a fine-grained pipeline fashion. There are different kinds of spatial architectures; one possible classification is shown in Figure \ref{fig:spatial_class}\cite{parashar2014efficient}. FPGAs are an example of spatially programmed architectures in which the PEs implement basic logic operations, and hence are classified as Logic-Grained. To change the functionality of a Logic-Grained architecture, the hardware design needs to be modified and re-synthesized. Instruction-Grained spatial architectures are instead programmable at instruction level and their PEs implement simplified ALUs. The functionality of an \textit{Instruction-Grained} spatial accelerator can change by modifying the sequence of instructions it executes. The advantage of using \textit{Instruction-Grained} over \textit{Logic-Grained} programmable architectures lies in their higher computational density, which results in a higher operational frequency and lower power consumption\cite{parashar2014efficient}. The Instruction-Grained class is itself composed of architectures having Centralized Control\cite{swanson2007wavescalar} , where a single control unit manages all the PEs, and Distributed Control, where each PE has a built-in control mechanism~\cite{parashar2014efficient,prabhakar2017plasticine,cerqueira2020catena}. Intuitively, an architecture with distributed control is more scalable and has a simpler interconnection network.
+In this work we introduce \frameworkname, an automated framework that \textit{generates distributed control spatial architectures optimized for input applications}.
+
+
+
+
+\begin{figure}
+  \centering
+  \resizebox{0.5\columnwidth}{!}{%
+    \begin{tikzpicture}[
+      % For compatability with PGF CVS add the absolute option:
+      absolute
+      ]
+      \begin{scope}[xshift=-7.5cm,yshift=-5cm,very thick,
+        node distance=2cm,on grid,>=stealth',
+        block/.style={rectangle,draw,font=\sffamily,fill=cyan!20,text width=2cm,text centered}]
+
+        \node[block, text width=2.5cm] (spatial_acc) {Spatially Programmed Accelerators};
+        \node[below=of spatial_acc]  (dummy1){};
+        \node[block, left=of dummy1,text width=2.5cm] (logic_grain) {Logic Grained\\e.g. FPGAs};
+        % \node[below=of logic_grain,yshift=35pt] (fpga) {FPGAs};
+        \node[block, right=of dummy1, text width=2.5cm] (inst) {Instruction Grained};
+        \node[below=of inst] (dummy2){};
+        \node[block, left=of dummy2] (cent_ctrl) {Centralized Control};
+        \node[block, right=of dummy2,fill=yellow!20] (dist_ctrl) {Distributed Control};
+        \draw[-] (spatial_acc) -- (logic_grain);
+        \draw[-] (spatial_acc) -- (inst);
+        \draw[-] (inst) -- (cent_ctrl);
+        \draw[-] (inst) -- (dist_ctrl);
+      \end{scope}
+
+    \end{tikzpicture}
+  }
+  \caption{Spatial Architectures classification \cite{parashar2014efficient}.} \label{fig:spatial_class}
+\end{figure}
+
+%This section will contain the relevant background. Consider the following items:
+%\begin{itemize}
+%\item Taxonomy of accelerators
+%\item Non-Volatile Memories
+%\item Memory wall
+%\item Static Data-Dependency Analysis
+%\item System Under Analysis
+%\end{itemize}
